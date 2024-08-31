@@ -6,10 +6,10 @@ Channel::Channel()
 
 Channel::~Channel()
 {
-    for (const Node &node : nodes)
+    for (const auto& [key, node] : nodes)
     {
         if (node.get_socket() != -1) {
-            close(node.get_socket());
+            // close(node.get_socket());
             std::cout << std::format("Closed socket for node {}.", node.to_string()) << std::endl;
         }
         // talvez uma close_socket_for_node(Node node);
@@ -18,6 +18,8 @@ Channel::~Channel()
 
 void Channel::init(std::string local_id, std::vector<Node> nodes)
 {
+    this->local_id = local_id;
+    
     for (const Node &node : nodes)
     {
         initialize_socket_for_node(node);
@@ -26,6 +28,8 @@ void Channel::init(std::string local_id, std::vector<Node> nodes)
 
 void Channel::initialize_socket_for_node(Node node)
 {
+    auto& config = node.get_config();
+
     int socket_descriptor = socket(AF_INET, SOCK_DGRAM, 0);
     if (socket_descriptor < 0)
     {
@@ -36,8 +40,11 @@ void Channel::initialize_socket_for_node(Node node)
     sockaddr_in socket_address;
     memset(&socket_address, 0, sizeof(sockaddr_in));
     socket_address.sin_family = AF_INET;
-    socket_address.sin_port = htons(node.get_config().port);
-    socket_address.sin_addr.s_addr = node.is_remote() ? inet_addr(node.get_config().socket.address.address.to_string()) : INADDR_ANY;
+    socket_address.sin_port = htons(config.address.port);
+    socket_address.sin_addr.s_addr =
+        node.is_remote() ?
+        inet_addr(config.address.address.to_string().c_str()) :
+        INADDR_ANY;
 
     int bind_result = bind(
         socket_descriptor, (const struct sockaddr *)&socket_address, sizeof(socket_address));
@@ -49,7 +56,7 @@ void Channel::initialize_socket_for_node(Node node)
 
     node.set_socket(socket_descriptor);
     node.set_socket_address(socket_address);
-    nodes[node.get_config().id] = node;
+    nodes.emplace(config.id, node);
     std::cout << std::format("Socket for node {} initialized successfully.", node.to_string()) << std::endl; // TODO: criar metodo generico pra fazer isso
 }
 
@@ -72,13 +79,14 @@ void Channel::send(Node node, char *m, std::size_t size)
 
 std::size_t Channel::receive(char *m)
 {
-    int bytes_received = recvfrom(local_socket, buff, 1024, 0, (struct sockaddr*)&cliAddr, &cliAddrLen);
-    if (readStatus < 0) { 
-        perror("reading error...\n");
-        close(serSockDes);
-        exit(-1);
-    }
+    // int bytes_received = recvfrom(local_socket, buff, 1024, 0, (struct sockaddr*)&cliAddr, &cliAddrLen);
+    // if (readStatus < 0) { 
+    //     perror("reading error...\n");
+    //     close(serSockDes);
+    //     exit(-1);
+    // }
 
-    cout.write(buff, readStatus);
-    cout << endl;
+    // std::cout.write(buff, readStatus);
+    // std::cout << std::endl;
+    return 0;
 }

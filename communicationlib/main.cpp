@@ -6,7 +6,7 @@
 
 
 struct Arguments {
-    int node_id;
+    std::string node_id;
 };
 
 Arguments parse_arguments(int argc, char* argv[]) {
@@ -16,20 +16,26 @@ Arguments parse_arguments(int argc, char* argv[]) {
         );
     }
 
-    int node_id;
+    ConfigReader reader(argv[1]);
+    std::string node_id = reader.read_word();
 
-    try {
-        node_id = std::stoi(argv[1]);
-    }
-    catch (std::invalid_argument& error) {
+    if (!reader.eof()) {
         throw std::invalid_argument(
-            std::format("Invalid node id argument '{}'. Must be an int", argv[1])
+            std::format("Node id must be alphanumeric.", argv[1])
         );
     }
 
     return Arguments{node_id};
 }
 
+
+void run_process(std::string node_id)
+{
+    Config config = ConfigReader::parse_file("nodes.conf");
+    NodeConfig node_config = config.get_node(node_id);
+
+    Node node(node_config);
+}
 
 int main(int argc, char* argv[]) {
     try {

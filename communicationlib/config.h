@@ -11,32 +11,14 @@ class parse_error : std::exception {
     std::string message;
 
  public:
-    parse_error() : message("") {}
-    parse_error(std::string msg) : message(msg) {}
+    parse_error();
+    parse_error(std::string msg);
 
-    virtual const char* what() const throw() {
-        return message.c_str();
-    }
+    virtual const char* what() const throw();
 };
 
 
-std::string read_file(const std::string& filename) {    
-    std::ifstream f(filename);
-
-    if (!f.good()) throw std::invalid_argument(
-        std::format("File '{}' does not exist.", filename)
-    );
-
-    f.seekg(0, std::ios::end);
-    size_t size = f.tellg();
-
-    std::string buffer(size, ' ');
-
-    f.seekg(0);
-    f.read(&buffer[0], size);
-
-    return buffer;
-}
+std::string read_file(const std::string& filename);
 
 
 struct IPv4 {
@@ -45,52 +27,29 @@ struct IPv4 {
     unsigned char c;
     unsigned char d;
 
-    std::string to_string() const {
-        return std::format("{}.{}.{}.{}", a, b, c, d);
-    }
+    std::string to_string() const;
 };
 
 struct SocketAddress {
     IPv4 address;
     int port;
 
-    std::string to_string() const {
-        return std::format("{}:{}", address.to_string(), port);
-    }
+    std::string to_string() const;
 };
 
 struct NodeConfig {
     std::string id;
     SocketAddress address;
 
-    std::string to_string() const {
-        return std::format("{{{}, {}}}", id, address.to_string());
-    }
+    std::string to_string() const;
 };
 
 struct Config {
     std::vector<NodeConfig> nodes;
 
-    NodeConfig& get_node(std::string id) {
-        for (NodeConfig& node : nodes) {
-            if (node.id == id) return node;
-        }
-        throw std::invalid_argument(
-           std::format("Node id {} not found in config.", id)
-        );
-    }
+    NodeConfig& get_node(std::string id);
 
-    std::string to_string() const {
-        std::string acc;
-
-        acc += "nodes = {\n";
-        for (const NodeConfig& node : nodes) {
-            acc += std::format("    {},\n", node.to_string());
-        }
-        acc += "};";
-
-        return acc;
-    }
+    std::string to_string() const;
 };
 
 
@@ -101,14 +60,8 @@ class Override {
     T previous_value;
 
 public:
-    Override(T* ref, T value) : ref(ref), value(value) {
-        previous_value = *ref;
-        *ref = value;
-    }
-
-    ~Override() {
-        *ref = previous_value;
-    }
+    Override(T* ref, T value);
+    ~Override();
 };
 
 class ConfigReader {
@@ -118,158 +71,28 @@ class ConfigReader {
     bool ignores_whitespace = true;
 
 public:
-    ConfigReader(std::string string) : str(string) {}
+    ConfigReader(std::string string);
 
-    static ConfigReader from_file(const std::string& path) {
-        return ConfigReader(read_file(path));
-    }
+    static ConfigReader from_file(const std::string& path);
+    static Config parse_file(const std::string& path);
 
-    static Config parse_file(const std::string& path) {
-        ConfigReader reader = ConfigReader::from_file(path);
-        return reader.parse();
-    }
+    int size();
+    bool eof();
 
-    int size() {
-        return str.size();
-    }
+    void advance(int amount);
+    char peek();
+    char read(char ch);
+    int read_int();
+    std::string read_word();
 
-    bool eof() {
-        return pos >= size();
-    }
+    void consume_space();
 
-    void advance(int amount = 1) {
-        pos = std::min(size(), pos + amount);
-    }
+    char expect(char ch);
+    void expect(const std::string& chars);
 
-    char peek() {
-        if (eof()) return 0;
-
-        char ch = str.at(pos);
-
-        if (ignores_whitespace && isspace(ch)) {
-            advance();
-            return peek();
-        }
-
-        return ch;
-    }
-
-    char read(char ch = 0) {
-        char p = peek();
-
-        if (!p) return 0;
-        
-        if (ch == 0 || ch == p) {
-            advance();
-            return p;
-        }
-
-        return 0;
-    }
-
-    int read_int() {
-        char ch = peek();
-        int start = pos;
-        
-        Override ovr(&ignores_whitespace, false);
-
-        while(ch && isdigit(ch)) {
-            advance();
-            ch = peek();
-        }
-
-        std::string string = str.substr(start, pos - start);
-
-        if (!string.size()) return 0;
-        return std::stoi(string);
-    }
-
-    std::string read_word() {
-        char ch = peek();
-        int start = pos;
-        
-        Override ovr(&ignores_whitespace, false);
-
-        while(ch && (isdigit(ch) || isalpha(ch)) ) {
-            advance();
-            ch = peek();
-        }
-
-        return str.substr(start, pos - start);
-    }
-
-    void consume_space() {
-        while (peek() && isspace(peek())) {
-            advance();
-        }
-    }
-
-    char expect(char ch) {
-        char result = read(ch);
-        if (!result) {
-            throw parse_error(std::format("Expected character '{}' at position {}. Got '{}'.", ch, std::to_string(pos), peek()));
-        }
-        return result;
-    }
-    void expect(const std::string& chars) {
-        Override ovr(&ignores_whitespace, false);
-
-        for (char ch : chars) {
-            expect(ch);
-        }
-    }
-
-    IPv4 parse_ipv4() {
-        int a = read_int();
-        expect('.');
-        int b = read_int();
-        expect('.');
-        int c = read_int();
-        expect('.');
-        int d = read_int();
-
-        return IPv4(a, b, c, d);
-    }
-
-    SocketAddress parse_socket_address() {
-        IPv4 ip = parse_ipv4();
-        expect(':');
-        int port = read_int();
-
-        return SocketAddress{ip, port};
-    }
-
-    Config parse() {
-        pos = 0;
-
-        std::vector<NodeConfig> nodes;
-
-        expect("nodes");
-        expect('=');
-        expect('{');
-
-        while (true) {
-            char ch = peek();
-
-            if (ch == '}') break;
-
-            expect('{');
-
-            std::string id = read_word();
-            expect(',');
-            SocketAddress address = parse_socket_address();
-
-            NodeConfig node{id, address};
-            nodes.push_back(node);
-
-            expect('}');
-            read(',');
-        }
-        expect('}');
-        expect(';');
-
-        return Config{nodes};
-    }
+    IPv4 parse_ipv4();
+    SocketAddress parse_socket_address();
+    Config parse();
 };
 
 
