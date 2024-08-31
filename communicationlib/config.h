@@ -60,7 +60,7 @@ struct SocketAddress {
 };
 
 struct NodeConfig {
-    int id;
+    std::string id;
     SocketAddress address;
 
     std::string to_string() const {
@@ -71,7 +71,7 @@ struct NodeConfig {
 struct Config {
     std::vector<NodeConfig> nodes;
 
-    NodeConfig& get_node(int id) {
+    NodeConfig& get_node(std::string id) {
         for (NodeConfig& node : nodes) {
             if (node.id == id) return node;
         }
@@ -184,6 +184,20 @@ public:
         return std::stoi(string);
     }
 
+    std::string read_word() {
+        char ch = peek();
+        int start = pos;
+        
+        Override ovr(&ignores_whitespace, false);
+
+        while(ch && (isdigit(ch) || isalpha(ch)) ) {
+            advance();
+            ch = peek();
+        }
+
+        return str.substr(start, pos - start);
+    }
+
     void consume_space() {
         while (peek() && isspace(peek())) {
             advance();
@@ -193,15 +207,7 @@ public:
     char expect(char ch) {
         char result = read(ch);
         if (!result) {
-            std::string message =
-                std::string("Expected character '")
-                + ch
-                + "' at position "
-                + std::to_string(pos)
-                + ". Got '"
-                + peek()
-                + "'.";
-            throw parse_error(message);
+            throw parse_error(std::format("Expected character '{}' at position {}. Got '{}'.", ch, std::to_string(pos), peek()));
         }
         return result;
     }
@@ -249,7 +255,7 @@ public:
 
             expect('{');
 
-            int id = read_int();
+            std::string id = read_word();
             expect(',');
             SocketAddress address = parse_socket_address();
 
