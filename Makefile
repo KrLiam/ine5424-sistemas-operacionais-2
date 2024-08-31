@@ -1,7 +1,7 @@
 CXX ?= g++
 
 # caminho
-SRC_PATH = src
+SRC_PATH = communicationlib
 BUILD_PATH = build
 BIN_PATH = $(BUILD_PATH)/bin
 
