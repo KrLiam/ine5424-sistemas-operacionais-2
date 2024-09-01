@@ -6,87 +6,72 @@ Channel::Channel()
 
 Channel::~Channel()
 {
-    for (const auto& [key, node] : nodes)
-    {
-        if (node.get_socket() != -1) {
-            // close(node.get_socket());
-            std::cout << std::format("Closed socket for node {}.", node.to_string()) << std::endl;
-        }
-        // talvez uma close_socket_for_node(Node node);
-    }
 }
 
-void Channel::init(std::string local_id, std::vector<Node> nodes)
+void Channel::initialize(int port)
 {
-    this->local_id = local_id;
-    
-    for (const Node &node : nodes)
-    {
-        initialize_socket_for_node(node);
-    }
+    open_socket(port);
 }
 
-void Channel::initialize_socket_for_node(Node node)
-{
-    auto& config = node.get_config();
+void Channel::deinitialize() {
+    close_socket();
+}
 
-    int socket_descriptor = socket(AF_INET, SOCK_DGRAM, 0);
+void Channel::open_socket(int port)
+{
+    socket_descriptor = socket(AF_INET, SOCK_DGRAM, 0);
     if (socket_descriptor < 0)
     {
-        std::cout << std::format("Unable to create socket for node {}.", node.to_string()) << std::endl;
+        std::cout << "Unable to create a socket." << std::endl;
         return;
     }
 
-    sockaddr_in socket_address;
-    memset(&socket_address, 0, sizeof(sockaddr_in));
-    socket_address.sin_family = AF_INET;
-    socket_address.sin_port = htons(config.address.port);
-    socket_address.sin_addr.s_addr =
-        node.is_remote() ?
-        inet_addr(config.address.address.to_string().c_str()) :
-        INADDR_ANY;
+    memset(&in_address, 0, sizeof(sockaddr_in));
+    in_address.sin_family = AF_INET;
+    in_address.sin_port = htons(port);
+    in_address.sin_addr.s_addr = INADDR_ANY;
+    
+    memset(&out_address, 0, sizeof(sockaddr_in));
+    out_address.sin_family = AF_INET;
 
-    int bind_result = bind(
-        socket_descriptor, (const struct sockaddr *)&socket_address, sizeof(socket_address));
+    int bind_result = bind(socket_descriptor, (const struct sockaddr *)&in_address, sizeof(in_address));
     if (bind_result < 0)
     {
-        std::cout << std::format("Unable to bind socket for node {}.", node.to_string()) << std::endl;
+        std::cout << std::format("Unable to bind socket on port {}.", port) << std::endl;
         return;
     }
 
-    node.set_socket(socket_descriptor);
-    node.set_socket_address(socket_address);
-    nodes.emplace(config.id, node);
-    std::cout << std::format("Socket for node {} initialized successfully.", node.to_string()) << std::endl; // TODO: criar metodo generico pra fazer isso
+    std::cout << std::format("Successfully binded socket to port {}.", port) << std::endl; // TODO: criar metodo generico pra fazer isso
 }
 
-void Channel::send(Node node, char *m, std::size_t size)
-{
-    if (node.get_socket() == -1) {
-        std::cout << std::format("No socket for node {} exists.", node.to_string()) << std::endl;
-        return;
-    }
+void Channel::close_socket() {
+    close(socket_descriptor);
+}
 
-    sockaddr_in socket_address = node.get_socket_address();
-    int bytes_sent = sendto(node.get_socket(), m, size, 0, (struct sockaddr *)&socket_address, sizeof(socket_address));
+void Channel::send(SocketAddress endpoint, char *m, std::size_t size)
+{
+    out_address.sin_port = htons(endpoint.port);
+    out_address.sin_addr.s_addr = inet_addr(endpoint.address.to_string().c_str());
+
+    int bytes_sent = sendto(socket_descriptor, m, size, 0, (struct sockaddr *)&out_address, sizeof(out_address));
     if (bytes_sent < 0)
     {
-        std::cout << std::format("Unable to send message to node {}.", node.to_string()) << std::endl;
+        std::cout << std::format("Unable to send message to {}.", endpoint.to_string()) << std::endl;
         return;
     }
-    std::cout << std::format("Sent {} bytes to node {}.", bytes_sent, node.to_string()) << std::endl; // TODO: criar metodo generico pra fazer isso
+    std::cout << std::format("Sent {} bytes to {}.", bytes_sent, endpoint.to_string()) << std::endl; // TODO: criar metodo generico pra fazer isso
 }
 
-std::size_t Channel::receive(char *m)
+std::size_t Channel::receive(char *m, std::size_t size)
 {
-    // int bytes_received = recvfrom(local_socket, buff, 1024, 0, (struct sockaddr*)&cliAddr, &cliAddrLen);
-    // if (readStatus < 0) { 
-    //     perror("reading error...\n");
-    //     close(serSockDes);
-    //     exit(-1);
-    // }
+    socklen_t len = sizeof(in_address);
+    std::size_t bytes_received = recvfrom(socket_descriptor, m, size, 0, (struct sockaddr*)&in_address, &len);
+    
+    // passar isso para uma função q dá uma struct com o size recebido e outras informações
+    char remote_address[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &in_address.sin_addr, remote_address, INET_ADDRSTRLEN);
+    int remote_port = ntohs(in_address.sin_port);
 
-    // std::cout.write(buff, readStatus);
-    // std::cout << std::endl;
-    return 0;
+    std::cout << std::format("Received {} bytes from {}:{}.", bytes_received, remote_address, remote_port) << std::endl;
+    return bytes_received;
 }
