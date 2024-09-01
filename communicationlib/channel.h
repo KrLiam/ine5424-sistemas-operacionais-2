@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include "config.h"
+#include "log.h"
 #include "node.h"
 
 class Channel

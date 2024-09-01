@@ -3,6 +3,7 @@
 #include <format>
 #include <thread>
 
+#include "log.h"
 #include "node.h"
 #include "reliablecommunication.h"
 
@@ -43,7 +44,7 @@ void* server(void *args) {
     std::size_t len = -1;
     while (len != 0) {
         len = comm->receive(buffer);
-        std::cout << "Received '" << buffer << "' from <IP>." << std::endl;
+        log_info("Received '", std::string(buffer), "' from <IP>.");
     }
     return NULL;
 }
@@ -67,7 +68,7 @@ void run_process(std::string node_id)
     comm->initialize(node_id, BUFFER_SIZE);
 
     Node local_node = comm->get_node(node_id);
-    std::cout << local_node.get_config().address.to_string() << std::endl;
+    log_info("Local node endpoint is ", local_node.get_config().address.to_string() , ".");
 
     ThreadArgs targs = { comm };
     pthread_t server_thread;
@@ -87,6 +88,6 @@ int main(int argc, char* argv[]) {
         run_process(args.node_id);
     }
     catch (std::exception& error) {
-        std::cout << "Error: " << error.what() << std::endl;
+        log_error(error.what());
     }
 }

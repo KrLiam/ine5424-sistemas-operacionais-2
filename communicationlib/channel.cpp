@@ -22,7 +22,7 @@ void Channel::open_socket(int port)
     socket_descriptor = socket(AF_INET, SOCK_DGRAM, 0);
     if (socket_descriptor < 0)
     {
-        std::cout << "Unable to create a socket." << std::endl;
+        log_error("Unable to create a socket.");
         return;
     }
 
@@ -37,11 +37,10 @@ void Channel::open_socket(int port)
     int bind_result = bind(socket_descriptor, (const struct sockaddr *)&in_address, sizeof(in_address));
     if (bind_result < 0)
     {
-        std::cout << std::format("Unable to bind socket on port {}.", port) << std::endl;
+        log_error("Unable to bind socket on port ", port, ".");
         return;
     }
-
-    std::cout << std::format("Successfully binded socket to port {}.", port) << std::endl; // TODO: criar metodo generico pra fazer isso
+    log_info("Successfully binded socket to port ", port, ".");
 }
 
 void Channel::close_socket() {
@@ -56,10 +55,10 @@ void Channel::send(SocketAddress endpoint, char *m, std::size_t size)
     int bytes_sent = sendto(socket_descriptor, m, size, 0, (struct sockaddr *)&out_address, sizeof(out_address));
     if (bytes_sent < 0)
     {
-        std::cout << std::format("Unable to send message to {}.", endpoint.to_string()) << std::endl;
+        log_warn("Unable to send message to ", endpoint.to_string(), ".");
         return;
     }
-    std::cout << std::format("Sent {} bytes to {}.", bytes_sent, endpoint.to_string()) << std::endl; // TODO: criar metodo generico pra fazer isso
+    log_info("Sent ", bytes_sent, " bytes to ", endpoint.to_string(), ".");
 }
 
 std::size_t Channel::receive(char *m, std::size_t size)
@@ -72,6 +71,6 @@ std::size_t Channel::receive(char *m, std::size_t size)
     inet_ntop(AF_INET, &in_address.sin_addr, remote_address, INET_ADDRSTRLEN);
     int remote_port = ntohs(in_address.sin_port);
 
-    std::cout << std::format("Received {} bytes from {}:{}.", bytes_received, remote_address, remote_port) << std::endl;
+    log_info("Received ", bytes_received, " bytes from ", remote_address, ":", remote_port, ".");
     return bytes_received;
 }

@@ -6,6 +6,7 @@
 #include <format>
 
 #include "config.h"
+#include "log.h"
 
 
 parse_error::parse_error() : message("") {}
