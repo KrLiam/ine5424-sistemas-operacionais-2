@@ -1,4 +1,5 @@
 #include "node.h"
+#include "format.h"
 
 Node::Node(const NodeConfig& _config, const bool& _remote)
 {
@@ -22,5 +23,5 @@ const bool& Node::is_remote() const
 
 std::string Node::to_string() const
 {
-    return std::format("{}:{}:{}", config.id, config.address.to_string(), remote);
+    return format("%s:%s:%i", config.id.c_str(), config.address.to_string().c_str(), remote);
 }

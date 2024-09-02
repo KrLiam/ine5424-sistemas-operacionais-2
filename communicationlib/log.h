@@ -1,9 +1,10 @@
 #pragma once
 
-#include <format>
 #include <iomanip>
 #include <iostream>
 #include <utility>
+
+#include "format.h"
 
 #define log_error(...) Logger::log("ERROR", __FILE__, __LINE__, ##__VA_ARGS__)
 #define log_warn(...) Logger::log("WARN", __FILE__, __LINE__, ##__VA_ARGS__)
@@ -16,6 +17,6 @@ public:
     {
         auto t = std::time(nullptr);
         auto tm = *std::localtime(&t);
-        (std::cout << std::put_time(&tm, "%H:%M:%S ") << std::format("{} [{}:{}]: ", level, file, line) << ... << args) << std::endl;
+        (std::cout << std::put_time(&tm, "%H:%M:%S ") << format("%s [%s:%i]: ", level, file, line) << ... << args) << std::endl;
     }
 };

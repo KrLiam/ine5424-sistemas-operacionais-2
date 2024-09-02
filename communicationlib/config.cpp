@@ -3,10 +3,10 @@
 #include <fstream>
 #include <algorithm>
 #include <vector>
-#include <format>
 
 #include "config.h"
 #include "log.h"
+#include "format.h"
 
 
 parse_error::parse_error() : message("") {}
@@ -21,7 +21,7 @@ std::string read_file(const std::string& filename) {
     std::ifstream f(filename);
 
     if (!f.good()) throw std::invalid_argument(
-        std::format("File '{}' does not exist.", filename)
+        format("File '%s' does not exist.", filename.c_str())
     );
 
     f.seekg(0, std::ios::end);
@@ -38,15 +38,15 @@ std::string read_file(const std::string& filename) {
 
 
 std::string IPv4::to_string() const {
-    return std::format("{}.{}.{}.{}", a, b, c, d);
+    return format("%i.%i.%i.%i", a, b, c, d);
 }
 
 std::string SocketAddress::to_string() const {
-    return std::format("{}:{}", address.to_string(), port);
+    return format("%s:%i", address.to_string().c_str(), port);
 }
 
 std::string NodeConfig::to_string() const {
-    return std::format("{{{}, {}}}", id, address.to_string());
+    return format("{%s, %s}", id, address.to_string().c_str());
 }
 
 
@@ -55,7 +55,7 @@ NodeConfig& Config::get_node(std::string id) {
         if (node.id == id) return node;
     }
     throw std::invalid_argument(
-        std::format("Node id {} not found in config.", id)
+        format("Node id %s not found in config.", id.c_str())
     );
 }
 
@@ -64,7 +64,7 @@ std::string Config::to_string() const {
 
     acc += "nodes = {\n";
     for (const NodeConfig& node : nodes) {
-        acc += std::format("    {},\n", node.to_string());
+        acc += format("    %s,\n", node.to_string().c_str());
     }
     acc += "};";
 
@@ -172,7 +172,7 @@ void ConfigReader::consume_space() {
 char ConfigReader::expect(char ch) {
     char result = read(ch);
     if (!result) {
-        throw parse_error(std::format("Expected character '{}' at position {}. Got '{}'.", ch, std::to_string(pos), peek()));
+        throw parse_error(format("Expected character '%c' at position %i. Got '%c'.", ch, pos, peek()));
     }
     return result;
 }

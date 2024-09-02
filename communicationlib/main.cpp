@@ -1,10 +1,10 @@
 #include <iostream>
 #include <vector>
-#include <format>
 #include <thread>
 
 #include "log.h"
 #include "node.h"
+#include "format.h"
 #include "reliablecommunication.h"
 
 std::size_t BUFFER_SIZE = 1024;
@@ -16,7 +16,7 @@ struct Arguments {
 Arguments parse_arguments(int argc, char* argv[]) {
     if (argc < 2) {
         throw std::invalid_argument(
-            std::format("Missing node id argument. Usage:\n{} <id-int>", argv[0])
+            format("Missing node id argument. Usage:\n%s <id-int>", argv[0])
         );
     }
 
@@ -25,7 +25,7 @@ Arguments parse_arguments(int argc, char* argv[]) {
 
     if (!reader.eof()) {
         throw std::invalid_argument(
-            std::format("Node id must be alphanumeric.", argv[1])
+            format("Node id must be alphanumeric.", argv[1])
         );
     }
 
@@ -44,7 +44,7 @@ void* server(void *args) {
     std::size_t len = -1;
     while (len != 0) {
         len = comm->receive(buffer);
-        log_info("Received '", std::string(buffer), "' from <IP>.");
+        log_info("Received '", std::string(buffer).c_str(), "' from <IP>.");
     }
     return NULL;
 }

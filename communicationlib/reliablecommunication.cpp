@@ -1,4 +1,5 @@
 #include "reliablecommunication.h"
+#include "format.h"
 
 ReliableCommunication::ReliableCommunication() {
 }
@@ -34,7 +35,7 @@ const Node& ReliableCommunication::get_node(std::string id) {
     for (Node* node : nodes) {
         if (node->get_config().id == id) return *node;
     }
-    throw std::invalid_argument(std::format("Node {} not found.", id));
+    throw std::invalid_argument(format("Node %s not found.", id.c_str()));
 }
 
 const std::vector<Node*>& ReliableCommunication::get_nodes() {
