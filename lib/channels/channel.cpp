@@ -33,12 +33,12 @@ void Channel::open_socket(int port)
         log_error("Unable to bind socket on port ", port, ".");
         return;
     }
-    log_info("Successfully binded socket to port ", port, ".");
+    log_debug("Successfully binded socket to port ", port, ".");
 }
 
 void Channel::close_socket() {
     close(socket_descriptor);
-    log_info("Closed channel");
+    log_debug("Closed channel");
 }
 
 void Channel::send(SocketAddress endpoint, char *m, std::size_t size)
@@ -58,6 +58,8 @@ void Channel::send(SocketAddress endpoint, char *m, std::size_t size)
 std::size_t Channel::receive(char *m, std::size_t size)
 {
     socklen_t len = sizeof(in_address);
+
+    log_debug("Waiting to receive data.");
     std::size_t bytes_received = recvfrom(socket_descriptor, m, size, 0, (struct sockaddr*)&in_address, &len);
     
     // passar isso para uma função q dá uma struct com o size recebido e outras informações
@@ -65,6 +67,6 @@ std::size_t Channel::receive(char *m, std::size_t size)
     inet_ntop(AF_INET, &in_address.sin_addr, remote_address, INET_ADDRSTRLEN);
     int remote_port = ntohs(in_address.sin_port);
 
-    log_info("Received ", bytes_received, " bytes from ", remote_address, ":", remote_port, ".");
+    log_debug("Received ", bytes_received, " bytes from ", remote_address, ":", remote_port, ".");
     return bytes_received;
 }
