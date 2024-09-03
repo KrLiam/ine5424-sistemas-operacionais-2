@@ -57,8 +57,13 @@ void* client(void *args) {
     while (true) {
         std::string id;
         std::cin >> id;
+
+        if (id == "exit") break;
+
         comm->send(id, msg);
     }
+    
+    log_info("Exited client.");
     return NULL;
 }
 
@@ -74,7 +79,6 @@ void run_process(std::string node_id)
     pthread_t client_thread;
     pthread_create(&server_thread, NULL, server, &targs);
     pthread_create(&client_thread, NULL, client, &targs);
-    pthread_join(server_thread, NULL);
     pthread_join(client_thread, NULL);
 }
 

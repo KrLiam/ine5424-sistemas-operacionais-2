@@ -38,6 +38,7 @@ void Channel::open_socket(int port)
 
 void Channel::close_socket() {
     close(socket_descriptor);
+    log_info("Closed channel");
 }
 
 void Channel::send(SocketAddress endpoint, char *m, std::size_t size)
