@@ -1,23 +1,14 @@
 #include "communication/reliable_communication.h"
 #include "core/format.h"
 
-ReliableCommunication::ReliableCommunication() {
-}
-
-ReliableCommunication::~ReliableCommunication() {
-}
-
-void ReliableCommunication::initialize(std::string local_id, std::size_t _buffer_size) {
-    buffer_size = _buffer_size;
-    nodes = create_nodes(local_id);
-
-    channel = new Channel();
-    channel->initialize(get_node(local_id).get_address().port);
-}
-
-void ReliableCommunication::deinitialize() {
-    channel->deinitialize();
-    delete channel;
+ReliableCommunication::ReliableCommunication(std::string local_id, std::size_t buffer_size)
+    : buffer_size(buffer_size),
+      nodes(create_nodes(local_id))
+{
+    const Node& local_node = get_node(local_id);
+    int port = local_node.get_address().port;
+    
+    channel = std::make_unique<Channel>(port);
 }
 
 void ReliableCommunication::send(std::string id, char* m) {

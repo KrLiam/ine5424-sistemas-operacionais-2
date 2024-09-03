@@ -1,20 +1,13 @@
 #include "channels/channel.h"
 
-Channel::Channel()
-{
-}
-
-Channel::~Channel()
-{
-}
-
-void Channel::initialize(int port)
+Channel::Channel(int port)
 {
     open_socket(port);
 }
 
-void Channel::deinitialize() {
-    close_socket();
+Channel::~Channel()
+{
+    if (socket_descriptor != -1) close_socket();
 }
 
 void Channel::open_socket(int port)

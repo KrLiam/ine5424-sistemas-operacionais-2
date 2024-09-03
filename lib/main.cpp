@@ -64,22 +64,18 @@ void* client(void *args) {
 
 void run_process(std::string node_id)
 {
-    ReliableCommunication* comm = new ReliableCommunication();
-    comm->initialize(node_id, BUFFER_SIZE);
+    ReliableCommunication comm(node_id, BUFFER_SIZE);
 
-    Node local_node = comm->get_node(node_id);
+    Node local_node = comm.get_node(node_id);
     log_info("Local node endpoint is ", local_node.get_address().to_string() , ".");
 
-    ThreadArgs targs = { comm };
+    ThreadArgs targs = { &comm };
     pthread_t server_thread;
     pthread_t client_thread;
     pthread_create(&server_thread, NULL, server, &targs);
     pthread_create(&client_thread, NULL, client, &targs);
     pthread_join(server_thread, NULL);
     pthread_join(client_thread, NULL);
-
-    comm->deinitialize();
-    delete comm;
 }
 
 int main(int argc, char* argv[]) {
