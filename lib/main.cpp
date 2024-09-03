@@ -2,10 +2,10 @@
 #include <vector>
 #include <thread>
 
-#include "log.h"
-#include "node.h"
-#include "format.h"
-#include "reliablecommunication.h"
+#include "core/log.h"
+#include "communication/node.h"
+#include "core/format.h"
+#include "communication/reliable_communication.h"
 
 std::size_t BUFFER_SIZE = 1024;
 

@@ -1,5 +1,5 @@
-#include "node.h"
-#include "format.h"
+#include "communication/node.h"
+#include "core/format.h"
 
 Node::Node(std::string id, SocketAddress address, bool remote)
     : id(id), address(address), remote(remote) {}

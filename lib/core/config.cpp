@@ -4,9 +4,9 @@
 #include <algorithm>
 #include <vector>
 
-#include "config.h"
-#include "log.h"
-#include "format.h"
+#include "core/config.h"
+#include "core/log.h"
+#include "core/format.h"
 
 
 parse_error::parse_error() : message("") {}

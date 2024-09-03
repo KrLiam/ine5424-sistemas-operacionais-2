@@ -1,7 +1,7 @@
 CXX ?= g++
 
 # caminho
-SRC_PATH = communicationlib
+SRC_PATH = lib
 BUILD_PATH = build
 BIN_PATH = $(BUILD_PATH)/bin
 
@@ -16,7 +16,7 @@ DEPS = $(OBJECTS:.o=.d)
 
 # flags
 COMPILE_FLAGS = -std=c++20 -Wall -Wextra -g
-INCLUDES = -I include/ -I /usr/local/include
+INCLUDES = -I include/ -I lib/ -I /usr/local/include
 
 LIBS =
 

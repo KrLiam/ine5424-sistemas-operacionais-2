@@ -1,5 +1,5 @@
-#include "reliablecommunication.h"
-#include "format.h"
+#include "communication/reliable_communication.h"
+#include "core/format.h"
 
 ReliableCommunication::ReliableCommunication() {
 }

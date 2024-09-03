@@ -5,7 +5,7 @@
 #include <cstring>
 #include <exception>
 
-#include "config.h"
+#include "core/config.h"
 
 class Node
 {

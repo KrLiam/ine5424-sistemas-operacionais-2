@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "channel.h"
+#include "channels/channel.h"
 
 class ReliableCommunication {
     public:

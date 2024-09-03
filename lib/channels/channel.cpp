@@ -1,4 +1,4 @@
-#include "channel.h"
+#include "channels/channel.h"
 
 Channel::Channel()
 {
