@@ -9,15 +9,17 @@
 
 class Node
 {
-    NodeConfig config;
+    std::string id;
+    SocketAddress address;
     bool remote;
 
 public:
-    Node(const NodeConfig& _config, const bool& _remote);
+    Node(std::string id, SocketAddress address, bool _remote);
     ~Node();
 
-    const NodeConfig& get_config() const;
-    const bool& is_remote() const;
+    const std::string& get_id() const;
+    const SocketAddress& get_address() const;
+    bool is_remote() const;
 
     std::string to_string() const;
 };

@@ -68,7 +68,7 @@ void run_process(std::string node_id)
     comm->initialize(node_id, BUFFER_SIZE);
 
     Node local_node = comm->get_node(node_id);
-    log_info("Local node endpoint is ", local_node.get_config().address.to_string() , ".");
+    log_info("Local node endpoint is ", local_node.get_address().to_string() , ".");
 
     ThreadArgs targs = { comm };
     pthread_t server_thread;
