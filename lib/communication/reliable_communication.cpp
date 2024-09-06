@@ -1,5 +1,11 @@
 #include "communication/reliable_communication.h"
-#include "core/format.h"
+
+static void management_thread(ReliableCommunication* manager)
+{
+    log_info("Initialized management thread.");
+    manager->run();
+    log_info("Closing management thread.");
+}
 
 ReliableCommunication::ReliableCommunication(std::string local_id, std::size_t buffer_size)
     : buffer_size(buffer_size),
@@ -9,15 +15,44 @@ ReliableCommunication::ReliableCommunication(std::string local_id, std::size_t b
     int port = local_node.get_address().port;
     
     channel = std::make_unique<Channel>(port);
+
+    std::thread management_thread_obj(management_thread, this);
+    management_thread_obj.detach();
+}
+
+void ReliableCommunication::run()
+{
+    char message[MESSAGE_SIZE];
+
+    while (true)
+    {
+
+        channel->receive(message, MESSAGE_SIZE);
+        if (!receive_producer.try_acquire())
+        {
+            continue;
+        }
+        receive_buffer_end = (receive_buffer_end + MESSAGE_SIZE) % (INTERMEDIARY_BUFFER_SIZE);
+        strncpy(&receive_buffer[receive_buffer_end], message, MESSAGE_SIZE);
+        log_debug("Wrote ", MESSAGE_SIZE, " bytes on receive buffer starting at ", receive_buffer_end, ".");
+        receive_consumer.release();
+    }
 }
 
 void ReliableCommunication::send(std::string id, char* m) {
+    // TODO: buffer de envio
     Node destination = get_node(id);
     channel->send(destination.get_address(), m, buffer_size);
 }
 
 std::size_t ReliableCommunication::receive(char* m) {
-    return channel->receive(m, buffer_size);
+    // TODO: ler tamanho variável
+    receive_consumer.acquire();
+    receive_buffer_start = (receive_buffer_start + MESSAGE_SIZE) % (INTERMEDIARY_BUFFER_SIZE);
+    strncpy(m, &receive_buffer[receive_buffer_start], MESSAGE_SIZE);
+    log_debug("Read ", MESSAGE_SIZE, " bytes from receive buffer starting at ", receive_buffer_start, ".");
+    receive_producer.release();
+    return MESSAGE_SIZE;
 }
 
 const Node& ReliableCommunication::get_node(std::string id) {

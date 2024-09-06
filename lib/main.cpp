@@ -1,12 +1,13 @@
 #include <iostream>
 #include <vector>
 #include <thread>
-#include "core/log.h"
-#include "communication/node.h"
-#include "core/format.h"
+#include "utils/log.h"
+#include "core/node.h"
+#include "core/constants.h"
+#include "utils/format.h"
 #include "communication/reliable_communication.h"
 
-const std::size_t BUFFER_SIZE = 1024;
+const std::size_t BUFFER_SIZE = MESSAGE_SIZE;
 
 struct Arguments {
     std::string node_id;

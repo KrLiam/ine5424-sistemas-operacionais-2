@@ -6,9 +6,9 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "core/config.h"
-#include "core/log.h"
-#include "communication/node.h"
+#include "utils/config.h"
+#include "utils/log.h"
+#include "core/node.h"
 
 class Channel
 {
