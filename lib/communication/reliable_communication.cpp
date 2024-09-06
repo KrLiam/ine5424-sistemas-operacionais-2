@@ -32,9 +32,9 @@ void ReliableCommunication::run()
         {
             continue;
         }
-        receive_buffer_end = (receive_buffer_end + MESSAGE_SIZE) % (INTERMEDIARY_BUFFER_SIZE);
         strncpy(&receive_buffer[receive_buffer_end], message, MESSAGE_SIZE);
         log_debug("Wrote ", MESSAGE_SIZE, " bytes on receive buffer starting at ", receive_buffer_end, ".");
+        receive_buffer_end = (receive_buffer_end + MESSAGE_SIZE) % (INTERMEDIARY_BUFFER_SIZE);
         receive_consumer.release();
     }
 }
@@ -48,9 +48,9 @@ void ReliableCommunication::send(std::string id, char* m) {
 std::size_t ReliableCommunication::receive(char* m) {
     // TODO: ler tamanho variável
     receive_consumer.acquire();
-    receive_buffer_start = (receive_buffer_start + MESSAGE_SIZE) % (INTERMEDIARY_BUFFER_SIZE);
     strncpy(m, &receive_buffer[receive_buffer_start], MESSAGE_SIZE);
     log_debug("Read ", MESSAGE_SIZE, " bytes from receive buffer starting at ", receive_buffer_start, ".");
+    receive_buffer_start = (receive_buffer_start + MESSAGE_SIZE) % (INTERMEDIARY_BUFFER_SIZE);
     receive_producer.release();
     return MESSAGE_SIZE;
 }
