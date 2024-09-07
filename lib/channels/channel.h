@@ -14,20 +14,20 @@
 class Channel
 {
 public:
-    Channel(int port);
+    Channel(SocketAddress local_address);
     ~Channel();
 
     void send(Segment segment);
     Segment receive();
 
 private:
-    std::string local_id;
+    SocketAddress address;
     Packet buffer;
 
-        int socket_descriptor = -1;
+    int socket_descriptor = -1;
     sockaddr_in in_address;
     sockaddr_in out_address;
 
-    void open_socket(int port);
+    void open_socket();
     void close_socket();
 };

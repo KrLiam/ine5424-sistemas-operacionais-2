@@ -1,9 +1,11 @@
 #pragma once
 
+#include <arpa/inet.h>
 #include <iostream>
 #include <fstream>
 #include <algorithm>
 #include <vector>
+#include <netinet/in.h>
 
 class parse_error : public std::runtime_error // todo: pensar numa forma menos horrivel de fzr isso. No caso talvez ter uma classe que tem cada tipo desses possiveis erros...
 {
@@ -45,6 +47,8 @@ struct SocketAddress
     int port;
 
     std::string to_string() const;
+
+    static SocketAddress from(sockaddr_in& address);
 };
 
 struct NodeConfig

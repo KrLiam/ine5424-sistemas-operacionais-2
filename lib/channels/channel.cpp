@@ -1,8 +1,8 @@
 #include "channels/channel.h"
 
-Channel::Channel(int port)
+Channel::Channel(SocketAddress local_address) : address(local_address)
 {
-    open_socket(port);
+    open_socket();
 }
 
 Channel::~Channel()
@@ -11,7 +11,7 @@ Channel::~Channel()
         close_socket();
 }
 
-void Channel::open_socket(int port)
+void Channel::open_socket()
 {
     socket_descriptor = socket(AF_INET, SOCK_DGRAM, 0);
     if (socket_descriptor < 0)
@@ -22,7 +22,7 @@ void Channel::open_socket(int port)
 
     memset(&in_address, 0, sizeof(sockaddr_in));
     in_address.sin_family = AF_INET;
-    in_address.sin_port = htons(port);
+    in_address.sin_port = htons(address.port);
     in_address.sin_addr.s_addr = INADDR_ANY;
 
     memset(&out_address, 0, sizeof(sockaddr_in));
@@ -31,10 +31,10 @@ void Channel::open_socket(int port)
     int bind_result = bind(socket_descriptor, (const struct sockaddr *)&in_address, sizeof(in_address));
     if (bind_result < 0)
     {
-        log_error("Unable to bind socket on port ", port, ".");
+        log_error("Unable to bind socket on port ", address.port, ".");
         return;
     }
-    log_debug("Successfully binded socket to port ", port, ".");
+    log_debug("Successfully binded socket to port ", address.port, ".");
 }
 
 void Channel::close_socket()
@@ -77,16 +77,13 @@ Segment Channel::receive()
         0,
         (struct sockaddr *)&in_address,
         &in_address_len);
+    
+    SocketAddress origin = SocketAddress::from(in_address);
+    log_debug("Received ", bytes_received, " bytes from ", origin.address.to_string(), ":", origin.port, ".");
 
-    // passar isso para uma função q dá uma struct com o size recebido e outras informações
-    char remote_address[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &in_address.sin_addr, remote_address, INET_ADDRSTRLEN);
-    int remote_port = ntohs(in_address.sin_port);
-
-    segment.origin = SocketAddress{IPv4::parse(remote_address), remote_port};
-    // segment.destination = ;
-
-    log_debug("Received ", bytes_received, " bytes from ", remote_address, ":", remote_port, ".");
+    segment.origin = origin;
+    segment.destination = address;
+    segment.data_size = bytes_received - sizeof(PacketHeader);
 
     return segment;
 }

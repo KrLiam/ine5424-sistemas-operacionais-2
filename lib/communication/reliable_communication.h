@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vector>
+#include <map>
 #include <memory>
 #include <semaphore>
 #include <thread>
@@ -24,7 +24,8 @@ public:
     Segment receive(char *m);
 
     const Node &get_node(std::string id);
-    const std::vector<Node> &get_nodes();
+    const std::map<std::string, Node> &get_nodes();
+    const Node &get_local_node();
 
 private:
     std::unique_ptr<Channel> channel;
@@ -33,9 +34,9 @@ private:
     Buffer<INTERMEDIARY_BUFFER_ITEMS, Segment> send_buffer{"send"};
 
     std::size_t user_buffer_size;
+
+    std::map<std::string, Node> nodes;
     std::string local_id;
 
-    std::vector<Node> nodes;
-
-    std::vector<Node> create_nodes(std::string local_id);
+    std::map<std::string, Node> create_nodes();
 };

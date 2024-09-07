@@ -63,6 +63,14 @@ std::string SocketAddress::to_string() const
     return format("%s:%i", address.to_string().c_str(), port);
 }
 
+SocketAddress SocketAddress::from(sockaddr_in& address)
+{
+    char remote_address[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &address.sin_addr, remote_address, INET_ADDRSTRLEN);
+    int remote_port = ntohs(address.sin_port);
+    return SocketAddress{IPv4::parse(remote_address), remote_port};
+}
+
 std::string NodeConfig::to_string() const
 {
     return format("{%s, %s}", id, address.to_string().c_str());

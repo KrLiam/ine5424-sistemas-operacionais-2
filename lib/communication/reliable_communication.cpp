@@ -15,12 +15,10 @@ static void sender_thread(ReliableCommunication *manager)
 }
 
 ReliableCommunication::ReliableCommunication(std::string _local_id, std::size_t _user_buffer_size)
-    : local_id(_local_id), user_buffer_size(_user_buffer_size), nodes(create_nodes(_local_id))
+    : local_id(_local_id), user_buffer_size(_user_buffer_size), nodes(create_nodes())
 {
     const Node &local_node = get_node(local_id);
-    int port = local_node.get_address().port;
-
-    channel = std::make_unique<Channel>(port);
+    channel = std::make_unique<Channel>(local_node.get_address());
 
     std::thread listener_thread_obj(receiver_thread, this);
     listener_thread_obj.detach();
@@ -51,7 +49,7 @@ void ReliableCommunication::listen_send()
 
 void ReliableCommunication::send(std::string id, char *m)
 {
-    Node origin = get_node(local_id);
+    Node origin = get_local_node();
     Node destination = get_node(id);
 
     Packet packet = Packet::from(m); // arrumar pra fragmentacao dps
@@ -73,31 +71,34 @@ Segment ReliableCommunication::receive(char *m)
 
 const Node &ReliableCommunication::get_node(std::string id)
 {
-    // talvez dava pra usar um mapa de id:nó para os nodes
-    for (Node &node : nodes)
+    std::map<std::string, Node>::iterator iterator = nodes.find(id);
+    if (iterator != nodes.end())
     {
-        if (node.get_id() == id)
-            return node;
+        return iterator->second;
     }
     throw std::invalid_argument(format("Node %s not found.", id.c_str()));
 }
 
-const std::vector<Node> &ReliableCommunication::get_nodes()
+const std::map<std::string, Node> &ReliableCommunication::get_nodes()
 {
     return nodes;
 }
 
-std::vector<Node> ReliableCommunication::create_nodes(std::string local_id)
+const Node &ReliableCommunication::get_local_node()
 {
-    std::vector<Node> _nodes;
+    return get_node(local_id);
+}
+
+std::map<std::string, Node> ReliableCommunication::create_nodes()
+{
+    std::map<std::string, Node> _nodes;
 
     Config config = ConfigReader::parse_file("nodes.conf");
     for (NodeConfig node_config : config.nodes)
     {
-        ;
         bool is_remote = local_id != node_config.id;
         Node node(node_config.id, node_config.address, is_remote);
-        _nodes.push_back(node);
+        _nodes.emplace(node.get_id(), node);
     }
 
     return _nodes;
