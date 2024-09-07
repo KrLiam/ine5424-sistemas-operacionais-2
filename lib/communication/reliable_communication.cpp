@@ -1,77 +1,100 @@
 #include "communication/reliable_communication.h"
 
-static void management_thread(ReliableCommunication* manager)
+static void receiver_thread(ReliableCommunication *manager)
 {
-    log_info("Initialized management thread.");
-    manager->run();
-    log_info("Closing management thread.");
+    log_info("Initialized receiver thread.");
+    manager->listen_receive();
+    log_info("Closing reicever thread.");
 }
 
-ReliableCommunication::ReliableCommunication(std::string local_id, std::size_t buffer_size)
-    : buffer_size(buffer_size),
-      nodes(create_nodes(local_id))
+static void sender_thread(ReliableCommunication *manager)
 {
-    const Node& local_node = get_node(local_id);
+    log_info("Initialized sender thread.");
+    manager->listen_send();
+    log_info("Closing sender thread.");
+}
+
+ReliableCommunication::ReliableCommunication(std::string _local_id, std::size_t _user_buffer_size)
+    : local_id(_local_id), user_buffer_size(_user_buffer_size), nodes(create_nodes(_local_id))
+{
+    const Node &local_node = get_node(local_id);
     int port = local_node.get_address().port;
-    
+
     channel = std::make_unique<Channel>(port);
 
-    std::thread management_thread_obj(management_thread, this);
-    management_thread_obj.detach();
+    std::thread listener_thread_obj(receiver_thread, this);
+    listener_thread_obj.detach();
+    std::thread sender_thread_obj(sender_thread, this);
+    sender_thread_obj.detach();
 }
 
-void ReliableCommunication::run()
+void ReliableCommunication::listen_receive()
 {
-    char message[MESSAGE_SIZE];
-
     while (true)
     {
-
-        channel->receive(message, MESSAGE_SIZE);
-        if (!receive_producer.try_acquire())
+        Segment segment = channel->receive();
+        if (!receive_buffer.produce(segment, false))
         {
             continue;
         }
-        strncpy(&receive_buffer[receive_buffer_end], message, MESSAGE_SIZE);
-        log_debug("Wrote ", MESSAGE_SIZE, " bytes on receive buffer starting at ", receive_buffer_end, ".");
-        receive_buffer_end = (receive_buffer_end + MESSAGE_SIZE) % (INTERMEDIARY_BUFFER_SIZE);
-        receive_consumer.release();
     }
 }
 
-void ReliableCommunication::send(std::string id, char* m) {
-    // TODO: buffer de envio
+void ReliableCommunication::listen_send()
+{
+    while (true)
+    {
+        Segment segment = send_buffer.consume();
+        channel->send(segment);
+    }
+}
+
+void ReliableCommunication::send(std::string id, char *m)
+{
+    Node origin = get_node(local_id);
     Node destination = get_node(id);
-    channel->send(destination.get_address(), m, buffer_size);
+
+    Packet packet = Packet::from(m); // arrumar pra fragmentacao dps
+    Segment segment = Segment{
+        origin : origin.get_address(),
+        destination : destination.get_address(),
+        packet : packet
+    };
+
+    send_buffer.produce(segment, true);
 }
 
-std::size_t ReliableCommunication::receive(char* m) {
-    // TODO: ler tamanho variável
-    receive_consumer.acquire();
-    strncpy(m, &receive_buffer[receive_buffer_start], MESSAGE_SIZE);
-    log_debug("Read ", MESSAGE_SIZE, " bytes from receive buffer starting at ", receive_buffer_start, ".");
-    receive_buffer_start = (receive_buffer_start + MESSAGE_SIZE) % (INTERMEDIARY_BUFFER_SIZE);
-    receive_producer.release();
-    return MESSAGE_SIZE;
+Segment ReliableCommunication::receive(char *m)
+{
+    Segment segment = receive_buffer.consume();
+    strncpy(m, segment.packet.data, Packet::DATA_SIZE);
+    return segment;
 }
 
-const Node& ReliableCommunication::get_node(std::string id) {
+const Node &ReliableCommunication::get_node(std::string id)
+{
     // talvez dava pra usar um mapa de id:nó para os nodes
-    for (Node& node : nodes) {
-        if (node.get_id() == id) return node;
+    for (Node &node : nodes)
+    {
+        if (node.get_id() == id)
+            return node;
     }
     throw std::invalid_argument(format("Node %s not found.", id.c_str()));
 }
 
-const std::vector<Node>& ReliableCommunication::get_nodes() {
+const std::vector<Node> &ReliableCommunication::get_nodes()
+{
     return nodes;
 }
 
-std::vector<Node> ReliableCommunication::create_nodes(std::string local_id) {
+std::vector<Node> ReliableCommunication::create_nodes(std::string local_id)
+{
     std::vector<Node> _nodes;
 
     Config config = ConfigReader::parse_file("nodes.conf");
-    for(NodeConfig node_config : config.nodes) {;
+    for (NodeConfig node_config : config.nodes)
+    {
+        ;
         bool is_remote = local_id != node_config.id;
         Node node(node_config.id, node_config.address, is_remote);
         _nodes.push_back(node);

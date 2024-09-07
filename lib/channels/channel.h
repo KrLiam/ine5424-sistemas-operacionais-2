@@ -8,6 +8,7 @@
 
 #include "utils/config.h"
 #include "utils/log.h"
+#include "core/segment.h"
 #include "core/node.h"
 
 class Channel
@@ -16,14 +17,14 @@ public:
     Channel(int port);
     ~Channel();
 
-    void send(SocketAddress endpoint, char *m, std::size_t size);
-    std::size_t receive(char *m, std::size_t size);
-
+    void send(Segment segment);
+    Segment receive();
 
 private:
     std::string local_id;
+    Packet buffer;
 
-    int socket_descriptor = -1;
+        int socket_descriptor = -1;
     sockaddr_in in_address;
     sockaddr_in out_address;
 

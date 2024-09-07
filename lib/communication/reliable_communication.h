@@ -6,44 +6,36 @@
 #include <thread>
 
 #include "channels/channel.h"
+#include "core/buffer.h"
 #include "core/constants.h"
+#include "core/segment.h"
+#include "core/node.h"
 #include "utils/format.h"
 
-class ReliableCommunication {
+class ReliableCommunication
+{
 public:
-    ReliableCommunication(std::string local_id, std::size_t _buffer_size);
+    ReliableCommunication(std::string _local_id, std::size_t _user_buffer_size);
 
-    void run();
+    void listen_receive();
+    void listen_send();
 
-    void send(std::string id, char* m);
-    std::size_t receive(char* m);
+    void send(std::string id, char *m);
+    Segment receive(char *m);
 
-    const Node& get_node(std::string id);
-    const std::vector<Node>& get_nodes();
+    const Node &get_node(std::string id);
+    const std::vector<Node> &get_nodes();
 
 private:
     std::unique_ptr<Channel> channel;
 
-    char receive_buffer[INTERMEDIARY_BUFFER_SIZE]; // trocar para ser o sizeof(estrutura com metadados da msg)*100
-    std::counting_semaphore<INTERMEDIARY_BUFFER_ITEMS> receive_consumer{0};
-    std::counting_semaphore<INTERMEDIARY_BUFFER_ITEMS> receive_producer{INTERMEDIARY_BUFFER_ITEMS};
-    int receive_buffer_start = 0;
-    int receive_buffer_end = 0;
+    Buffer<INTERMEDIARY_BUFFER_ITEMS, Segment> receive_buffer{"receive"};
+    Buffer<INTERMEDIARY_BUFFER_ITEMS, Segment> send_buffer{"send"};
 
-    char send_buffer[INTERMEDIARY_BUFFER_SIZE];
-    std::counting_semaphore<INTERMEDIARY_BUFFER_ITEMS> send_consumer{0};
-    std::counting_semaphore<INTERMEDIARY_BUFFER_ITEMS> send_producer{INTERMEDIARY_BUFFER_ITEMS};
-    int send_buffer_start = 0;
-    int send_buffer_end = 0;
-
-    std::size_t buffer_size;
+    std::size_t user_buffer_size;
+    std::string local_id;
 
     std::vector<Node> nodes;
 
     std::vector<Node> create_nodes(std::string local_id);
-};
-
-struct ManagementThreadArgs
-{
-    ReliableCommunication* manager;
 };

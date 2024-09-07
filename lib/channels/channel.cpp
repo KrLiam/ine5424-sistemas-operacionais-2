@@ -7,7 +7,8 @@ Channel::Channel(int port)
 
 Channel::~Channel()
 {
-    if (socket_descriptor != -1) close_socket();
+    if (socket_descriptor != -1)
+        close_socket();
 }
 
 void Channel::open_socket(int port)
@@ -23,7 +24,7 @@ void Channel::open_socket(int port)
     in_address.sin_family = AF_INET;
     in_address.sin_port = htons(port);
     in_address.sin_addr.s_addr = INADDR_ANY;
-    
+
     memset(&out_address, 0, sizeof(sockaddr_in));
     out_address.sin_family = AF_INET;
 
@@ -36,37 +37,56 @@ void Channel::open_socket(int port)
     log_debug("Successfully binded socket to port ", port, ".");
 }
 
-void Channel::close_socket() {
+void Channel::close_socket()
+{
     close(socket_descriptor);
     log_debug("Closed channel");
 }
 
-void Channel::send(SocketAddress endpoint, char *m, std::size_t size)
+void Channel::send(Segment segment)
 {
-    out_address.sin_port = htons(endpoint.port);
-    out_address.sin_addr.s_addr = inet_addr(endpoint.address.to_string().c_str());
+    SocketAddress destination = segment.destination;
+    out_address.sin_port = htons(destination.port);
+    out_address.sin_addr.s_addr = inet_addr(destination.address.to_string().c_str());
 
-    int bytes_sent = sendto(socket_descriptor, m, size, 0, (struct sockaddr *)&out_address, sizeof(out_address));
+    int bytes_sent = sendto(
+        socket_descriptor,
+        segment.packet.data,
+        segment.data_size,
+        0,
+        (struct sockaddr *)&out_address,
+        sizeof(out_address));
     if (bytes_sent < 0)
     {
-        log_warn("Unable to send message to ", endpoint.to_string(), ".");
+        log_warn("Unable to send message to ", destination.to_string(), ".");
         return;
     }
-    log_info("Sent ", bytes_sent, " bytes to ", endpoint.to_string(), ".");
+    log_info("Sent ", bytes_sent, " bytes to ", destination.to_string(), ".");
 }
 
-std::size_t Channel::receive(char *m, std::size_t size)
+Segment Channel::receive()
 {
-    socklen_t len = sizeof(in_address);
+    Segment segment;
+    socklen_t in_address_len = sizeof(in_address);
 
     log_debug("Waiting to receive data.");
-    std::size_t bytes_received = recvfrom(socket_descriptor, m, size, 0, (struct sockaddr*)&in_address, &len);
-    
+    std::size_t bytes_received = recvfrom(
+        socket_descriptor,
+        (char *)&segment.packet,
+        sizeof(Packet),
+        0,
+        (struct sockaddr *)&in_address,
+        &in_address_len);
+
     // passar isso para uma função q dá uma struct com o size recebido e outras informações
     char remote_address[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &in_address.sin_addr, remote_address, INET_ADDRSTRLEN);
     int remote_port = ntohs(in_address.sin_port);
 
+    segment.origin = SocketAddress{IPv4::parse(remote_address), remote_port};
+    // segment.destination = ;
+
     log_debug("Received ", bytes_received, " bytes from ", remote_address, ":", remote_port, ".");
-    return bytes_received;
+
+    return segment;
 }

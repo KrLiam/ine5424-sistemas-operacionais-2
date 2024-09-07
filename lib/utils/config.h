@@ -5,65 +5,79 @@
 #include <algorithm>
 #include <vector>
 
+class parse_error : public std::runtime_error // todo: pensar numa forma menos horrivel de fzr isso. No caso talvez ter uma classe que tem cada tipo desses possiveis erros...
+{
+private:
+    std::string message; // mensagem de erro
 
-class parse_error : std::exception {
-    std::string message;
+public:
+    // personalizada
+    parse_error(const std::string &msg);
 
- public:
+    // padrao
     parse_error();
-    parse_error(std::string msg);
 
-    virtual const char* what() const throw();
+    virtual const char *what() const noexcept;
+
+    std::string get_message() const;
 };
 
+std::string read_file(const std::string &filename);
 
-std::string read_file(const std::string& filename);
+class ConfigReader;
 
-
-struct IPv4 {
+struct IPv4
+{
     unsigned char a;
     unsigned char b;
     unsigned char c;
     unsigned char d;
 
+    static IPv4 parse(std::string string);
+    static IPv4 parse(ConfigReader &reader);
+
     std::string to_string() const;
 };
 
-struct SocketAddress {
+struct SocketAddress
+{
     IPv4 address;
     int port;
 
     std::string to_string() const;
 };
 
-struct NodeConfig {
+struct NodeConfig
+{
     std::string id;
     SocketAddress address;
 
     std::string to_string() const;
 };
 
-struct Config {
+struct Config
+{
     std::vector<NodeConfig> nodes;
 
-    NodeConfig& get_node(std::string id);
+    NodeConfig &get_node(std::string id);
 
     std::string to_string() const;
 };
 
-
 template <typename T>
-class Override {
-    T* ref;
+class Override
+{
+    T *ref;
     T value;
     T previous_value;
 
 public:
-    Override(T* ref, T value);
+    Override(T *ref, T value);
     ~Override();
 };
 
-class ConfigReader {
+class ConfigReader
+{
     std::string str;
     int pos = 0;
 
@@ -72,8 +86,8 @@ class ConfigReader {
 public:
     ConfigReader(std::string string);
 
-    static ConfigReader from_file(const std::string& path);
-    static Config parse_file(const std::string& path);
+    static ConfigReader from_file(const std::string &path);
+    static Config parse_file(const std::string &path);
 
     int size();
     bool eof();
@@ -87,11 +101,9 @@ public:
     void consume_space();
 
     char expect(char ch);
-    void expect(const std::string& chars);
+    void expect(const std::string &chars);
 
     IPv4 parse_ipv4();
     SocketAddress parse_socket_address();
     Config parse();
 };
-
-

@@ -2,6 +2,7 @@
 
 #include <iomanip>
 #include <iostream>
+#include <mutex>
 #include <utility>
 
 #include "utils/format.h"
@@ -34,14 +35,17 @@
     #define log_debug(...)
 #endif
 
+static std::mutex log_mutex;
 
 class Logger {
 public:
     template<typename ...Args>
     static void log(const char* level, const char* file, int line, Args && ...args)
     {
+        log_mutex.lock();
         auto t = std::time(nullptr);
         auto tm = *std::localtime(&t);
         (std::cout << std::put_time(&tm, "%H:%M:%S ") << format("%s [%s:%i]: ", level, file, line) << ... << args) << std::endl;
+        log_mutex.unlock();
     }
 };

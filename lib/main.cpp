@@ -36,9 +36,9 @@ struct ThreadArgs {
 void server(ThreadArgs* args) {
     ReliableCommunication* comm = args->communication;
     char buffer[BUFFER_SIZE];
-    std::size_t len = -1;
-    while (len != 0) {
-        len = comm->receive(buffer);
+    while (true) {
+        Segment segment = comm->receive(buffer);
+        if (segment.data_size == 0) break;
         log_info("Received '", std::string(buffer).c_str(), "' from <IP>.");
     }
 }
