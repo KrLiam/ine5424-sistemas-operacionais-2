@@ -4,7 +4,7 @@ static void receiver_thread(ReliableCommunication *manager)
 {
     log_info("Initialized receiver thread.");
     manager->listen_receive();
-    log_info("Closing reicever thread.");
+    log_info("Closing receiver thread.");
 }
 
 static void sender_thread(ReliableCommunication *manager)
@@ -32,10 +32,7 @@ void ReliableCommunication::listen_receive()
     {
         Segment segment = channel->receive();
         log_debug("Received segment with message ID ", (uint32_t) segment.packet.header.id, ".");
-        if (!receive_buffer.produce(segment, false))
-        {
-            continue;
-        }
+        pipeline.receive(segment);
     }
 }
 
@@ -51,11 +48,15 @@ void ReliableCommunication::listen_send()
 
 void ReliableCommunication::send(std::string id, char *m)
 {
+    // TODO: aguardar pelo ack, fazer o handshake
+    pipeline.send(origin, destination, m, user_buffer_size);
+
+    /*
     Node origin = get_local_node();
     Node destination = get_node(id);
 
     PacketHeader packet_header{
-        id: create_message_id(origin.get_address(), destination.get_address()),
+        seq_num: 0,
         ack: 0
     };
     Packet packet = Packet::from(packet_header, m);
@@ -65,14 +66,14 @@ void ReliableCommunication::send(std::string id, char *m)
         packet : packet
     };
 
-    send_buffer.produce(segment, true);
+    send_buffer.produce(segment, true);*/
 }
 
-Segment ReliableCommunication::receive(char *m)
+Data ReliableCommunication::receive(char *m)
 {
-    Segment segment = receive_buffer.consume();
-    strncpy(m, segment.packet.data, Packet::DATA_SIZE);
-    return segment;
+    Data data = receive_buffer.consume();
+    strncpy(m, segment.packet.data, user_buffer_size);
+    return data;
 }
 
 const Node &ReliableCommunication::get_node(std::string id)

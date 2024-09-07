@@ -5,16 +5,23 @@
 #include <cstring>
 #include <cstdint>
 
+enum MessageType {
+    DATA = 0,
+    HANDSHAKE = 1,
+    DISCOVER = 2,
+    HEARTBEAT = 3
+};
+
 struct PacketHeader
 {
-    int id : 32;
+    int seq_num : 32;
     int fragment_num : 32;
     int checksum : 16;
     int window : 16;
     int type : 4;
+    int ack: 1;
     int more_fragments : 1;
-    int ack : 1;
-    int reserved : 10;
+    int reserved : 11;
 };
 
 struct Packet
