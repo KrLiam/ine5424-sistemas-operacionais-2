@@ -7,7 +7,7 @@
 #include "utils/format.h"
 #include "communication/reliable_communication.h"
 
-const std::size_t BUFFER_SIZE = MESSAGE_SIZE;
+const std::size_t BUFFER_SIZE = Packet::DATA_SIZE;
 
 struct Arguments {
     std::string node_id;

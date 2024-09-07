@@ -51,8 +51,8 @@ void Channel::send(Segment segment)
 
     int bytes_sent = sendto(
         socket_descriptor,
-        segment.packet.data,
-        segment.data_size,
+        (char *)&segment.packet,
+        Packet::SIZE,
         0,
         (struct sockaddr *)&out_address,
         sizeof(out_address));
