@@ -11,6 +11,7 @@
 #include "core/segment.h"
 #include "core/node.h"
 #include "utils/format.h"
+#include "utils/hash.h"
 
 class ReliableCommunication
 {
@@ -39,4 +40,6 @@ private:
     std::string local_id;
 
     std::map<std::string, Node> create_nodes();
+
+    uint32_t create_message_id(SocketAddress origin, SocketAddress destination);
 };

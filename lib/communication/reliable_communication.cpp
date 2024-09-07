@@ -31,6 +31,7 @@ void ReliableCommunication::listen_receive()
     while (true)
     {
         Segment segment = channel->receive();
+        log_debug("Received segment with message ID ", (uint32_t) segment.packet.header.id, ".");
         if (!receive_buffer.produce(segment, false))
         {
             continue;
@@ -43,6 +44,7 @@ void ReliableCommunication::listen_send()
     while (true)
     {
         Segment segment = send_buffer.consume();
+        log_debug("Sending segment with message ID ", (uint32_t)segment.packet.header.id, ".");
         channel->send(segment);
     }
 }
@@ -52,7 +54,11 @@ void ReliableCommunication::send(std::string id, char *m)
     Node origin = get_local_node();
     Node destination = get_node(id);
 
-    Packet packet = Packet::from(m); // arrumar pra fragmentacao dps
+    PacketHeader packet_header{
+        id: create_message_id(origin.get_address(), destination.get_address()),
+        ack: 0
+    };
+    Packet packet = Packet::from(packet_header, m);
     Segment segment = Segment{
         origin : origin.get_address(),
         destination : destination.get_address(),
@@ -102,4 +108,16 @@ std::map<std::string, Node> ReliableCommunication::create_nodes()
     }
 
     return _nodes;
+}
+
+uint32_t ReliableCommunication::create_message_id(SocketAddress origin, SocketAddress destination)
+{
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch());
+
+    srand((unsigned)time(NULL));
+    int random = rand();
+
+    std::string str = origin.to_string() + destination.to_string() + std::to_string(ms.count()) + std::to_string(random);
+    return hash_string(str.data());
 }
