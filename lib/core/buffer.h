@@ -22,7 +22,7 @@ public:
 
         mutex.unlock();
         log_debug("Consumed item from [", name, "] buffer.");
-        consumer.release();
+        producer.release();
 
         return item;
     };
