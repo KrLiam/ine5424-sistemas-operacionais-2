@@ -7,7 +7,7 @@
 #include "utils/format.h"
 #include "communication/reliable_communication.h"
 
-const std::size_t BUFFER_SIZE = Packet::DATA_SIZE;
+const std::size_t BUFFER_SIZE = PacketData::MAX_MESSAGE_SIZE;
 
 struct Arguments {
     std::string node_id;
@@ -37,9 +37,9 @@ void server(ThreadArgs* args) {
     ReliableCommunication* comm = args->communication;
     char buffer[BUFFER_SIZE];
     while (true) {
-        Segment segment = comm->receive(buffer);
-        if (segment.data_size == 0) break;
-        log_info("Received '", std::string(buffer).c_str(), "' from <IP>.");
+        Message msg = comm->receive(buffer);
+        if (msg.length == 0) break;
+        log_info("Received '", std::string(buffer).c_str(), "' from ", msg.origin.to_string(), ".");
     }
 }
 

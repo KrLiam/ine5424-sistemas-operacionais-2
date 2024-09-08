@@ -27,22 +27,25 @@ public:
         return item;
     };
 
-    bool produce(T &item, bool ensure)
+    void produce(T &item)
     {
-        if (ensure)
-        {
-            producer.acquire();
-        }
-        else if (!producer.try_acquire())
-        {
-            return false;
-        }
+        producer.acquire();
         mutex.lock();
         buffer.push(item);
         mutex.unlock();
         log_debug("Produced item to [", name, "] buffer.");
         consumer.release();
-        return true;
+
+    }
+
+    bool can_consume()
+    {
+        return buffer.size() > 0;
+    }
+
+    bool can_produce()
+    {
+        return buffer.size() < NUM_OF_ITEMS;
     }
 
 private:

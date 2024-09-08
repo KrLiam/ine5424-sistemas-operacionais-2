@@ -5,16 +5,9 @@
 #include <cstring>
 #include <cstdint>
 
-enum MessageType {
-    DATA = 0,
-    HANDSHAKE = 1,
-    DISCOVER = 2,
-    HEARTBEAT = 3
-};
-
 struct PacketHeader
 {
-    int seq_num : 32;
+    int msg_num : 32;
     int fragment_num : 32;
     int checksum : 16;
     int window : 16;
@@ -24,23 +17,72 @@ struct PacketHeader
     int reserved : 11;
 };
 
-struct Packet
+struct PacketData
 {
-    static const int SIZE = 1280; // arrumar dps pra tamanho variavel
-    static const int DATA_SIZE = SIZE - sizeof(PacketHeader);
+    static const int MAX_PACKET_SIZE = 1280;
+    static const int MAX_MESSAGE_SIZE = MAX_PACKET_SIZE - sizeof(PacketHeader);
 
-    static Packet from(PacketHeader packet_header, const char *buffer);
+    static PacketData from(PacketHeader packet_header, const char *buffer);
 
     PacketHeader header;
-    char data[DATA_SIZE];
+    char message_data[MAX_MESSAGE_SIZE];
+    // int message_length;
 };
 
-struct Segment
+struct PacketMetadata
 {
-    // campos de metadados
     SocketAddress origin;
     SocketAddress destination;
-    int data_size = Packet::SIZE; // arrumar dps pra tamanho variavel
+    int time;
+    int message_length;
+};
 
-    Packet packet;
+struct Packet
+{
+    PacketData data;
+    PacketMetadata meta;
+};
+
+enum MessageType {
+    DATA = 0,
+    HANDSHAKE = 1,
+    DISCOVER = 2,
+    HEARTBEAT = 3
+};
+
+struct Message
+{
+    SocketAddress origin;
+    SocketAddress destination;
+    MessageType type;
+    char data[PacketData::MAX_MESSAGE_SIZE];
+    int length;
+
+/*
+    static Message from(SocketAddress origin, SocketAddress destination, const char* data, int length)
+    {
+        Message message = {
+            origin: origin,
+            destination: destination,
+            length: length
+        };
+
+        /*
+        int required_packets = length / Packet::MAX_DATA_SIZE;
+        Packet packets[required_packets];
+
+        for (int i = 0; i < required_packets; i++)
+        {
+            packets[i].header = {
+                fragment_num: i,
+                type: MessageType::DATA,
+                ack: 0,
+                more_fragments: i != required_packets - 1
+                };
+            packets[i].length = std::min(length - i*Packet::MAX_DATA_SIZE, Packet::MAX_DATA_SIZE);
+            strncpy(packets[i].data, &data[i*Packet::MAX_DATA_SIZE], packets[i].length);
+        }
+
+        return message;
+    }*/
 };

@@ -39,6 +39,11 @@ struct IPv4
     static IPv4 parse(ConfigReader &reader);
 
     std::string to_string() const;
+
+    bool operator==(const IPv4& other)
+    {
+        return other.a == a && other.b == b && other.c == c && other.d == d;
+    }
 };
 
 struct SocketAddress
@@ -49,6 +54,11 @@ struct SocketAddress
     std::string to_string() const;
 
     static SocketAddress from(sockaddr_in& address);
+
+    bool operator==(const SocketAddress& other)
+    {
+        return other.address == address && other.port == port;
+    }
 };
 
 struct NodeConfig

@@ -43,16 +43,16 @@ void Channel::close_socket()
     log_debug("Closed channel");
 }
 
-void Channel::send(Segment segment)
+void Channel::send(Packet packet)
 {
-    SocketAddress destination = segment.destination;
+    SocketAddress destination = packet.meta.destination;
     out_address.sin_port = htons(destination.port);
     out_address.sin_addr.s_addr = inet_addr(destination.address.to_string().c_str());
 
     int bytes_sent = sendto(
         socket_descriptor,
-        (char *)&segment.packet,
-        Packet::SIZE,
+        (char *)&packet.data,
+        packet.meta.message_length + sizeof(packet.data.header),
         0,
         (struct sockaddr *)&out_address,
         sizeof(out_address));
@@ -64,16 +64,16 @@ void Channel::send(Segment segment)
     log_info("Sent ", bytes_sent, " bytes to ", destination.to_string(), ".");
 }
 
-Segment Channel::receive()
+Packet Channel::receive()
 {
-    Segment segment;
+    Packet packet;
     socklen_t in_address_len = sizeof(in_address);
 
     log_debug("Waiting to receive data.");
     std::size_t bytes_received = recvfrom(
         socket_descriptor,
-        (char *)&segment.packet,
-        sizeof(Packet),
+        (char *)&packet.data,
+        sizeof(PacketData),
         0,
         (struct sockaddr *)&in_address,
         &in_address_len);
@@ -81,9 +81,10 @@ Segment Channel::receive()
     SocketAddress origin = SocketAddress::from(in_address);
     log_debug("Received ", bytes_received, " bytes from ", origin.address.to_string(), ":", origin.port, ".");
 
-    segment.origin = origin;
-    segment.destination = address;
-    segment.data_size = bytes_received - sizeof(PacketHeader);
+    packet.meta.origin = origin;
+    packet.meta.destination = address;
+    // packet.meta.time = now();
+    packet.meta.message_length = bytes_received - sizeof(PacketHeader);
 
-    return segment;
+    return packet;
 }

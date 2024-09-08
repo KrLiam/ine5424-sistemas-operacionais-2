@@ -17,8 +17,8 @@ public:
     Channel(SocketAddress local_address);
     ~Channel();
 
-    void send(Segment segment);
-    Segment receive();
+    void send(Packet packet);
+    Packet receive();
 
 private:
     SocketAddress address;
