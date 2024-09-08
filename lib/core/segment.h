@@ -59,7 +59,7 @@ struct Message
     MessageType type;
 
     char data[MAX_MESSAGE_SIZE];
-    int length;
+    std::size_t length;
 
 /*
     static Message from(SocketAddress origin, SocketAddress destination, const char* data, int length)

@@ -229,9 +229,32 @@ public:
     Message receive(char *m)
     {
         Message message = receive_buffer.consume();
-        // atualmente assumindo que vai ter um valor fixo e igual ao tamanho da msg
-        strncpy(m, message.data, message.length);
-        return message;
+
+        if (user_buffer_size >= message.length)
+        {
+            strncpy(m, message.data, message.length);
+            return message;
+        }
+
+        throw std::runtime_error( "Provided buffer is smaller than the message.");
+        /*log_warn("Buffer size defined by the user [", user_buffer_size , "] is smaller ",
+        "than the received message's size [", message.length, "]; we will split this message into multiple ones.");
+        int required_parts = ceil((double) message.length / user_buffer_size);
+        for (int i = 0; i < required_parts; i++)
+        {
+            Message part = {
+                origin: message.origin,
+                destination: message.destination,
+                type: message.type,
+                part: i,
+                has_more_parts: i != required_parts - 1
+            };
+            part.length = i * user_buffer_size;
+            strncpy(part.data, &message.data[i * user_buffer_size], part.length);
+            receive_buffer.produce(part);
+        }
+
+        return receive(m); // problema: perde a ordem */
     }
 
     const Node &get_node(std::string id)
