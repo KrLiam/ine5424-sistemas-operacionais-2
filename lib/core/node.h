@@ -43,10 +43,10 @@ public:
     std::vector<Packet> packets_to_send = std::vector<Packet>{};
     std::vector<int> packets_awaiting_ack = std::vector<int>{};
 
-    char receive_buffer[PacketData::MAX_MESSAGE_SIZE];
+    char receive_buffer[Message::MAX_MESSAGE_SIZE];
     std::vector<int> received_fragments = std::vector<int>{};
-    int last_fragment_num = -1;
-    int bytes_received = 0;
+    unsigned int last_fragment_num = INT_MAX;
+    unsigned int bytes_received = 0;
 };
 
 class Node

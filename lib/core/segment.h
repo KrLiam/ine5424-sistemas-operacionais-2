@@ -52,10 +52,13 @@ enum MessageType {
 
 struct Message
 {
+    const static int MAX_MESSAGE_SIZE = 65536;
+
     SocketAddress origin;
     SocketAddress destination;
     MessageType type;
-    char data[PacketData::MAX_MESSAGE_SIZE];
+
+    char data[MAX_MESSAGE_SIZE];
     int length;
 
 /*

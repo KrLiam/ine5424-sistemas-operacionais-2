@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <map>
 #include <memory>
 #include <semaphore>
@@ -95,7 +96,9 @@ public:
             }
         }
 
-        if (packet.data.header.more_fragments == 0)
+        int frag_num = packet.data.header.fragment_num;
+        bool more_fragments = packet.data.header.more_fragments;
+        if (!more_fragments)
         {
             connection->last_fragment_num = packet.data.header.fragment_num;
         }
@@ -106,6 +109,7 @@ public:
 
         if (connection->last_fragment_num == connection->received_fragments.size() - 1)
         {
+            log_debug("Received all fragments; forwarding to message process step.");
             Message message = {
                 origin: packet.meta.origin,
                 destination: packet.meta.destination,
@@ -137,6 +141,8 @@ public:
 
     void sender_thread()
     {
+        // TODO: essa thread tá consumindo 100% de cpu. tem q fazer algum semáforo pra travar ela, aí libera no send() e timeout de msg
+
         // <fragmentacao>
         // CONSUMIR MSG DO BUFFER E FRAGMENTAR EM PACOTES
         fragmentation_step();
@@ -155,32 +161,37 @@ public:
         Message message = send_buffer.consume();
         log_debug("Fragmentation step consumed message from send buffer.");
 
-        // atualmente vou assumir q é só 1 fragmento toda msg
         Node destination = get_node(message.destination);
         Connection* connection = connections[destination.get_id()];
 
-        PacketMetadata meta = {
-            origin: get_local_node().get_address(),
-            destination: destination.get_address(),
-            time: 0
-        };
-        PacketData data;
-        data.header = {
-            msg_num: connection->get_msg_num(), // inicio 0
-            fragment_num: 0,
-            type: message.type,
-            ack: 0,
-            more_fragments: 0
+        int required_packets = ceil((double) message.length / PacketData::MAX_MESSAGE_SIZE);
+        log_debug("Message length is ", message.length, "; will split into ", required_packets, " packets.");
+        for (int i = 0; i < required_packets; i++)
+        {
+            PacketMetadata meta = {
+                origin: get_local_node().get_address(),
+                destination: destination.get_address(),
+                time: 0
             };
-        meta.message_length = std::min((int)user_buffer_size, (int)PacketData::MAX_MESSAGE_SIZE);
-        strncpy(data.message_data, message.data, meta.message_length);
-        Packet packet = {
-            data: data,
-            meta: meta
-        };
+            PacketData data;
+            bool more_fragments = i != required_packets - 1;
+            data.header = {
+                msg_num: connection->get_msg_num(), // inicio 0
+                fragment_num: i,
+                type: message.type,
+                ack: 0,
+                more_fragments: more_fragments
+                };
+            meta.message_length = std::min((int)(message.length - i*PacketData::MAX_MESSAGE_SIZE), (int)PacketData::MAX_MESSAGE_SIZE);
+            strncpy(data.message_data, &message.data[i*PacketData::MAX_MESSAGE_SIZE], meta.message_length);
+            Packet packet = {
+                data: data,
+                meta: meta
+            };
 
-        log_debug("Forwarding packet ", (int)packet.data.header.msg_num, "/", (int)packet.data.header.fragment_num, " to transmission step.");
-        connection->forward_packet(packet);
+            log_debug("Forwarding packet ", (int)packet.data.header.msg_num, "/", (int)packet.data.header.fragment_num, " to transmission step.");
+            connection->forward_packet(packet);
+        }
     }
 
     unsigned int now()
@@ -211,7 +222,7 @@ public:
             destination: get_node(id).get_address(), 
             length: user_buffer_size
             };
-        strncpy(message.data, m, user_buffer_size);    
+        strncpy(message.data, m, user_buffer_size);
         send_buffer.produce(message);
     }
 

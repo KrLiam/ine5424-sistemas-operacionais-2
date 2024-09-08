@@ -7,7 +7,7 @@
 #include "utils/format.h"
 #include "communication/reliable_communication.h"
 
-const std::size_t BUFFER_SIZE = PacketData::MAX_MESSAGE_SIZE;
+const std::size_t BUFFER_SIZE = 50000;
 
 struct Arguments {
     std::string node_id;
@@ -40,6 +40,7 @@ void server(ThreadArgs* args) {
         Message msg = comm->receive(buffer);
         if (msg.length == 0) break;
         log_info("Received '", std::string(buffer).c_str(), "' from ", msg.origin.to_string(), ".");
+        log_debug("Message has ", msg.length, " bytes.");
     }
 }
 
