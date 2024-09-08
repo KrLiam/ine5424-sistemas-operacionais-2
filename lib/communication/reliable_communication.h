@@ -21,6 +21,7 @@ public:
 
     void receiver_thread()
     {
+        // separar isso em camada de transmissão(recebimento), (des)fragmentação e processamento
         // receive_step(); - transmission_step
         Packet packet = channel->receive();
         
@@ -142,7 +143,8 @@ public:
     void sender_thread()
     {
         // TODO: essa thread tá consumindo 100% de cpu. tem q fazer algum semáforo pra travar ela, aí libera no send() e timeout de msg
-
+        
+        process_step();
         // <fragmentacao>
         // CONSUMIR MSG DO BUFFER E FRAGMENTAR EM PACOTES
         fragmentation_step();
@@ -152,9 +154,15 @@ public:
         transmission_step();
     }
 
+    void process_step()
+    {
+        // dar peek no send_buffer e ver se já tá enviando algo pra aquele destino. se nao tiver, manda pra etapa de fragmentacao
+        // aqui tem q incrementar o msg_num tb
+    }
+
     void fragmentation_step()
     {
-        if (!send_buffer.can_consume())
+        if (!send_buffer.can_consume()) // trocar por um buffer de fragmentação
         {
             return;
         }
@@ -318,6 +326,7 @@ private:
 
     void create_connections()
     {
+        // imeplementar handshake e fazer as conexões serem dinamicas
         for (auto& [id, node] : nodes)
         {
             Connection* c = new Connection();
