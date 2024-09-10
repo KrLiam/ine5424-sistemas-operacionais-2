@@ -21,32 +21,13 @@ class Connection
 public:
     Connection() {}
 
-    const int& get_msg_num()
+    const int& get_current_message_number()
     {
         return msg_num;
     }
 
-    const std::vector<Packet>& get_packets_to_send()
-    {
-        return packets_to_send;
-    }
-
-    void forward_packet(Packet packet)
-    {
-        packets_to_send.push_back(packet);
-    }
-
     int msg_num = 0;
-
     ConnectionState state = ConnectionState::CLOSED;
-    
-    std::vector<Packet> packets_to_send = std::vector<Packet>{};
-    std::vector<int> packets_awaiting_ack = std::vector<int>{};
-
-    char receive_buffer[Message::MAX_MESSAGE_SIZE];
-    std::vector<int> received_fragments = std::vector<int>{};
-    unsigned int last_fragment_num = INT_MAX;
-    unsigned int bytes_received = 0;
 };
 
 class Node

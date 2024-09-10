@@ -1,6 +1,8 @@
 #pragma once
 
 #include "utils/config.h"
+#include "utils/format.h"
+#include "utils/hash.h"
 #include "constants.h"
 #include <cstring>
 #include <cstdint>
@@ -41,6 +43,16 @@ struct Packet
 {
     PacketData data;
     PacketMetadata meta;
+
+    std::string to_string() const
+    {
+        return format("[%s to %s: %s/%s]", meta.origin, meta.destination, (uint32_t)data.header.msg_num, (uint32_t)data.header.fragment_num);
+    }
+
+    bool operator==(const Packet& other)
+    {
+        return meta.origin == other.meta.origin && meta.destination == other.meta.destination && meta.message_length == other.meta.message_length && data.header.msg_num == other.data.header.msg_num && data.header.fragment_num == other.data.header.fragment_num;
+    }
 };
 
 enum MessageType {
@@ -60,6 +72,11 @@ struct Message
 
     char data[MAX_MESSAGE_SIZE];
     std::size_t length;
+
+    std::string to_string() const
+    {
+        return format("[%s]", hash_string(data));
+    }
 
 /*
     static Message from(SocketAddress origin, SocketAddress destination, const char* data, int length)
