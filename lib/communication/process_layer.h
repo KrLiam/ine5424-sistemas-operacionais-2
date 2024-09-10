@@ -12,7 +12,7 @@ private:
     ReliableCommunication *comm;
 
 public:
-    ProcessLayer(Pipeline *control, ReliableCommunication *comm);
+    ProcessLayer(PipelineHandler& handler, ReliableCommunication *comm);
 
     void service();
 

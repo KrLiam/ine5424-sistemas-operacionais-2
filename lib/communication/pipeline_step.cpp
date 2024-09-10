@@ -1,16 +1,18 @@
+#pragma once
+
 #include "communication/pipeline_step.h"
 
-PipelineStep::PipelineStep(unsigned int number, Pipeline *control) : number(number), control(control)
+PipelineStep::PipelineStep(unsigned int number, PipelineHandler& handler) : number(number), handler(handler)
 {
     service();
 }
 
 void PipelineStep::forward_send(char *m)
 {
-    control->send_to(number - 1, m);
+    handler.send_to(number - 1, m);
 }
 
 void PipelineStep::forward_receive(char *m)
 {
-    control->receive_on(number + 1, m);
+    handler.receive_on(number + 1, m);
 }

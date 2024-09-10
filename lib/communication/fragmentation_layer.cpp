@@ -1,6 +1,6 @@
 #include "communication/fragmentation_layer.h"
 
-FragmentationLayer::FragmentationLayer(Pipeline *control, ReliableCommunication *comm) : PipelineStep(PipelineStep::FRAGMENTATION_LAYER, control), comm(comm)
+FragmentationLayer::FragmentationLayer(PipelineHandler& handler, ReliableCommunication *comm) : PipelineStep(PipelineStep::FRAGMENTATION_LAYER, handler), comm(comm)
 {
 }
 

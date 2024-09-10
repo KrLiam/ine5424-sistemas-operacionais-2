@@ -20,7 +20,7 @@ static void run_sender_thread(TransmissionLayer *manager)
     log_info("Closing transmission layer sender thread.");
 }
 
-TransmissionLayer::TransmissionLayer(Pipeline *control, ReliableCommunication *comm, Channel *channel) : PipelineStep(PipelineStep::TRANSMISSION_LAYER, control), comm(comm), channel(channel)
+TransmissionLayer::TransmissionLayer(PipelineHandler& handler, ReliableCommunication *comm, Channel *channel) : PipelineStep(PipelineStep::TRANSMISSION_LAYER, handler), comm(comm), channel(channel)
 {
 }
 

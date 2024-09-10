@@ -4,9 +4,9 @@
 
 #include "communication/fragment_assembler.h"
 #include "communication/pipeline_step.h"
+#include "communication/reliable_communication.h"
 
 class ReliableCommunication;
-class Pipeline;
 
 class FragmentationLayer : public PipelineStep
 {
@@ -16,7 +16,7 @@ private:
     std::map<std::string, FragmentAssembler> assembler_map;
 
 public:
-    FragmentationLayer(Pipeline *control, ReliableCommunication *comm);
+    FragmentationLayer(PipelineHandler& handler, ReliableCommunication *comm);
 
     void service();
 

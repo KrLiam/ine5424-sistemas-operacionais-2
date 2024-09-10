@@ -1,6 +1,6 @@
 #include "communication/process_layer.h"
 
-ProcessLayer::ProcessLayer(Pipeline *control, ReliableCommunication *comm) : PipelineStep(PipelineStep::PROCESS_LAYER, control), comm(comm) {}
+ProcessLayer::ProcessLayer(PipelineHandler& handler, ReliableCommunication *comm) : PipelineStep(PipelineStep::PROCESS_LAYER, handler), comm(comm) {}
 
 void ProcessLayer::service() {}
 

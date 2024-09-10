@@ -23,7 +23,7 @@ private:
     void process_ack_of_received_packet(Packet packet);
 
 public:
-    TransmissionLayer(Pipeline *control, ReliableCommunication *comm, Channel *channel);
+    TransmissionLayer(PipelineHandler& handler, ReliableCommunication *comm, Channel *channel);
 
     void service();
 

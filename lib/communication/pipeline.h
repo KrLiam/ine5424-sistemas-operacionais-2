@@ -3,18 +3,19 @@
 #include <vector>
 
 #include "channels/channel.h"
+#include "communication/pipeline_handler.h"
 #include "communication/pipeline_step.h"
 #include "communication/reliable_communication.h"
+#include "communication/transmission_layer.h"
+#include "communication/fragmentation_layer.h"
+#include "communication/process_layer.h"
 
 class PipelineStep;
 class ReliableCommunication;
-class TransmissionLayer;
-class FragmentationLayer;
-class ProcessLayer;
 
 class Pipeline
 {
-    std::vector<PipelineStep> layers;
+    std::vector<PipelineStep*> layers;
 
 public:
     Pipeline(ReliableCommunication *comm, Channel *channel);
