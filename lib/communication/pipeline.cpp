@@ -13,14 +13,14 @@ Pipeline::Pipeline(ReliableCommunication *comm, Channel *channel)
 
 void Pipeline::send_to(unsigned int layer, char *m)
 {
-    if (layer < 0 || layer >= layers.size())
+    if (layer >= layers.size())
         return;
     layers.at(layer)->send(m);
 }
 
 void Pipeline::receive_on(unsigned int layer, char *m)
 {
-    if (layer < 0 || layer >= layers.size())
+    if (layer >= layers.size())
         return;
     layers.at(layer)->receive(m);
 }
