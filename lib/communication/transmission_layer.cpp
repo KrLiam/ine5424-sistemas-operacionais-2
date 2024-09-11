@@ -127,9 +127,6 @@ bool TransmissionLayer::process_ack_of_received_packet(Packet packet)
         data : data,
         meta : meta
     };
-
-    char pkt[sizeof(Packet)];
-    memcpy(pkt, &ack_packet, sizeof(Packet));
-    handler.send_to(PipelineStep::TRANSMISSION_LAYER, pkt);
+    channel->send(ack_packet);
     return false;
 }
