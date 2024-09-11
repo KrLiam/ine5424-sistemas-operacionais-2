@@ -22,6 +22,7 @@ static void run_sender_thread(TransmissionLayer *manager)
 
 TransmissionLayer::TransmissionLayer(PipelineHandler& handler, GroupRegistry& gr, Channel *channel) : PipelineStep(PipelineStep::TRANSMISSION_LAYER, handler, gr), channel(channel)
 {
+    service();
 }
 
 void TransmissionLayer::service()
@@ -51,7 +52,7 @@ void TransmissionLayer::sender_thread()
     // TODO: atualmente, não tem controle de enviar 1 msg só por vez
     for (auto &[id, queue] : queue_map)
     {
-        queue.send_timedout_packets(channel);
+        queue->send_timedout_packets(channel);
         // if (queue.has_sent_everything()) queue_map.erase(id); <- mutex pra esse mapa
     }
 }
@@ -66,9 +67,9 @@ void TransmissionLayer::send(char *m)
     Node destination = gr.get_node(packet.meta.destination);
     if (!queue_map.contains(destination.get_id()))
     {
-        queue_map.emplace(destination.get_id(), TransmissionQueue());
+        queue_map.emplace(destination.get_id(), new TransmissionQueue());
     }
-    queue_map.at(destination.get_id()).add_packet_to_queue(packet);
+    queue_map.at(destination.get_id())->add_packet_to_queue(packet);
     // esse aqui cospe no buffer da sender_thread
 }
 
@@ -88,10 +89,11 @@ void TransmissionLayer::receive(char *m)
         return;
     }
 
-    process_ack_of_received_packet(packet);
+    if (process_ack_of_received_packet(packet)) return;
+    forward_receive(m);
 }
 
-void TransmissionLayer::process_ack_of_received_packet(Packet packet)
+bool TransmissionLayer::process_ack_of_received_packet(Packet packet)
 {
     Node origin = gr.get_node(packet.meta.origin);
 
@@ -101,9 +103,9 @@ void TransmissionLayer::process_ack_of_received_packet(Packet packet)
         log_debug("Received ACK for packet ", packet.to_string(), "; removing from list of packets with pending ACKs.");
         if (queue_map.contains(origin.get_id()))
         {
-            queue_map.at(origin.get_id()).mark_packet_as_acked(packet);
+            queue_map.at(origin.get_id())->mark_packet_as_acked(packet);
         }
-        return;
+        return true;
     }
 
     log_debug("Received a packet ", packet.to_string(), " that expects confirmation; sending ACK.");
@@ -129,4 +131,5 @@ void TransmissionLayer::process_ack_of_received_packet(Packet packet)
     char pkt[sizeof(Packet)];
     memcpy(pkt, &ack_packet, sizeof(Packet));
     handler.send_to(PipelineStep::TRANSMISSION_LAYER, pkt);
+    return false;
 }

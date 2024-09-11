@@ -29,7 +29,7 @@ public:
     {
         uint32_t fragment_number = (uint32_t)packet.data.header.fragment_num;
         fragments_awaiting_ack.erase(std::remove(fragments_awaiting_ack.begin(), fragments_awaiting_ack.end(), fragment_number), fragments_awaiting_ack.end());
-        fragments_to_send.erase(std::remove(fragments_to_send.begin(), fragments_to_send.end(), packet), fragments_to_send.end());
+        // fragments_to_send.erase(std::remove(fragments_to_send.begin(), fragments_to_send.end(), packet), fragments_to_send.end());
     }
 
     void send_timedout_packets(Channel *channel)

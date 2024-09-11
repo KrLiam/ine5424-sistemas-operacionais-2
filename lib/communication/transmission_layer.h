@@ -14,9 +14,9 @@ class TransmissionLayer : public PipelineStep
 private:
     Channel *channel;
 
-    std::map<std::string, TransmissionQueue> queue_map;
+    std::map<std::string, TransmissionQueue*> queue_map;
 
-    void process_ack_of_received_packet(Packet packet);
+    bool process_ack_of_received_packet(Packet packet);
 
 public:
     TransmissionLayer(PipelineHandler& handler, GroupRegistry& gr, Channel *channel);

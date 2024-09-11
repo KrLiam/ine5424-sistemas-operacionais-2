@@ -8,9 +8,9 @@ void ProcessLayer::service() {}
 
 void ProcessLayer::send(char *m)
 {
-    Packet packet;
-    memcpy(&packet, m, sizeof(Packet));
-    log_debug("Packet [", packet.to_string(), "] sent to process layer.");
+    Message message;
+    memcpy(&message, m, sizeof(Message));
+    log_debug("Message [", message.to_string(), "] sent to process layer.");
     forward_send(m);
 }
 

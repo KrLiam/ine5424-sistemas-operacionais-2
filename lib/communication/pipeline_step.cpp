@@ -2,7 +2,6 @@
 
 PipelineStep::PipelineStep(unsigned int number, PipelineHandler& handler, GroupRegistry& gr) : number(number), handler(handler), gr(gr)
 {
-    service();
 }
 
 void PipelineStep::forward_send(char *m)

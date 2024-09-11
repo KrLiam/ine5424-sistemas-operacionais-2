@@ -46,7 +46,7 @@ struct Packet
 
     std::string to_string() const
     {
-        return format("[%s to %s: %s/%s]", meta.origin, meta.destination, (uint32_t)data.header.msg_num, (uint32_t)data.header.fragment_num);
+        return format("%s --> %s | %s/%s", meta.origin.to_string().c_str(), meta.destination.to_string().c_str(), std::to_string((uint32_t)data.header.msg_num).c_str(), std::to_string((uint32_t)data.header.fragment_num).c_str());
     }
 
     bool operator==(const Packet& other)
@@ -75,7 +75,7 @@ struct Message
 
     std::string to_string() const
     {
-        return format("[%s]", hash_string(data));
+        return format("%s -> %s", origin.to_string().c_str(), destination.to_string().c_str());
     }
 
 /*

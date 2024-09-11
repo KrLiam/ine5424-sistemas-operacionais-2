@@ -23,7 +23,6 @@ void ReliableCommunication::send(std::string id, char *m)
         length : user_buffer_size
     };
     strncpy(message.data, m, user_buffer_size);
-
     char msg[sizeof(Message)];
     memcpy(msg, &message, sizeof(Message));
     pipeline->send_to(PipelineStep::PROCESS_LAYER, msg);
