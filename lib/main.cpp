@@ -58,7 +58,8 @@ void client(ThreadArgs* args) {
 
 void run_process(const std::string& node_id) {
     ReliableCommunication comm(node_id, BUFFER_SIZE);
-    Node local_node = comm.get_node(node_id);
+    GroupRegistry gr = comm.get_group_registry();
+    Node local_node = gr.get_local_node();
     log_info("Local node endpoint is ", local_node.get_address().to_string(), ".");
 
     ThreadArgs targs = { &comm };

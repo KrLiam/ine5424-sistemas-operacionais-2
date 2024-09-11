@@ -9,13 +9,9 @@
 #include "core/node.h"
 #include "core/segment.h"
 
-class Pipeline;
-class ReliableCommunication;
-
 class TransmissionLayer : public PipelineStep
 {
 private:
-    ReliableCommunication *comm;
     Channel *channel;
 
     std::map<std::string, TransmissionQueue> queue_map;
@@ -23,7 +19,7 @@ private:
     void process_ack_of_received_packet(Packet packet);
 
 public:
-    TransmissionLayer(PipelineHandler& handler, ReliableCommunication *comm, Channel *channel);
+    TransmissionLayer(PipelineHandler& handler, GroupRegistry& gr, Channel *channel);
 
     void service();
 

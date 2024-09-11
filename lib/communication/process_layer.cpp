@@ -1,6 +1,8 @@
 #include "communication/process_layer.h"
 
-ProcessLayer::ProcessLayer(PipelineHandler& handler, ReliableCommunication *comm) : PipelineStep(PipelineStep::PROCESS_LAYER, handler), comm(comm) {}
+ProcessLayer::ProcessLayer(PipelineHandler& handler, GroupRegistry& gr) : PipelineStep(PipelineStep::PROCESS_LAYER, handler, gr)
+{
+}
 
 void ProcessLayer::service() {}
 
@@ -21,8 +23,7 @@ void ProcessLayer::receive(char *m)
     switch (message.type)
     {
     case MessageType::DATA:
-        comm->produce(message); // dá pra usar friend pra esconder do usuário
-        // TODO: acho q a reciver thread vai travar aqui caso o buffer esteja cheio. tratar
+        handler.forward_to_application(message); // TODO: acho q a reciver thread vai travar aqui caso o buffer esteja cheio. tratar
         break;
 
     default:

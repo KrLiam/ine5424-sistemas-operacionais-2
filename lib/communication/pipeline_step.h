@@ -1,6 +1,7 @@
 #pragma once
 
 #include "channels/channel.h"
+#include "communication/group_registry.h"
 #include "communication/pipeline_handler.h"
 #include "core/segment.h"
 #include "core/constants.h"
@@ -13,6 +14,7 @@ class PipelineStep
 protected:
     unsigned int number;
     PipelineHandler handler;
+    GroupRegistry gr;
 
     void forward_send(char *m);
 
@@ -23,7 +25,7 @@ public:
     static const unsigned int FRAGMENTATION_LAYER = 1;
     static const unsigned int PROCESS_LAYER = 2;
 
-    PipelineStep(unsigned int number, PipelineHandler& handler);
+    PipelineStep(unsigned int number, PipelineHandler& handler, GroupRegistry& gr);
 
     virtual void service() {};
 

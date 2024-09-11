@@ -20,7 +20,7 @@ static void run_sender_thread(TransmissionLayer *manager)
     log_info("Closing transmission layer sender thread.");
 }
 
-TransmissionLayer::TransmissionLayer(PipelineHandler& handler, ReliableCommunication *comm, Channel *channel) : PipelineStep(PipelineStep::TRANSMISSION_LAYER, handler), comm(comm), channel(channel)
+TransmissionLayer::TransmissionLayer(PipelineHandler& handler, GroupRegistry& gr, Channel *channel) : PipelineStep(PipelineStep::TRANSMISSION_LAYER, handler, gr), channel(channel)
 {
 }
 
@@ -63,7 +63,7 @@ void TransmissionLayer::send(char *m)
     log_debug("Packet [", packet.to_string(), "] sent to transmission layer.");
     // tinha pensado em fazer o send daqui aguardar sincronamente, mas aí ele poderia travar a receiver_thread
     // TODO:
-    Node destination = comm->get_node(packet.meta.destination);
+    Node destination = gr.get_node(packet.meta.destination);
     if (!queue_map.contains(destination.get_id()))
     {
         queue_map.emplace(destination.get_id(), TransmissionQueue());
@@ -78,8 +78,8 @@ void TransmissionLayer::receive(char *m)
     memcpy(&packet, m, sizeof(Packet));
     log_debug("Packet [", packet.to_string(), "] received on transmission layer.");
 
-    Node origin = comm->get_node(packet.meta.origin);
-    Connection *connection = comm->get_connection(origin.get_id());
+    Node origin = gr.get_node(packet.meta.origin);
+    Connection *connection = gr.get_connection(origin.get_id());
 
     uint32_t message_number = (uint32_t)packet.data.header.msg_num;
     if (message_number != connection->get_current_message_number())
@@ -93,7 +93,7 @@ void TransmissionLayer::receive(char *m)
 
 void TransmissionLayer::process_ack_of_received_packet(Packet packet)
 {
-    Node origin = comm->get_node(packet.meta.origin);
+    Node origin = gr.get_node(packet.meta.origin);
 
     bool is_ack = packet.data.header.ack;
     if (is_ack)
@@ -116,8 +116,8 @@ void TransmissionLayer::process_ack_of_received_packet(Packet packet)
         more_fragments : 0
     };
     PacketMetadata meta = {
-        origin : comm->get_local_node().get_address(),
-        destination : comm->get_node(packet.meta.origin).get_address(),
+        origin : gr.get_local_node().get_address(),
+        destination : gr.get_node(packet.meta.origin).get_address(),
         time : 0,
         message_length : 0
     };
@@ -128,5 +128,5 @@ void TransmissionLayer::process_ack_of_received_packet(Packet packet)
 
     char pkt[sizeof(Packet)];
     memcpy(pkt, &ack_packet, sizeof(Packet));
-    control->send_to(PipelineStep::TRANSMISSION_LAYER, pkt);
+    handler.send_to(PipelineStep::TRANSMISSION_LAYER, pkt);
 }

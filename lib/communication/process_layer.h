@@ -3,16 +3,10 @@
 #include "communication/pipeline_step.h"
 #include "core/segment.h"
 
-class ReliableCommunication;
-class Pipeline;
-
 class ProcessLayer : public PipelineStep
 {
-private:
-    ReliableCommunication *comm;
-
 public:
-    ProcessLayer(PipelineHandler& handler, ReliableCommunication *comm);
+    ProcessLayer(PipelineHandler& handler, GroupRegistry& gr);
 
     void service();
 
