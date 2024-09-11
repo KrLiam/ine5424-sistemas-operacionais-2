@@ -55,7 +55,7 @@ public:
             }
             channel->send(packet);
             packet.meta.time = now;
-            fragments_awaiting_ack.push_back((uint32_t)packet.data.header.fragment_num);
+            fragments_awaiting_ack.push_back((uint32_t)packet.data.header.fragment_num); // melhor usar set pra isso
         }
     }
 };

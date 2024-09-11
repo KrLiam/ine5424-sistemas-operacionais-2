@@ -35,7 +35,7 @@ struct PacketMetadata
 {
     SocketAddress origin;
     SocketAddress destination;
-    int time;
+    uint64_t time;
     int message_length;
 };
 
