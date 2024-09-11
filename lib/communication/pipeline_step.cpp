@@ -1,5 +1,3 @@
-#pragma once
-
 #include "communication/pipeline_step.h"
 
 PipelineStep::PipelineStep(unsigned int number, PipelineHandler& handler) : number(number), handler(handler)

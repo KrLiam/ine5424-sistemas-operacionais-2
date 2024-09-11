@@ -15,10 +15,12 @@ class ReliableCommunication;
 
 class Pipeline
 {
-    std::vector<PipelineStep*> layers;
+    std::vector<PipelineStep *> layers;
 
 public:
     Pipeline(ReliableCommunication *comm, Channel *channel);
+
+    ~Pipeline();
 
     void send_to(unsigned int layer, char *m);
 
