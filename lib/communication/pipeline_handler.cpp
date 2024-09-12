@@ -16,6 +16,11 @@ void PipelineHandler::forward_receive(char *m)
     pipeline.receive_on(step_index + 1, m);
 }
 
+bool PipelineHandler::can_forward_to_application()
+{
+    return pipeline.can_forward_to_application();
+}
+
 void PipelineHandler::forward_to_application(Message message)
 {
     pipeline.forward_to_application(message);

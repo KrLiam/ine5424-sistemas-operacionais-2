@@ -26,5 +26,7 @@ public:
 
     void forward_send(char *m);
     void forward_receive(char *m);
+    
+    bool can_forward_to_application();
     void forward_to_application(Message message);
 };

@@ -35,6 +35,11 @@ void Pipeline::receive_on(unsigned int layer, char *m)
     layers.at(layer)->receive(m);
 }
 
+bool Pipeline::can_forward_to_application()
+{
+    return incoming_buffer.can_produce();
+}
+
 void Pipeline::forward_to_application(Message message)
 {
     incoming_buffer.produce(message);

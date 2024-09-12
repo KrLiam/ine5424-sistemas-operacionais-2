@@ -85,6 +85,13 @@ void TransmissionLayer::receive(char *m)
         return;
     }
 
+    uint8_t type = (uint8_t)packet.data.header.type;
+    if (type == MessageType::DATA && !handler.can_forward_to_application())
+    {
+        log_debug("Incoming buffer is full; ignoring packet ", packet.to_string(), ".");
+        return;
+    }
+
     Node origin = gr.get_node(packet.meta.origin);
     Connection *connection = gr.get_connection(origin.get_id());
 
@@ -118,15 +125,15 @@ bool TransmissionLayer::process_ack_of_received_packet(Packet packet)
 
     log_debug("Received a packet ", packet.to_string(), " that expects confirmation; sending ACK.");
     PacketData data;
-    data.header = { // TODO: Definir corretamente checksum, window, e reserved.
-        msg_num : packet.data.header.msg_num,
-        fragment_num : packet.data.header.fragment_num,
-        checksum : 0,
-        window : 0,
-        type : packet.data.header.type,
-        ack : 1,
-        more_fragments : 0,
-        reserved : 0
+    data.header = {// TODO: Definir corretamente checksum, window, e reserved.
+                   msg_num : packet.data.header.msg_num,
+                   fragment_num : packet.data.header.fragment_num,
+                   checksum : 0,
+                   window : 0,
+                   type : packet.data.header.type,
+                   ack : 1,
+                   more_fragments : 0,
+                   reserved : 0
     };
     PacketMetadata meta = {
         origin : gr.get_local_node().get_address(),
