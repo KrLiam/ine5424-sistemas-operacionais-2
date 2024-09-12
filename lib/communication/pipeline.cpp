@@ -2,10 +2,7 @@
 
 Pipeline::Pipeline(GroupRegistry &gr, Channel *channel)
 {
-    std::function<void(unsigned int, char*)> send_callback = std::bind(&Pipeline::send_to, this, std::placeholders::_1, std::placeholders::_2);
-    std::function<void(unsigned int, char*)> receive_callback = std::bind(&Pipeline::receive_on, this, std::placeholders::_1, std::placeholders::_2);
-    std::function<void(Message)> application_forward_callback = std::bind(&Pipeline::forward_to_application, this, std::placeholders::_1);
-    PipelineHandler handler = PipelineHandler(send_callback, receive_callback, application_forward_callback);    
+    PipelineHandler handler = PipelineHandler(*this);    
 
     layers.push_back(new TransmissionLayer(handler, gr, channel));
     layers.push_back(new FragmentationLayer(handler, gr));

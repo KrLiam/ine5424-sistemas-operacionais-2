@@ -19,6 +19,7 @@ class Pipeline
 
     Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> incoming_buffer{"incoming messages"};
 
+    friend PipelineHandler;
 public:
     Pipeline(GroupRegistry &gr, Channel *channel);
 

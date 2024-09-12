@@ -4,17 +4,15 @@
 
 #include "core/segment.h"
 
+class Pipeline;
+
 class PipelineHandler
 {
 private:
-    std::function<void(unsigned int, char *)> send_callback;
-    std::function<void(unsigned int, char *)> receive_callback;
-    std::function<void(Message)> application_forward_callback;
+    Pipeline& pipeline;
 
 public:
-    PipelineHandler(std::function<void(unsigned int, char *)> send_callback,
-                    std::function<void(unsigned int, char *)> receive_callback,
-                    std::function<void(Message)> application_forward_callback);
+    PipelineHandler(Pipeline& pipeline);
 
     void send_to(unsigned int layer_number, char *m);
     void receive_on(unsigned int layer_number, char *m);
