@@ -16,7 +16,8 @@ private:
 
     std::map<std::string, TransmissionQueue *> queue_map;
 
-    bool process_ack_of_received_packet(Packet packet);
+    bool process_ack_field_of_received_packet(Packet packet);
+    Packet create_ack_packet(Packet packet);
 
 public:
     TransmissionLayer(PipelineHandler handler, GroupRegistry &gr, Channel *channel);

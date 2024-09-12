@@ -103,12 +103,12 @@ void TransmissionLayer::receive(char *m)
         return;
     }
 
-    if (process_ack_of_received_packet(packet))
+    if (process_ack_field_of_received_packet(packet))
         return;
     handler.forward_receive(m);
 }
 
-bool TransmissionLayer::process_ack_of_received_packet(Packet packet)
+bool TransmissionLayer::process_ack_field_of_received_packet(Packet packet)
 {
     Node origin = gr.get_node(packet.meta.origin);
 
@@ -124,6 +124,13 @@ bool TransmissionLayer::process_ack_of_received_packet(Packet packet)
     }
 
     log_debug("Received a packet ", packet.to_string(), " that expects confirmation; sending ACK.");
+    Packet ack_packet = create_ack_packet(packet);
+    send(&ack_packet.as_bytes()[0]);
+    return false;
+}
+
+Packet TransmissionLayer::create_ack_packet(Packet packet)
+{
     PacketData data;
     data.header = {// TODO: Definir corretamente checksum, window, e reserved.
                    msg_num : packet.data.header.msg_num,
@@ -145,6 +152,5 @@ bool TransmissionLayer::process_ack_of_received_packet(Packet packet)
         data : data,
         meta : meta
     };
-    channel->send(ack_packet);
-    return false;
+    return ack_packet;
 }

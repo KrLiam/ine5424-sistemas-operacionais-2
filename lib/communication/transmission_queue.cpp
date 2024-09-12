@@ -34,16 +34,33 @@ void TransmissionQueue::mark_packet_as_acked(Packet packet)
 
 void TransmissionQueue::send_timedout_packets(Channel *channel)
 {
-    // mtx
-    unsigned int now = DateUtils::now();
-    for (Packet &packet : fragments_to_send)
+    // TODO: mutex pro vetor pra não ter condição de corrida entre thread de recebimento e envio
+    uint64_t now = DateUtils::now();
+    std::vector<std::size_t> indexes_to_remove = std::vector<std::size_t>();
+
+    for (std::size_t i = 0; i < fragments_to_send.size(); i++)
     {
+        Packet packet = fragments_to_send[i];
+
         if (now - packet.meta.time < ACK_TIMEOUT)
+            continue;
+        channel->send(packet);
+
+        bool is_ack = packet.data.header.ack;
+        if (is_ack)
         {
+            indexes_to_remove.push_back(i);
             continue;
         }
-        channel->send(packet);
-        packet.meta.time = now;
+
+        fragments_to_send[i].meta.time = now;
         fragments_awaiting_ack.push_back((uint32_t)packet.data.header.fragment_num); // melhor usar set pra isso
+    }
+
+    int offset = 0;
+    for (int idx : indexes_to_remove)
+    {
+        fragments_to_send.erase(fragments_to_send.begin() + idx + offset);
+        offset--;
     }
 }
