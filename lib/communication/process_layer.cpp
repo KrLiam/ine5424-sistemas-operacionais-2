@@ -14,16 +14,14 @@ void ProcessLayer::service()
 
 void ProcessLayer::send(char *m)
 {
-    Message message;
-    memcpy(&message, m, sizeof(Message));
+    Message message = Message::from(m);
     log_debug("Message [", message.to_string(), "] sent to process layer.");
     handler.forward_send(m);
 }
 
 void ProcessLayer::receive(char *m)
 {
-    Message message;
-    memcpy(&message, m, sizeof(Message));
+    Message message = Message::from(m);
     log_debug("Message [", message.to_string(), "] received on process layer.");
 
     switch (message.type)

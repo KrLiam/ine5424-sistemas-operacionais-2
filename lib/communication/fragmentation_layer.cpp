@@ -15,8 +15,7 @@ void FragmentationLayer::service()
 
 void FragmentationLayer::send(char *m)
 {
-    Message message;
-    memcpy(&message, m, sizeof(Message));
+    Message message = Message::from(m);
     log_debug("Message [", message.to_string(), "] sent to fragmentation layer.");
 
     Node destination = gr.get_node(message.destination);
@@ -52,16 +51,13 @@ void FragmentationLayer::send(char *m)
         };
 
         log_debug("Forwarding packet ", packet.to_string(), " to next step.");
-        char pkt[sizeof(Packet)];
-        memcpy(pkt, &packet, sizeof(Packet));
-        handler.forward_send(pkt);
+        handler.forward_send(&packet.as_bytes()[0]);
     }
 }
 
 void FragmentationLayer::receive(char *m)
 {
-    Packet packet;
-    memcpy(&packet, m, sizeof(Packet));
+    Packet packet = Packet::from(m);
     log_debug("Packet [", packet.to_string(), "] received on fragmentation layer.");
 
     Node origin = gr.get_node(packet.meta.origin);
@@ -82,10 +78,7 @@ void FragmentationLayer::receive(char *m)
     {
         log_debug("Received all fragments; forwarding message to next step.");
         Message message = assembler->assemble();
-
-        char msg[sizeof(Message)];
-        memcpy(msg, &message, sizeof(Message));
-        handler.forward_receive(msg);
+        handler.forward_receive(&message.as_bytes()[0]);
         delete assembler;
         assembler_map.erase(origin.get_id());
     }

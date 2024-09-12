@@ -40,9 +40,7 @@ void TransmissionLayer::service()
 void TransmissionLayer::receiver_thread()
 {
     Packet packet = channel->receive();
-    char pkt[sizeof(Packet)];
-    memcpy(pkt, &packet, sizeof(Packet));
-    receive(pkt);
+    receive(&packet.as_bytes()[0]);
 }
 
 void TransmissionLayer::sender_thread()
@@ -63,8 +61,7 @@ void TransmissionLayer::sender_thread()
 
 void TransmissionLayer::send(char *m)
 {
-    Packet packet;
-    memcpy(&packet, m, sizeof(Packet));
+    Packet packet = Packet::from(m);
     log_debug("Packet [", packet.to_string(), "] sent to transmission layer.");
     // tinha pensado em fazer o send daqui aguardar sincronamente, mas aí ele poderia travar a receiver_thread
     // TODO:
@@ -79,8 +76,7 @@ void TransmissionLayer::send(char *m)
 
 void TransmissionLayer::receive(char *m)
 {
-    Packet packet;
-    memcpy(&packet, m, sizeof(Packet));
+    Packet packet = Packet::from(m);
     log_debug("Packet [", packet.to_string(), "] received on transmission layer.");
 
     if (!gr.packet_originates_from_group(packet))

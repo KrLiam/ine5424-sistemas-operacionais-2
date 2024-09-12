@@ -44,6 +44,20 @@ struct Packet
     PacketData data;
     PacketMetadata meta;
 
+    static Packet from(char *m)
+    {
+        Packet p;
+        memcpy(&p, m, sizeof(Packet));
+        return p;
+    }
+
+    std::vector<char> as_bytes()
+    {
+        std::vector<char> p(sizeof(Packet));
+        memcpy(&p[0], this, sizeof(Packet));
+        return p;
+    }
+
     std::string to_string() const
     {
         return format("%s --> %s | %s/%s", meta.origin.to_string().c_str(), meta.destination.to_string().c_str(), std::to_string((uint32_t)data.header.msg_num).c_str(), std::to_string((uint32_t)data.header.fragment_num).c_str());
@@ -72,6 +86,20 @@ struct Message
 
     char data[MAX_MESSAGE_SIZE];
     std::size_t length;
+
+    static Message from(char *m)
+    {
+        Message message;
+        memcpy(&message, m, sizeof(Message));
+        return message;
+    }
+
+    std::vector<char> as_bytes()
+    {
+        std::vector<char> msg(sizeof(Message));
+        memcpy(&msg[0], this, sizeof(Message));
+        return msg;
+    }
 
     std::string to_string() const
     {
