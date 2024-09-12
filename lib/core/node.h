@@ -19,19 +19,17 @@ enum ConnectionState
 class Connection
 {
 public:
-    Connection() {}
+    Connection();
 
-    const int& get_current_message_number()
-    {
-        return msg_num;
-    }
+    const int &get_current_message_number();
 
-    int msg_num = 0;
-    ConnectionState state = ConnectionState::CLOSED;
+    int msg_num;
+    ConnectionState state;
 };
 
 class Node
 {
+private:
     std::string id;
     SocketAddress address;
     bool remote;
@@ -40,8 +38,8 @@ public:
     Node(std::string id, SocketAddress address, bool _remote);
     ~Node();
 
-    const std::string& get_id() const;
-    const SocketAddress& get_address() const;
+    const std::string &get_id() const;
+    const SocketAddress &get_address() const;
     bool is_remote() const;
 
     std::string to_string() const;
@@ -50,13 +48,4 @@ public:
 class connection_error : std::exception
 {
     std::string message;
-
-/*public:
-    connection_error() : message("") {}
-    connection_error(std::string msg) : message(msg) {}
-
-    virtual const char *what() const throw()
-{
-        return message.c_str();
-    }*/
 };

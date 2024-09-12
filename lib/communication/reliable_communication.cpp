@@ -1,7 +1,7 @@
 #include "communication/reliable_communication.h"
 
 ReliableCommunication::ReliableCommunication(std::string _local_id, std::size_t _user_buffer_size)
-    : user_buffer_size(_user_buffer_size), gr(_local_id)
+    : gr(_local_id), user_buffer_size(_user_buffer_size)
 {
     const Node &local_node = gr.get_local_node();
     channel = new Channel(local_node.get_address());
@@ -15,11 +15,18 @@ ReliableCommunication::~ReliableCommunication()
     delete pipeline;
 }
 
+const GroupRegistry &ReliableCommunication::get_group_registry()
+{
+    return gr;
+}
+
 void ReliableCommunication::send(std::string id, char *m)
 {
     Message message = {
         origin : gr.get_local_node().get_address(),
         destination : gr.get_node(id).get_address(),
+        type : MessageType::DATA, // TODO: Definir corretamente
+        data : {0},
         length : user_buffer_size
     };
     strncpy(message.data, m, user_buffer_size);

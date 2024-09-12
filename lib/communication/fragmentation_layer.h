@@ -9,14 +9,15 @@
 class FragmentationLayer : public PipelineStep
 {
 private:
-    std::map<std::string, FragmentAssembler*> assembler_map;
+    std::map<std::string, FragmentAssembler *> assembler_map;
 
 public:
-    FragmentationLayer(PipelineHandler& handler, GroupRegistry& gr);
+    FragmentationLayer(PipelineHandler &handler, GroupRegistry &gr);
+    ~FragmentationLayer() override;
 
     void service();
 
-    void send(char*m);
+    void send(char *m);
 
-    void receive(char*m);
+    void receive(char *m);
 };

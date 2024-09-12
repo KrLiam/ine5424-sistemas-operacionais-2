@@ -25,11 +25,13 @@ public:
     static const unsigned int FRAGMENTATION_LAYER = 1;
     static const unsigned int PROCESS_LAYER = 2;
 
-    PipelineStep(unsigned int number, PipelineHandler& handler, GroupRegistry& gr);
+    PipelineStep(unsigned int number, PipelineHandler &handler, GroupRegistry &gr);
 
-    virtual void service() {};
+    virtual ~PipelineStep();
 
-    virtual void send(char *m) {};
+    virtual void service() = 0;
 
-    virtual void receive(char *m) {};
+    virtual void send(char *m) = 0;
+
+    virtual void receive(char *m) = 0;
 };

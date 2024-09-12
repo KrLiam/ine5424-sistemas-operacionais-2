@@ -6,7 +6,8 @@
 class ProcessLayer : public PipelineStep
 {
 public:
-    ProcessLayer(PipelineHandler& handler, GroupRegistry& gr);
+    ProcessLayer(PipelineHandler &handler, GroupRegistry &gr);
+    ~ProcessLayer() override;
 
     void service();
 

@@ -1,6 +1,10 @@
 #include "communication/pipeline_step.h"
 
-PipelineStep::PipelineStep(unsigned int number, PipelineHandler& handler, GroupRegistry& gr) : number(number), handler(handler), gr(gr)
+PipelineStep::PipelineStep(unsigned int number, PipelineHandler &handler, GroupRegistry &gr) : number(number), handler(handler), gr(gr)
+{
+}
+
+PipelineStep::~PipelineStep()
 {
 }
 

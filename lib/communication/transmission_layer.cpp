@@ -20,9 +20,13 @@ static void run_sender_thread(TransmissionLayer *manager)
     log_info("Closing transmission layer sender thread.");
 }
 
-TransmissionLayer::TransmissionLayer(PipelineHandler& handler, GroupRegistry& gr, Channel *channel) : PipelineStep(PipelineStep::TRANSMISSION_LAYER, handler, gr), channel(channel)
+TransmissionLayer::TransmissionLayer(PipelineHandler &handler, GroupRegistry &gr, Channel *channel) : PipelineStep(PipelineStep::TRANSMISSION_LAYER, handler, gr), channel(channel)
 {
     service();
+}
+
+TransmissionLayer::~TransmissionLayer()
+{
 }
 
 void TransmissionLayer::service()
@@ -82,14 +86,16 @@ void TransmissionLayer::receive(char *m)
     Node origin = gr.get_node(packet.meta.origin);
     Connection *connection = gr.get_connection(origin.get_id());
 
-    uint32_t message_number = (uint32_t)packet.data.header.msg_num;
+    // TODO: Ver se pode ser int mesmo
+    int message_number = packet.data.header.msg_num;
     if (message_number != connection->get_current_message_number())
     {
         log_debug("Received message with number ", message_number, ", but expected ", connection->get_current_message_number(), ".");
         return;
     }
 
-    if (process_ack_of_received_packet(packet)) return;
+    if (process_ack_of_received_packet(packet))
+        return;
     forward_receive(m);
 }
 
@@ -110,12 +116,15 @@ bool TransmissionLayer::process_ack_of_received_packet(Packet packet)
 
     log_debug("Received a packet ", packet.to_string(), " that expects confirmation; sending ACK.");
     PacketData data;
-    data.header = {
+    data.header = { // TODO: Definir corretamente checksum, window, e reserved.
         msg_num : packet.data.header.msg_num,
         fragment_num : packet.data.header.fragment_num,
+        checksum : 0,
+        window : 0,
         type : packet.data.header.type,
         ack : 1,
-        more_fragments : 0
+        more_fragments : 0,
+        reserved : 0
     };
     PacketMetadata meta = {
         origin : gr.get_local_node().get_address(),

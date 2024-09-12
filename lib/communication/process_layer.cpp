@@ -1,10 +1,16 @@
 #include "communication/process_layer.h"
 
-ProcessLayer::ProcessLayer(PipelineHandler& handler, GroupRegistry& gr) : PipelineStep(PipelineStep::PROCESS_LAYER, handler, gr)
+ProcessLayer::ProcessLayer(PipelineHandler &handler, GroupRegistry &gr) : PipelineStep(PipelineStep::PROCESS_LAYER, handler, gr)
 {
 }
 
-void ProcessLayer::service() {}
+ProcessLayer::~ProcessLayer()
+{
+}
+
+void ProcessLayer::service()
+{
+}
 
 void ProcessLayer::send(char *m)
 {

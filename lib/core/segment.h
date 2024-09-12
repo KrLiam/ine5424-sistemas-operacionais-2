@@ -77,32 +77,4 @@ struct Message
     {
         return format("%s -> %s", origin.to_string().c_str(), destination.to_string().c_str());
     }
-
-/*
-    static Message from(SocketAddress origin, SocketAddress destination, const char* data, int length)
-    {
-        Message message = {
-            origin: origin,
-            destination: destination,
-            length: length
-        };
-
-        /*
-        int required_packets = length / Packet::MAX_DATA_SIZE;
-        Packet packets[required_packets];
-
-        for (int i = 0; i < required_packets; i++)
-        {
-            packets[i].header = {
-                fragment_num: i,
-                type: MessageType::DATA,
-                ack: 0,
-                more_fragments: i != required_packets - 1
-                };
-            packets[i].length = std::min(length - i*Packet::MAX_DATA_SIZE, Packet::MAX_DATA_SIZE);
-            strncpy(packets[i].data, &data[i*Packet::MAX_DATA_SIZE], packets[i].length);
-        }
-
-        return message;
-    }*/
 };
