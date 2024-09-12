@@ -4,6 +4,7 @@
 #include <map>
 
 #include "core/node.h"
+#include "core/segment.h"
 
 class GroupRegistry
 {
@@ -16,6 +17,8 @@ public:
     const std::map<std::string, Node> &get_nodes();
     const Node &get_local_node();
     Connection *get_connection(std::string id);
+
+    bool packet_originates_from_group(Packet packet);
 
 private:
     std::string local_id;

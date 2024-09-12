@@ -83,6 +83,12 @@ void TransmissionLayer::receive(char *m)
     memcpy(&packet, m, sizeof(Packet));
     log_debug("Packet [", packet.to_string(), "] received on transmission layer.");
 
+    if (!gr.packet_originates_from_group(packet))
+    {
+        log_debug("Ignoring packet ", packet.to_string(), ", as it did not originate from the group.");
+        return;
+    }
+
     Node origin = gr.get_node(packet.meta.origin);
     Connection *connection = gr.get_connection(origin.get_id());
 

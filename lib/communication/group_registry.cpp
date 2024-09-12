@@ -70,3 +70,15 @@ void GroupRegistry::establish_connections()
         connections.emplace(id, c);
     }
 }
+
+bool GroupRegistry::packet_originates_from_group(Packet packet)
+{
+    for (auto &[id, node] : nodes)
+    {
+        if (packet.meta.origin == node.get_address())
+        {
+            return true;
+        }
+    }
+    return false;
+}
