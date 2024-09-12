@@ -1,24 +1,34 @@
-CXX ?= g++
+
+LIB_NAME = communication
 
 # flags
+CXX ?= g++
 LOG_LEVEL = 0
 COMPILE_FLAGS = -std=c++20 -Wall -Wextra -g -DLOG_LEVEL=$(LOG_LEVEL)
 INCLUDES = -I include/ -I lib/ -I /usr/local/include
-LIBS =
 
 # caminhos
 SRC_PATH = lib
+TEST_PATH = test
 SRC_EXT = cpp
 BUILD_PATH = build
+BIN_PATH = $(BUILD_PATH)/bin
 LIB_PATH = $(BUILD_PATH)/lib
 
-# executavel
-LIB_NAME = libcommunication.a
+# arquivos de saída
+LIB_FILENAME = lib$(LIB_NAME).a
+TEST_BIN_FILENAME = program
 
 
-SOURCES = $(shell find $(SRC_PATH) -name '*.$(SRC_EXT)' | sort -k 1nr | cut -f2-)
-OBJECTS = $(SOURCES:$(SRC_PATH)/%.$(SRC_EXT)=$(BUILD_PATH)/%.o)
-DEPS = $(OBJECTS:.o=.d)
+LIB_SOURCES = $(shell find $(SRC_PATH) -name '*.$(SRC_EXT)' | sort -k 1nr | cut -f2-)
+LIB_OBJECTS = $(LIB_SOURCES:$(SRC_PATH)/%.$(SRC_EXT)=$(BUILD_PATH)/%.o)
+DEPS = $(LIB_OBJECTS:.o=.d)
+
+TEST_SOURCES = $(shell find $(TEST_PATH) -name '*.$(SRC_EXT)' | sort -k 1nr | cut -f2-)
+TEST_OBJECTS = $(TEST_SOURCES:$(TEST_PATH)/%.$(SRC_EXT)=$(BUILD_PATH)/test/%.o)
+TEST_DEPS = $(TEST_OBJECTS:.o=.d)
+
+
 
 .PHONY: default_target
 default_target: release
@@ -28,31 +38,63 @@ release: export CXXFLAGS := $(CXXFLAGS) $(COMPILE_FLAGS)
 release: dirs
 	@$(MAKE) all
 
+
+
 .PHONY: dirs
 dirs:
-	@mkdir -p $(dir $(OBJECTS))
+	@mkdir -p $(dir $(LIB_OBJECTS)) $(dir $(TEST_OBJECTS))
 	@mkdir -p $(LIB_PATH)
+	@mkdir -p $(BIN_PATH)
+
+
 
 .PHONY: clean
 clean:
-	@$(RM) $(LIB_NAME)
+	@$(RM) $(LIB_FILENAME)
+	@$(RM) $(TEST_BIN_FILENAME)
 	@$(RM) -r $(BUILD_PATH)
 	@$(RM) -r $(LIB_PATH)
 
+
+# make all
+#
+# Compila a biblioteca e gera um arquivo .a
 .PHONY: all
-all: $(LIB_PATH)/$(LIB_NAME)
-	@$(RM) $(LIB_NAME)
-	@ln -s $(LIB_PATH)/$(LIB_NAME) $(LIB_NAME)
-
-# Criando o executável
-# $(LIB_PATH)/$(LIB_NAME): $(OBJECTS)
-# 	$(CXX) $(OBJECTS) -o $@ ${LIBS}
-
-# Criar biblioteca estática
-$(LIB_PATH)/$(LIB_NAME): $(OBJECTS)
-	@ar rcs $(LIB_PATH)/$(LIB_NAME) $(OBJECTS)
+all: $(LIB_PATH)/$(LIB_FILENAME)
+	@$(RM) $(LIB_FILENAME)
+	@ln -s $(LIB_PATH)/$(LIB_FILENAME) $(LIB_FILENAME)
 
 -include $(DEPS)
 
 $(BUILD_PATH)/%.o: $(SRC_PATH)/%.$(SRC_EXT)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -MP -MMD -c $< -o $@
+
+# Criar biblioteca estática
+$(LIB_PATH)/$(LIB_FILENAME): $(LIB_OBJECTS)
+	ar rcs $(LIB_PATH)/$(LIB_FILENAME) $(LIB_OBJECTS)
+
+
+# make test
+#
+# Comando para compilar programa de testes. Irá compilar a biblioteca em conjunto.
+.PHONY: test
+test: export CXXFLAGS := $(CXXFLAGS) $(COMPILE_FLAGS)
+test: dirs $(BIN_PATH)/$(TEST_BIN_FILENAME)
+	@$(RM) $(TEST_BIN_FILENAME)
+	@ln -s $(BIN_PATH)/$(TEST_BIN_FILENAME) $(TEST_BIN_FILENAME)
+
+-include $(TEST_DEPS)
+
+$(BUILD_PATH)/test/%.o: $(TEST_PATH)/%.$(SRC_EXT)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -MP -MMD -c $< -o $@
+
+$(BIN_PATH)/$(TEST_BIN_FILENAME): $(LIB_PATH)/$(LIB_FILENAME) $(TEST_OBJECTS)
+	$(CXX) -o $@ $(TEST_OBJECTS) -L $(LIB_PATH) -l$(LIB_NAME)
+
+
+# make run args=...
+#
+# Comando para compilar programa de teste de automaticamente executá-lo
+.PHONY: run
+run: test
+	./$(TEST_BIN_FILENAME) $(args)
