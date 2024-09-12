@@ -1,7 +1,7 @@
 #include "communication/fragmentation_layer.h"
 
-FragmentationLayer::FragmentationLayer(PipelineHandler &handler, GroupRegistry &gr)
-    : PipelineStep(PipelineStep::FRAGMENTATION_LAYER, handler, gr)
+FragmentationLayer::FragmentationLayer(PipelineHandler handler, GroupRegistry &gr)
+    : PipelineStep(handler, gr)
 {
 }
 
@@ -54,7 +54,7 @@ void FragmentationLayer::send(char *m)
         log_debug("Forwarding packet ", packet.to_string(), " to next step.");
         char pkt[sizeof(Packet)];
         memcpy(pkt, &packet, sizeof(Packet));
-        forward_send(pkt);
+        handler.forward_send(pkt);
     }
 }
 
@@ -85,7 +85,7 @@ void FragmentationLayer::receive(char *m)
 
         char msg[sizeof(Message)];
         memcpy(msg, &message, sizeof(Message));
-        forward_receive(msg);
+        handler.forward_receive(msg);
         delete assembler;
         assembler_map.erase(origin.get_id());
     }

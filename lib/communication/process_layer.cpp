@@ -1,6 +1,6 @@
 #include "communication/process_layer.h"
 
-ProcessLayer::ProcessLayer(PipelineHandler &handler, GroupRegistry &gr) : PipelineStep(PipelineStep::PROCESS_LAYER, handler, gr)
+ProcessLayer::ProcessLayer(PipelineHandler handler, GroupRegistry &gr) : PipelineStep(handler, gr)
 {
 }
 
@@ -17,7 +17,7 @@ void ProcessLayer::send(char *m)
     Message message;
     memcpy(&message, m, sizeof(Message));
     log_debug("Message [", message.to_string(), "] sent to process layer.");
-    forward_send(m);
+    handler.forward_send(m);
 }
 
 void ProcessLayer::receive(char *m)

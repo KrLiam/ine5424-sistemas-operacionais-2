@@ -20,7 +20,7 @@ static void run_sender_thread(TransmissionLayer *manager)
     log_info("Closing transmission layer sender thread.");
 }
 
-TransmissionLayer::TransmissionLayer(PipelineHandler &handler, GroupRegistry &gr, Channel *channel) : PipelineStep(PipelineStep::TRANSMISSION_LAYER, handler, gr), channel(channel)
+TransmissionLayer::TransmissionLayer(PipelineHandler handler, GroupRegistry &gr, Channel *channel) : PipelineStep(handler, gr), channel(channel)
 {
     service();
 }
@@ -96,7 +96,7 @@ void TransmissionLayer::receive(char *m)
 
     if (process_ack_of_received_packet(packet))
         return;
-    forward_receive(m);
+    handler.forward_receive(m);
 }
 
 bool TransmissionLayer::process_ack_of_received_packet(Packet packet)

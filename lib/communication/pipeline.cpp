@@ -2,11 +2,11 @@
 
 Pipeline::Pipeline(GroupRegistry &gr, Channel *channel)
 {
-    PipelineHandler handler = PipelineHandler(*this);    
+    PipelineHandler handler = PipelineHandler(*this, -1);    
 
-    layers.push_back(new TransmissionLayer(handler, gr, channel));
-    layers.push_back(new FragmentationLayer(handler, gr));
-    layers.push_back(new ProcessLayer(handler, gr));
+    layers.push_back(new TransmissionLayer(handler.at_index(0), gr, channel));
+    layers.push_back(new FragmentationLayer(handler.at_index(1), gr));
+    layers.push_back(new ProcessLayer(handler.at_index(2), gr));
 }
 
 Pipeline::~Pipeline()
@@ -20,6 +20,12 @@ void Pipeline::send_to(unsigned int layer, char *m)
     if (layer >= layers.size())
         return;
     layers.at(layer)->send(m);
+}
+
+void Pipeline::send(char *m)
+{
+    int top_layer_index = layers.size() - 1;
+    return send_to(top_layer_index, m);
 }
 
 void Pipeline::receive_on(unsigned int layer, char *m)

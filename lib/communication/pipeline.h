@@ -20,13 +20,15 @@ class Pipeline
     Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> incoming_buffer{"incoming messages"};
 
     friend PipelineHandler;
+
+    void send_to(unsigned int layer, char *m);
+    void receive_on(unsigned int layer, char *m);
 public:
     Pipeline(GroupRegistry &gr, Channel *channel);
 
     ~Pipeline();
 
-    void send_to(unsigned int layer, char *m);
-    void receive_on(unsigned int layer, char *m);
+    void send(char* m);
 
     void forward_to_application(Message message);
     Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &get_incoming_buffer();

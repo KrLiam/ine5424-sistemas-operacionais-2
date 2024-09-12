@@ -1,18 +1,19 @@
 #include "pipeline_handler.h"
 #include "pipeline.h"
 
-PipelineHandler::PipelineHandler(Pipeline& pipeline) : pipeline(pipeline)
+PipelineHandler::PipelineHandler(Pipeline& pipeline, int step_index)
+    : pipeline(pipeline), step_index(step_index)
 {
 }
 
-void PipelineHandler::send_to(unsigned int layer_number, char *m)
+void PipelineHandler::forward_send(char *m)
 {
-    pipeline.send_to(layer_number, m);
+    pipeline.send_to(step_index - 1, m);
 }
 
-void PipelineHandler::receive_on(unsigned int layer_number, char *m)
+void PipelineHandler::forward_receive(char *m)
 {
-    pipeline.receive_on(layer_number, m);
+    pipeline.receive_on(step_index + 1, m);
 }
 
 void PipelineHandler::forward_to_application(Message message)

@@ -19,7 +19,7 @@ private:
     bool process_ack_of_received_packet(Packet packet);
 
 public:
-    TransmissionLayer(PipelineHandler &handler, GroupRegistry &gr, Channel *channel);
+    TransmissionLayer(PipelineHandler handler, GroupRegistry &gr, Channel *channel);
     ~TransmissionLayer() override;
 
     void service();
