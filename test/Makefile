@@ -3,18 +3,20 @@ CXX ?= g++
 # flags
 LOG_LEVEL = 0
 COMPILE_FLAGS = -std=c++20 -Wall -Wextra -g -DLOG_LEVEL=$(LOG_LEVEL)
-INCLUDES = -I include/ -I lib/ -I /usr/local/include
+INCLUDES = -I ../include/ -I ../lib/ -I src/ -I /usr/local/include
 LIBS =
 
 # caminhos
-SRC_PATH = lib
+SRC_PATH = src
 SRC_EXT = cpp
 BUILD_PATH = build
-LIB_PATH = $(BUILD_PATH)/lib
+BIN_PATH = $(BUILD_PATH)/bin
+
+LIB_NAME = communication
+LIB_PATH = ../lib$(LIB_NAME).a
 
 # executavel
-LIB_NAME = libcommunication.a
-
+BIN_NAME = program
 
 SOURCES = $(shell find $(SRC_PATH) -name '*.$(SRC_EXT)' | sort -k 1nr | cut -f2-)
 OBJECTS = $(SOURCES:$(SRC_PATH)/%.$(SRC_EXT)=$(BUILD_PATH)/%.o)
@@ -31,28 +33,28 @@ release: dirs
 .PHONY: dirs
 dirs:
 	@mkdir -p $(dir $(OBJECTS))
-	@mkdir -p $(LIB_PATH)
+	@mkdir -p $(BIN_PATH)
 
 .PHONY: clean
 clean:
-	@$(RM) $(LIB_NAME)
+	@$(RM) $(BIN_NAME)
 	@$(RM) -r $(BUILD_PATH)
-	@$(RM) -r $(LIB_PATH)
+	@$(RM) -r $(BIN_PATH)
+	@$(MAKE) -C ../ clean
 
 .PHONY: all
-all: $(LIB_PATH)/$(LIB_NAME)
-	@$(RM) $(LIB_NAME)
-	@ln -s $(LIB_PATH)/$(LIB_NAME) $(LIB_NAME)
+all: $(BIN_PATH)/$(BIN_NAME)
+	@$(RM) $(BIN_NAME)
+	@ln -s $(BIN_PATH)/$(BIN_NAME) $(BIN_NAME)
 
 # Criando o executável
-# $(LIB_PATH)/$(LIB_NAME): $(OBJECTS)
-# 	$(CXX) $(OBJECTS) -o $@ ${LIBS}
+$(BIN_PATH)/$(BIN_NAME): $(LIB_PATH) $(OBJECTS)
+	$(CXX) $(OBJECTS) -L../ -l${LIB_NAME} -o $@ ${LIBS}
 
-# Criar biblioteca estática
-$(LIB_PATH)/$(LIB_NAME): $(OBJECTS)
-	@ar rcs $(LIB_PATH)/$(LIB_NAME) $(OBJECTS)
-
--include $(DEPS)
-
+# compilar .cpp's
 $(BUILD_PATH)/%.o: $(SRC_PATH)/%.$(SRC_EXT)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -MP -MMD -c $< -o $@
+
+# compilar biblioteca
+$(LIB_PATH):
+	$(MAKE) -C ../
