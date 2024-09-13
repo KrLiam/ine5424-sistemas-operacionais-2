@@ -3,7 +3,7 @@
 static void run_receiver_thread(TransmissionLayer *manager)
 {
     log_info("Initialized transmission layer receiver thread.");
-    while (true)
+    while (!manager->stop_threads)
     {
         manager->receiver_thread();
     }
@@ -13,34 +13,44 @@ static void run_receiver_thread(TransmissionLayer *manager)
 static void run_sender_thread(TransmissionLayer *manager)
 {
     log_info("Initialized transmission layer sender thread.");
-    while (true)
+    while (!manager->stop_threads)
     {
         manager->sender_thread();
     }
     log_info("Closing transmission layer sender thread.");
 }
 
-TransmissionLayer::TransmissionLayer(PipelineHandler handler, GroupRegistry &gr, Channel *channel) : PipelineStep(handler, gr), channel(channel)
+TransmissionLayer::TransmissionLayer(PipelineHandler handler, GroupRegistry &gr, Channel *channel) : PipelineStep(handler, gr), channel(channel), stop_threads(false)
 {
     service();
 }
 
 TransmissionLayer::~TransmissionLayer()
 {
+    stop_threads = true;
+
+    if (listener_thread_obj.joinable())
+        listener_thread_obj.join();
+    if (sender_thread_obj.joinable())
+        sender_thread_obj.join();
+
+    for (auto [id, queue] : queue_map)
+        delete queue;
 }
 
 void TransmissionLayer::service()
 {
-    std::thread listener_thread_obj(run_receiver_thread, this);
-    listener_thread_obj.detach();
-    std::thread sender_thread_obj(run_sender_thread, this);
-    sender_thread_obj.detach();
+    listener_thread_obj = std::thread(run_receiver_thread, this);
+    sender_thread_obj = std::thread(run_sender_thread, this);
 }
 
 void TransmissionLayer::receiver_thread()
 {
     Packet packet = channel->receive();
-    receive(&packet.as_bytes()[0]);
+    if (packet != Packet{})
+    {
+        receive(&packet.as_bytes()[0]);
+    }
 }
 
 void TransmissionLayer::sender_thread()

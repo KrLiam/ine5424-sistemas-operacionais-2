@@ -39,6 +39,7 @@ void Channel::open_socket()
 
 void Channel::close_socket()
 {
+    shutdown(socket_descriptor, SHUT_RDWR);
     close(socket_descriptor);
     log_debug("Closed channel");
 }
@@ -70,14 +71,17 @@ Packet Channel::receive()
     socklen_t in_address_len = sizeof(in_address);
 
     log_debug("Waiting to receive data.");
-    std::size_t bytes_received = recvfrom(
+    int bytes_received = recvfrom(
         socket_descriptor,
         (char *)&packet.data,
         sizeof(PacketData),
         0,
         (struct sockaddr *)&in_address,
         &in_address_len);
-    
+
+    if (bytes_received <= 0 || errno != 0)
+        return Packet{};
+
     SocketAddress origin = SocketAddress::from(in_address);
     log_debug("Received ", bytes_received, " bytes from ", origin.address.to_string(), ":", origin.port, ".");
 

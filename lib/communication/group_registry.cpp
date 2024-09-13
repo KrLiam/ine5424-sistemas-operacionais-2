@@ -8,8 +8,8 @@ GroupRegistry::GroupRegistry(std::string local_id) : local_id(local_id)
 
 GroupRegistry::~GroupRegistry()
 {
-    for (auto [id, connection] : connections)
-        delete connection;
+    // for (auto [id, connection] : connections)
+    //     delete connection;
 }
 
 const Node &GroupRegistry::get_node(std::string id)
