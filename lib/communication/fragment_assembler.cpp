@@ -29,6 +29,7 @@ void FragmentAssembler::add_packet(Packet packet)
     strncpy(&message.data[pos_in_msg], packet.data.message_data, len);
     bytes_received += len;
 
+    message.type = static_cast<MessageType>(packet.data.header.type);
     message.origin = packet.meta.origin;
     message.destination = packet.meta.destination;
 
