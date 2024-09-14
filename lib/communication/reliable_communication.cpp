@@ -11,8 +11,8 @@ ReliableCommunication::ReliableCommunication(std::string _local_id, std::size_t 
 
 ReliableCommunication::~ReliableCommunication()
 {
-    delete channel;
     delete pipeline;
+    delete channel;
 }
 
 const GroupRegistry &ReliableCommunication::get_group_registry()

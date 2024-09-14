@@ -20,6 +20,7 @@ public:
     void send(Packet packet);
     Packet receive();
 
+    void shutdown_socket();
 private:
     SocketAddress address;
     Packet buffer;

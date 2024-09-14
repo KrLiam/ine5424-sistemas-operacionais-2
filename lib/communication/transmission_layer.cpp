@@ -28,6 +28,7 @@ TransmissionLayer::TransmissionLayer(PipelineHandler handler, GroupRegistry &gr,
 TransmissionLayer::~TransmissionLayer()
 {
     stop_threads = true;
+    channel->shutdown_socket();
 
     if (listener_thread_obj.joinable())
         listener_thread_obj.join();

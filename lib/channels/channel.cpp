@@ -39,9 +39,13 @@ void Channel::open_socket()
 
 void Channel::close_socket()
 {
-    shutdown(socket_descriptor, SHUT_RDWR);
     close(socket_descriptor);
     log_debug("Closed channel");
+}
+
+void Channel::shutdown_socket()
+{
+    shutdown(socket_descriptor, SHUT_RDWR);
 }
 
 void Channel::send(Packet packet)
