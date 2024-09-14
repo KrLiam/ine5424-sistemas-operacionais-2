@@ -9,14 +9,14 @@
 
 struct PacketHeader
 {
-    int msg_num : 32;
-    int fragment_num : 32;
-    int checksum : 16;
-    int window : 16;
-    int type : 4;
-    int ack: 1;
-    int more_fragments : 1;
-    int reserved : 11;
+    unsigned int msg_num : 32;
+    unsigned int fragment_num : 32;
+    unsigned int checksum : 16;
+    unsigned int window : 16;
+    unsigned int type : 4;
+    unsigned int ack: 1;
+    unsigned int more_fragments : 1;
+    unsigned int reserved : 11;
 };
 
 struct PacketData

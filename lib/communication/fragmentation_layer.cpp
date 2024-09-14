@@ -19,11 +19,12 @@ void FragmentationLayer::send(char *m)
     log_debug("Message [", message.to_string(), "] sent to fragmentation layer.");
 
     Node destination = gr->get_node(message.destination);
-    Connection connection = gr->get_connection(destination.get_id());
+    Connection& connection = gr->get_connection(destination.get_id());
 
-    int required_packets = ceil((double)message.length / PacketData::MAX_MESSAGE_SIZE);
+    uint32_t required_packets = ceil((double)message.length / PacketData::MAX_MESSAGE_SIZE);
     log_debug("Message [", message.to_string(), "] length is ", message.length, "; will fragment into ", required_packets, " packets.");
-    for (int i = 0; i < required_packets; i++)
+    // Mutex para não ter duas threads usando o mesmo msg_num simultaneamente
+    for (uint32_t i = 0; i < required_packets; i++)
     {
         PacketMetadata meta = {
             origin : gr->get_local_node().get_address(),
@@ -34,7 +35,7 @@ void FragmentationLayer::send(char *m)
         PacketData data;
         bool more_fragments = i != required_packets - 1;
         data.header = { // TODO: Definir checksum, window e reserved corretamente
-            msg_num : connection.get_current_message_number(),
+            msg_num : connection.get_next_message_number(),
             fragment_num : i,
             checksum : 0,
             window : 0,
@@ -53,6 +54,7 @@ void FragmentationLayer::send(char *m)
         log_debug("Forwarding packet ", packet.to_string(), " to next step.");
         handler.forward_send(&packet.as_bytes()[0]);
     }
+    connection.increment_next_message_number();
 }
 
 void FragmentationLayer::receive(char *m)
@@ -78,7 +80,12 @@ void FragmentationLayer::receive(char *m)
     {
         log_debug("Received all fragments; forwarding message to next step.");
         Message message = assembler.assemble();
-        handler.forward_receive(&message.as_bytes()[0]);
         assembler_map.erase(origin.get_id());
+
+        Node destination = gr->get_node(packet.meta.destination);
+        Connection& connection = gr->get_connection(origin.get_id());
+        connection.increment_expected_message_number();
+
+        handler.forward_receive(&message.as_bytes()[0]);
     }
 }

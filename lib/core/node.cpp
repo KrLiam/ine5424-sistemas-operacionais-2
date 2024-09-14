@@ -1,12 +1,7 @@
 #include "core/node.h"
 
-Connection::Connection() : msg_num(0), state(ConnectionState::CLOSED)
+Connection::Connection()
 {
-}
-
-const int &Connection::get_current_message_number()
-{
-    return msg_num;
 }
 
 Node::Node(std::string id, SocketAddress address, bool remote)

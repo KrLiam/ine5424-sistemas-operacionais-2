@@ -96,6 +96,20 @@ void TransmissionLayer::receive(char *m)
         return;
     }
 
+    if (process_ack_field_of_received_packet(packet))
+        return;
+
+    Node origin = gr->get_node(packet.meta.origin);
+    Connection connection = gr->get_connection(origin.get_id());
+
+    // TODO: Ver se pode ser int mesmo
+    uint32_t message_number = packet.data.header.msg_num;
+    if (message_number != connection.get_expected_message_number())
+    {
+        log_debug("Received message with number ", message_number, ", but expected ", connection.get_expected_message_number(), ".");
+        return;
+    }
+
     uint8_t type = (uint8_t)packet.data.header.type;
     if (type == MessageType::DATA && !handler.can_forward_to_application())
     {
@@ -103,25 +117,13 @@ void TransmissionLayer::receive(char *m)
         return;
     }
 
-    Node origin = gr->get_node(packet.meta.origin);
-    Connection connection = gr->get_connection(origin.get_id());
-
-    // TODO: Ver se pode ser int mesmo
-    int message_number = packet.data.header.msg_num;
-    if (message_number != connection.get_current_message_number())
-    {
-        log_debug("Received message with number ", message_number, ", but expected ", connection.get_current_message_number(), ".");
-        return;
-    }
-
-    if (process_ack_field_of_received_packet(packet))
-        return;
     handler.forward_receive(m);
 }
 
 bool TransmissionLayer::process_ack_field_of_received_packet(Packet packet)
 {
     Node origin = gr->get_node(packet.meta.origin);
+    Connection connection = gr->get_connection(origin.get_id()); // melhorar pra n precisar pegar o ndo toda vez q quer pegar a conexao
 
     bool is_ack = packet.data.header.ack;
     if (is_ack)
@@ -132,6 +134,13 @@ bool TransmissionLayer::process_ack_field_of_received_packet(Packet packet)
             queue_map.at(origin.get_id())->mark_packet_as_acked(packet);
         }
         return true;
+    }
+
+    uint32_t message_number = packet.data.header.msg_num;
+    if (message_number > connection.get_expected_message_number())
+    {
+        log_debug("Received a packet ", packet.to_string(), " that expects confirmation, but message number ", message_number ," is higher than the expected ", connection.get_expected_message_number(), ".");
+        return false;
     }
 
     log_debug("Received a packet ", packet.to_string(), " that expects confirmation; sending ACK.");
