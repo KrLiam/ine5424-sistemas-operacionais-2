@@ -50,6 +50,8 @@ void Channel::shutdown_socket()
 
 void Channel::send(Packet packet)
 {
+    const PacketHeader& header = packet.data.header;
+
     SocketAddress destination = packet.meta.destination;
     out_address.sin_port = htons(destination.port);
     out_address.sin_addr.s_addr = inet_addr(destination.address.to_string().c_str());
@@ -57,7 +59,7 @@ void Channel::send(Packet packet)
     int bytes_sent = sendto(
         socket_descriptor,
         (char *)&packet.data,
-        packet.meta.message_length + sizeof(packet.data.header),
+        packet.meta.message_length + sizeof(header),
         0,
         (struct sockaddr *)&out_address,
         sizeof(out_address));
@@ -66,7 +68,7 @@ void Channel::send(Packet packet)
         log_warn("Unable to send message to ", destination.to_string(), ".");
         return;
     }
-    log_info("Sent ", bytes_sent, " bytes to ", destination.to_string(), ".");
+    log_info("Sent packet ", header.msg_num, "/", header.fragment_num, " (", bytes_sent, " bytes) to ", destination.to_string(), ".");
 }
 
 Packet Channel::receive()
@@ -87,7 +89,9 @@ Packet Channel::receive()
         return Packet{};
 
     SocketAddress origin = SocketAddress::from(in_address);
-    log_debug("Received ", bytes_received, " bytes from ", origin.address.to_string(), ":", origin.port, ".");
+
+    const PacketHeader& header = packet.data.header;
+    log_info("Received packet ", header.msg_num, "/", header.fragment_num, " (", bytes_received, " bytes) from ", origin.to_string(), ".");
 
     packet.meta.origin = origin;
     packet.meta.destination = address;
