@@ -3,7 +3,6 @@
 #include <iomanip>
 #include <iostream>
 #include <mutex>
-#include <utility>
 
 #include "utils/format.h"
 
@@ -46,7 +45,11 @@ public:
         log_mutex.lock();
         auto t = std::time(nullptr);
         auto tm = *std::localtime(&t);
-        (std::cout << std::put_time(&tm, "%H:%M:%S ") << format("%s [%s:%i]: ", level, file, line) << ... << args) << std::endl;
+
+        std::ostringstream oss;
+        (oss << std::put_time(&tm, "%H:%M:%S ") << format("%s [%s:%i]: ", level, file, line) << ... << args) << std::endl;
+        std::cout << oss.str();
+
         log_mutex.unlock();
     }
 };
