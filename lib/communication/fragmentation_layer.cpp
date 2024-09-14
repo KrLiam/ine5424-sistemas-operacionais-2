@@ -63,23 +63,22 @@ void FragmentationLayer::receive(char *m)
     Node origin = gr.get_node(packet.meta.origin);
     if (!assembler_map.contains(origin.get_id()))
     {
-        assembler_map.emplace(origin.get_id(), new FragmentAssembler());
+        assembler_map.emplace(origin.get_id(), FragmentAssembler());
     }
-    FragmentAssembler *assembler = assembler_map.at(origin.get_id());
+    FragmentAssembler& assembler = assembler_map.at(origin.get_id());
 
-    if (assembler->has_received(packet))
+    if (assembler.has_received(packet))
     {
         log_debug("Ignoring packet ", packet.to_string(), ", as it was already received.");
         return;
     }
-    assembler->add_packet(packet);
+    assembler.add_packet(packet);
 
-    if (assembler->has_received_all_packets())
+    if (assembler.has_received_all_packets())
     {
         log_debug("Received all fragments; forwarding message to next step.");
-        Message message = assembler->assemble();
+        Message message = assembler.assemble();
         handler.forward_receive(&message.as_bytes()[0]);
-        delete assembler;
         assembler_map.erase(origin.get_id());
     }
 }
