@@ -92,9 +92,10 @@ $(BIN_PATH)/$(TEST_BIN_FILENAME): $(LIB_PATH)/$(LIB_FILENAME) $(TEST_OBJECTS)
 	$(CXX) -o $@ $(TEST_OBJECTS) -L $(LIB_PATH) -l$(LIB_NAME)
 
 
-# make run args=...
+# make run id=...
 #
 # Comando para compilar programa de teste de automaticamente executá-lo
 .PHONY: run
-run: test
-	./$(TEST_BIN_FILENAME) $(args)
+run: export CXXFLAGS := $(CXXFLAGS) $(COMPILE_FLAGS)
+run: dirs $(BIN_PATH)/$(TEST_BIN_FILENAME)
+	./$(BIN_PATH)/$(TEST_BIN_FILENAME) $(id)
