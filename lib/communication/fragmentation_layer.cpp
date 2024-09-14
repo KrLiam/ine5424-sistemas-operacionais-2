@@ -1,6 +1,6 @@
 #include "communication/fragmentation_layer.h"
 
-FragmentationLayer::FragmentationLayer(PipelineHandler handler, GroupRegistry &gr)
+FragmentationLayer::FragmentationLayer(PipelineHandler handler, GroupRegistry *gr)
     : PipelineStep(handler, gr)
 {
 }
@@ -18,15 +18,15 @@ void FragmentationLayer::send(char *m)
     Message message = Message::from(m);
     log_debug("Message [", message.to_string(), "] sent to fragmentation layer.");
 
-    Node destination = gr.get_node(message.destination);
-    Connection *connection = gr.get_connection(destination.get_id());
+    Node destination = gr->get_node(message.destination);
+    Connection *connection = gr->get_connection(destination.get_id());
 
     int required_packets = ceil((double)message.length / PacketData::MAX_MESSAGE_SIZE);
     log_debug("Message [", message.to_string(), "] length is ", message.length, "; will fragment into ", required_packets, " packets.");
     for (int i = 0; i < required_packets; i++)
     {
         PacketMetadata meta = {
-            origin : gr.get_local_node().get_address(),
+            origin : gr->get_local_node().get_address(),
             destination : destination.get_address(),
             time : 0,
             message_length : static_cast<int>(message.length),
@@ -60,7 +60,7 @@ void FragmentationLayer::receive(char *m)
     Packet packet = Packet::from(m);
     log_debug("Packet [", packet.to_string(), "] received on fragmentation layer.");
 
-    Node origin = gr.get_node(packet.meta.origin);
+    Node origin = gr->get_node(packet.meta.origin);
     if (!assembler_map.contains(origin.get_id()))
     {
         assembler_map.emplace(origin.get_id(), FragmentAssembler());

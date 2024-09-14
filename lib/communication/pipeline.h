@@ -24,7 +24,7 @@ class Pipeline
     void send_to(unsigned int layer, char *m);
     void receive_on(unsigned int layer, char *m);
 public:
-    Pipeline(GroupRegistry &gr, Channel *channel);
+    Pipeline(GroupRegistry *gr, Channel *channel);
 
     ~Pipeline();
 

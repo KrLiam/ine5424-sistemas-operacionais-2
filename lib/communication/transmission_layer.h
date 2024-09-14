@@ -25,7 +25,7 @@ private:
 
 public:
     std::atomic<bool> stop_threads; // TODO
-    TransmissionLayer(PipelineHandler handler, GroupRegistry &gr, Channel *channel);
+    TransmissionLayer(PipelineHandler handler, GroupRegistry *gr, Channel *channel);
     ~TransmissionLayer() override;
 
     void service();

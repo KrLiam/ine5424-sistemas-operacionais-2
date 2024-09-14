@@ -1,6 +1,6 @@
 #include "communication/process_layer.h"
 
-ProcessLayer::ProcessLayer(PipelineHandler handler, GroupRegistry &gr) : PipelineStep(handler, gr)
+ProcessLayer::ProcessLayer(PipelineHandler handler, GroupRegistry *gr) : PipelineStep(handler, gr)
 {
 }
 

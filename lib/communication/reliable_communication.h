@@ -26,13 +26,13 @@ public:
     void send(std::string id, char *m);
     Message receive(char *m);
 
-    const GroupRegistry &get_group_registry();
+    GroupRegistry *get_group_registry();
 
 private:
     Channel *channel;
 
     Pipeline *pipeline;
-    GroupRegistry gr;
+    GroupRegistry *gr;
 
     std::size_t user_buffer_size;
 };

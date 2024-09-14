@@ -12,7 +12,7 @@ private:
     std::map<std::string, FragmentAssembler> assembler_map;
 
 public:
-    FragmentationLayer(PipelineHandler handler, GroupRegistry &gr);
+    FragmentationLayer(PipelineHandler handler, GroupRegistry *gr);
     ~FragmentationLayer() override;
 
     void service();

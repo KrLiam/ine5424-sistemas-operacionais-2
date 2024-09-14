@@ -13,9 +13,9 @@ class PipelineStep
 {
 protected:
     PipelineHandler handler;
-    GroupRegistry gr;
+    GroupRegistry *gr;
 public:
-    PipelineStep(PipelineHandler &handler, GroupRegistry &gr);
+    PipelineStep(PipelineHandler &handler, GroupRegistry *gr);
 
     virtual ~PipelineStep();
 

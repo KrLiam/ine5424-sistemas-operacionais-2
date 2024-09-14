@@ -1,6 +1,6 @@
 #include "pipeline.h"
 
-Pipeline::Pipeline(GroupRegistry &gr, Channel *channel)
+Pipeline::Pipeline(GroupRegistry *gr, Channel *channel)
 {
     PipelineHandler handler = PipelineHandler(*this, -1);    
 

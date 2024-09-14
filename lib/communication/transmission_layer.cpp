@@ -20,7 +20,7 @@ static void run_sender_thread(TransmissionLayer *manager)
     log_info("Closing transmission layer sender thread.");
 }
 
-TransmissionLayer::TransmissionLayer(PipelineHandler handler, GroupRegistry &gr, Channel *channel) : PipelineStep(handler, gr), channel(channel), stop_threads(false)
+TransmissionLayer::TransmissionLayer(PipelineHandler handler, GroupRegistry *gr, Channel *channel) : PipelineStep(handler, gr), channel(channel), stop_threads(false)
 {
     service();
 }
@@ -76,7 +76,7 @@ void TransmissionLayer::send(char *m)
     log_debug("Packet [", packet.to_string(), "] sent to transmission layer.");
     // tinha pensado em fazer o send daqui aguardar sincronamente, mas aí ele poderia travar a receiver_thread
     // TODO:
-    Node destination = gr.get_node(packet.meta.destination);
+    Node destination = gr->get_node(packet.meta.destination);
     if (!queue_map.contains(destination.get_id()))
     {
         queue_map.emplace(destination.get_id(), new TransmissionQueue());
@@ -90,7 +90,7 @@ void TransmissionLayer::receive(char *m)
     Packet packet = Packet::from(m);
     log_debug("Packet [", packet.to_string(), "] received on transmission layer.");
 
-    if (!gr.packet_originates_from_group(packet))
+    if (!gr->packet_originates_from_group(packet))
     {
         log_debug("Ignoring packet ", packet.to_string(), ", as it did not originate from the group.");
         return;
@@ -103,8 +103,8 @@ void TransmissionLayer::receive(char *m)
         return;
     }
 
-    Node origin = gr.get_node(packet.meta.origin);
-    Connection *connection = gr.get_connection(origin.get_id());
+    Node origin = gr->get_node(packet.meta.origin);
+    Connection *connection = gr->get_connection(origin.get_id());
 
     // TODO: Ver se pode ser int mesmo
     int message_number = packet.data.header.msg_num;
@@ -121,7 +121,7 @@ void TransmissionLayer::receive(char *m)
 
 bool TransmissionLayer::process_ack_field_of_received_packet(Packet packet)
 {
-    Node origin = gr.get_node(packet.meta.origin);
+    Node origin = gr->get_node(packet.meta.origin);
 
     bool is_ack = packet.data.header.ack;
     if (is_ack)
@@ -154,8 +154,8 @@ Packet TransmissionLayer::create_ack_packet(Packet packet)
                    reserved : 0
     };
     PacketMetadata meta = {
-        origin : gr.get_local_node().get_address(),
-        destination : gr.get_node(packet.meta.origin).get_address(),
+        origin : gr->get_local_node().get_address(),
+        destination : gr->get_node(packet.meta.origin).get_address(),
         time : 0,
         message_length : 0
     };
