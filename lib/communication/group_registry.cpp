@@ -8,8 +8,6 @@ GroupRegistry::GroupRegistry(std::string local_id) : local_id(local_id)
 
 GroupRegistry::~GroupRegistry()
 {
-    for (auto [id, connection] : connections)
-        delete connection;
 }
 
 const Node &GroupRegistry::get_node(std::string id)
@@ -44,7 +42,7 @@ const Node &GroupRegistry::get_local_node()
     return get_node(local_id);
 }
 
-Connection *GroupRegistry::get_connection(std::string id)
+Connection &GroupRegistry::get_connection(std::string id)
 {
     return connections.at(id);
 }
@@ -66,8 +64,7 @@ void GroupRegistry::establish_connections()
     // TODO: implementar handshake e fazer as conexões serem dinamicas
     for (auto &[id, node] : nodes)
     {
-        Connection *c = new Connection();
-        connections.emplace(id, c);
+        connections.emplace(id, Connection());
     }
 }
 

@@ -19,7 +19,7 @@ void FragmentationLayer::send(char *m)
     log_debug("Message [", message.to_string(), "] sent to fragmentation layer.");
 
     Node destination = gr->get_node(message.destination);
-    Connection *connection = gr->get_connection(destination.get_id());
+    Connection connection = gr->get_connection(destination.get_id());
 
     int required_packets = ceil((double)message.length / PacketData::MAX_MESSAGE_SIZE);
     log_debug("Message [", message.to_string(), "] length is ", message.length, "; will fragment into ", required_packets, " packets.");
@@ -34,7 +34,7 @@ void FragmentationLayer::send(char *m)
         PacketData data;
         bool more_fragments = i != required_packets - 1;
         data.header = { // TODO: Definir checksum, window e reserved corretamente
-            msg_num : connection->get_current_message_number(),
+            msg_num : connection.get_current_message_number(),
             fragment_num : i,
             checksum : 0,
             window : 0,

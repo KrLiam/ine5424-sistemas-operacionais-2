@@ -104,13 +104,13 @@ void TransmissionLayer::receive(char *m)
     }
 
     Node origin = gr->get_node(packet.meta.origin);
-    Connection *connection = gr->get_connection(origin.get_id());
+    Connection connection = gr->get_connection(origin.get_id());
 
     // TODO: Ver se pode ser int mesmo
     int message_number = packet.data.header.msg_num;
-    if (message_number != connection->get_current_message_number())
+    if (message_number != connection.get_current_message_number())
     {
-        log_debug("Received message with number ", message_number, ", but expected ", connection->get_current_message_number(), ".");
+        log_debug("Received message with number ", message_number, ", but expected ", connection.get_current_message_number(), ".");
         return;
     }
 
