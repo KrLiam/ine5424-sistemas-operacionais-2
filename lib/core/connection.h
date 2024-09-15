@@ -20,7 +20,9 @@ enum ConnectionState
     CLOSED = 0,
     SYN_SENT = 1,
     SYN_RECEIVED = 2,
-    ESTABLISHED = 3
+    ESTABLISHED = 3,
+    FIN_WAIT = 4,
+    LAST_ACK = 5
 };
 
 class Connection
@@ -30,8 +32,9 @@ class Connection
     Node local_node;
     Node remote_node;
 
-    uint32_t expected_message_number = 0;
-    uint32_t next_message_number = 0;
+    uint32_t remote_expected_message_number = 0;
+    uint32_t local_unacknowlodged_message_number = 0;
+    uint32_t local_next_message_number = 0;
 
     ConnectionState state = ConnectionState::CLOSED;
     std::condition_variable state_change;
@@ -90,7 +93,7 @@ public:
             return true;
 
         change_state(ConnectionState::SYN_SENT);
-        next_message_number = 0;
+        local_next_message_number = 0;
         Packet p = empty_packet();
         p.data.header.syn = 1; // Dá pra simplificar essa parte
         log_debug("establish: Sending SYN.");
@@ -108,7 +111,7 @@ public:
     {
         PacketHeader header;
         memset(&header, 0, sizeof(PacketHeader));
-        header.msg_num = next_message_number;
+        header.msg_num = local_next_message_number;
 
         PacketData data;
         memset(&data, 0, sizeof(PacketData));
@@ -120,8 +123,8 @@ public:
         packet.meta.destination = remote_node.get_address();
         packet.data = data;
 
-        expected_message_number = next_message_number + 1;
-        next_message_number = expected_message_number + 1;
+        // remote_expected_message_number++;
+        // local_next_message_number++;
 
         return packet;
     }
@@ -131,7 +134,7 @@ public:
         if (p.data.header.is_syn() && !p.data.header.is_ack())
         {
             log_debug("closed: received SYN; sending SYN+ACK.");
-            next_message_number = 1;
+            // local_next_message_number = 1;
             change_state(ConnectionState::SYN_RECEIVED);
             Packet p = empty_packet();
             p.data.header.syn = 1;
@@ -146,16 +149,21 @@ public:
         {
             if (p.data.header.is_ack())
             {
+                // remote_expected_message_number = p.data.header.get_message_number() + 1;
                 log_debug("syn_sent: received SYN+ACK; sending ACK.");
                 change_state(ConnectionState::ESTABLISHED);
                 Packet p = empty_packet();
                 p.data.header.ack = 1;
+                remote_expected_message_number = 1;
+                local_next_message_number = 1;
+                local_unacknowlodged_message_number = 1;
+                log_debug("Connection established; our current sequence number is ", local_next_message_number, ", and we expect to receive ", remote_expected_message_number, " from the remote.");
                 send(p);
                 return;
             }
             log_debug("syn_sent: received SYN from simultaneous connection; transitioning to syn_received and sending SYN+ACK.");
-            change_state(ConnectionState::SYN_RECEIVED);
             Packet p = empty_packet();
+            change_state(ConnectionState::SYN_RECEIVED);
             p.data.header.syn = 1;
             p.data.header.ack = 1;
             send(p);
@@ -168,15 +176,6 @@ public:
 
     void syn_received(Packet p)
     {
-        /*if (p.data.header.is_syn())
-        {
-            log_debug("syn_received: received SYN; closing.");
-            Packet p = empty_packet();
-            p.data.header.rst = 1;
-            change_state(ConnectionState::CLOSED);
-            return;
-        }*/
-
         if (p.data.header.is_rst())
         {
             log_debug("syn_received: received RST; closing.");
@@ -186,8 +185,20 @@ public:
 
         if (p.data.header.is_ack())
         {
-            log_debug("syn_received: received ACK; connection established.");
+            remote_expected_message_number = 1;
+            local_next_message_number = 1;
+            local_unacknowlodged_message_number = 1;
+            log_debug("syn_received: received ACK, connection established; our current sequence number is ", local_next_message_number, ", and we expect to receive ", remote_expected_message_number, " from the remote.");
             change_state(ConnectionState::ESTABLISHED);
+            return;
+        }
+
+        log_debug("syn_received: received SYN; closing.");
+        if (p.data.header.is_syn())
+        {
+            Packet p = empty_packet();
+            p.data.header.rst = 1;
+            change_state(ConnectionState::CLOSED);
         }
     }
 
@@ -199,7 +210,6 @@ public:
             change_state(ConnectionState::CLOSED);
             return;
         }
-
         if (p.data.header.is_syn())
         {
             log_debug("established: received SYN; closing and sending RST.");
@@ -214,19 +224,19 @@ public:
 
     const uint32_t &get_next_message_number()
     {
-        return next_message_number;
+        return local_next_message_number;
     }
     void increment_next_message_number()
     {
-        next_message_number++;
+        local_next_message_number++;
     }
 
     const uint32_t &get_expected_message_number()
     {
-        return expected_message_number;
+        return remote_expected_message_number;
     }
     void increment_expected_message_number()
     {
-        expected_message_number++;
+        remote_expected_message_number++;
     }
 };
