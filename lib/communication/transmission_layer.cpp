@@ -50,7 +50,7 @@ void TransmissionLayer::receiver_thread()
     Packet packet = channel->receive();
     if (packet != Packet{})
     {
-        receive(&packet.as_bytes()[0]);
+        receive(packet);
     }
 }
 
@@ -70,9 +70,8 @@ void TransmissionLayer::sender_thread()
     }
 }
 
-void TransmissionLayer::send(char *m)
+void TransmissionLayer::send(Packet packet)
 {
-    Packet packet = Packet::from(m);
     log_debug("Packet [", packet.to_string(), "] sent to transmission layer.");
     // tinha pensado em fazer o send daqui aguardar sincronamente, mas aí ele poderia travar a receiver_thread
     // TODO:
@@ -85,9 +84,8 @@ void TransmissionLayer::send(char *m)
     // esse aqui cospe no buffer da sender_thread
 }
 
-void TransmissionLayer::receive(char *m)
+void TransmissionLayer::receive(Packet packet)
 {
-    Packet packet = Packet::from(m);
     log_debug("Packet [", packet.to_string(), "] received on transmission layer.");
 
     if (!gr->packet_originates_from_group(packet))
@@ -117,7 +115,7 @@ void TransmissionLayer::receive(char *m)
         return;
     }
 
-    handler.forward_receive(m);
+    handler.forward_receive(packet);
 }
 
 bool TransmissionLayer::process_ack_field_of_received_packet(Packet packet)
@@ -145,7 +143,7 @@ bool TransmissionLayer::process_ack_field_of_received_packet(Packet packet)
 
     log_debug("Received a packet ", packet.to_string(), " that expects confirmation; sending ACK.");
     Packet ack_packet = create_ack_packet(packet);
-    send(&ack_packet.as_bytes()[0]);
+    send(ack_packet);
     return false;
 }
 

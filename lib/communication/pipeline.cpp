@@ -15,25 +15,41 @@ Pipeline::~Pipeline()
         delete layer;
 }
 
-void Pipeline::send_to(unsigned int layer, char *m)
-{
-    if (layer >= layers.size())
-        return;
-    layers.at(layer)->send(m);
+
+PipelineStep* Pipeline::get_step(int step_index) {
+    int total_layers = layers.size();
+
+    if (step_index >= total_layers) {
+        return nullptr;
+    }
+    
+    return layers.at(step_index);
 }
 
-void Pipeline::send(char *m)
-{
-    int top_layer_index = layers.size() - 1;
-    return send_to(top_layer_index, m);
+void Pipeline::send(Message message) {
+    send(message, layers.size() - 1);
+}
+void Pipeline::send(Message message, int step_index) {
+    PipelineStep* step = get_step(step_index);
+    if (step) step->send(message);
+}
+void Pipeline::send(Packet packet, int step_index) {
+    PipelineStep* step = get_step(step_index);
+    if (step) step->send(packet);
+
 }
 
-void Pipeline::receive_on(unsigned int layer, char *m)
-{
-    if (layer >= layers.size())
-        return;
-    layers.at(layer)->receive(m);
+void Pipeline::receive(Message message, int step_index) {
+    PipelineStep* step = get_step(step_index);
+    if (step) step->receive(message);
+
 }
+void Pipeline::receive(Packet packet, int step_index) {
+    PipelineStep* step = get_step(step_index);
+    if (step) step->receive(packet);
+
+}
+
 
 bool Pipeline::can_forward_to_application()
 {

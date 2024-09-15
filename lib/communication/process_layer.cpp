@@ -12,16 +12,14 @@ void ProcessLayer::service()
 {
 }
 
-void ProcessLayer::send(char *m)
+void ProcessLayer::send(Message message)
 {
-    Message message = Message::from(m);
     log_debug("Message [", message.to_string(), "] sent to process layer.");
-    handler.forward_send(m);
+    handler.forward_send(message);
 }
 
-void ProcessLayer::receive(char *m)
+void ProcessLayer::receive(Message message)
 {
-    Message message = Message::from(m);
     log_debug("Message [", message.to_string(), "] received on process layer.");
 
     switch (message.type)

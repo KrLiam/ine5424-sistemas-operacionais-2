@@ -13,9 +13,8 @@ void FragmentationLayer::service()
 {
 }
 
-void FragmentationLayer::send(char *m)
+void FragmentationLayer::send(Message message)
 {
-    Message message = Message::from(m);
     log_debug("Message [", message.to_string(), "] sent to fragmentation layer.");
 
     Node destination = gr->get_node(message.destination);
@@ -52,14 +51,13 @@ void FragmentationLayer::send(char *m)
         };
 
         log_debug("Forwarding packet ", packet.to_string(), " to next step.");
-        handler.forward_send(&packet.as_bytes()[0]);
+        handler.forward_send(packet);
     }
     connection.increment_next_message_number();
 }
 
-void FragmentationLayer::receive(char *m)
+void FragmentationLayer::receive(Packet packet)
 {
-    Packet packet = Packet::from(m);
     log_debug("Packet [", packet.to_string(), "] received on fragmentation layer.");
 
     Node origin = gr->get_node(packet.meta.origin);
@@ -86,6 +84,6 @@ void FragmentationLayer::receive(char *m)
         Connection& connection = gr->get_connection(origin.get_id());
         connection.increment_expected_message_number();
 
-        handler.forward_receive(&message.as_bytes()[0]);
+        handler.forward_receive(message);
     }
 }

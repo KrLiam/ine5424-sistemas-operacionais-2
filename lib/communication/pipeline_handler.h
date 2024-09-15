@@ -24,9 +24,12 @@ private:
 public:
     PipelineHandler(Pipeline& pipeline, int step_index);
 
-    void forward_send(char *m);
-    void forward_receive(char *m);
+    void forward_send(Packet);
+    void forward_send(Message);
+
+    void forward_receive(Packet);
+    void forward_receive(Message);
     
     bool can_forward_to_application();
-    void forward_to_application(Message message);
+    void forward_to_application(Message);
 };

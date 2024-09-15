@@ -6,14 +6,22 @@ PipelineHandler::PipelineHandler(Pipeline& pipeline, int step_index)
 {
 }
 
-void PipelineHandler::forward_send(char *m)
+void PipelineHandler::forward_send(Packet packet)
 {
-    pipeline.send_to(step_index - 1, m);
+    pipeline.send(packet, step_index - 1);
+}
+void PipelineHandler::forward_send(Message message)
+{
+    pipeline.send(message, step_index - 1);
 }
 
-void PipelineHandler::forward_receive(char *m)
+void PipelineHandler::forward_receive(Packet packet)
 {
-    pipeline.receive_on(step_index + 1, m);
+    pipeline.receive(packet, step_index + 1);
+}
+void PipelineHandler::forward_receive(Message message)
+{
+    pipeline.receive(message, step_index + 1);
 }
 
 bool PipelineHandler::can_forward_to_application()

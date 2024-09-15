@@ -34,7 +34,7 @@ void ReliableCommunication::send(std::string id, MessageData data)
         length : data.size
     };
     strncpy(message.data, data.ptr, data.size);
-    pipeline->send(&message.as_bytes()[0]);
+    pipeline->send(message);
 }
 
 Message ReliableCommunication::receive(char *m)

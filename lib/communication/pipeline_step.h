@@ -21,7 +21,9 @@ public:
 
     virtual void service() = 0;
 
-    virtual void send(char *m) = 0;
+    virtual void send(Packet packet);
+    virtual void send(Message);
 
-    virtual void receive(char *m) = 0;
+    virtual void receive(Packet);
+    virtual void receive(Message);
 };

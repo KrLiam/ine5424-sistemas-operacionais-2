@@ -34,7 +34,7 @@ public:
 
     void receiver_thread();
 
-    void send(char *m);
+    void send(Packet packet);
 
-    void receive(char *m);
+    void receive(Packet packet);
 };

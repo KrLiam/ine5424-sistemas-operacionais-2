@@ -21,14 +21,19 @@ class Pipeline
 
     friend PipelineHandler;
 
-    void send_to(unsigned int layer, char *m);
-    void receive_on(unsigned int layer, char *m);
+    PipelineStep* get_step(int step_index);
+
+    void send(Message message, int step_index);
+    void send(Packet packet, int step_index);
+    
+    void receive(Message message, int step_index);
+    void receive(Packet packet, int step_index);
 public:
     Pipeline(GroupRegistry *gr, Channel *channel);
 
     ~Pipeline();
 
-    void send(char* m);
+    void send(Message);
 
     bool can_forward_to_application();
     void forward_to_application(Message message);
