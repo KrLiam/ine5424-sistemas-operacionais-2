@@ -17,8 +17,9 @@ struct PacketHeader
     unsigned int ack : 1;
     unsigned int syn : 1;
     unsigned int rst : 1;
+    unsigned int fin : 1;
     unsigned int more_fragments : 1;
-    unsigned int reserved : 9;
+    unsigned int reserved : 8;
 
     uint32_t get_message_number()
     {
@@ -38,6 +39,11 @@ struct PacketHeader
     bool is_rst()
     {
         return (bool)rst;
+    }
+
+    bool is_fin()
+    {
+        return (bool)fin;
     }
 };
 

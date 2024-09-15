@@ -45,11 +45,13 @@ public:
 
     void send(Message message)
     {
-        if (!establish())
+        if (!connect())
         {
             log_warn("Unable to establish a connection to ", remote_node.get_address().to_string(), ".");
             return;
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+        disconnect();
         // pipeline->send(message);
     }
     void send(Packet packet);
@@ -74,7 +76,12 @@ public:
             closed(packet);
             break;
 
-        default:
+        case ConnectionState::FIN_WAIT:
+            fin_wait(packet);
+            break;
+
+        case ConnectionState::LAST_ACK:
+            last_ack(packet);
             break;
         }
     }
@@ -87,7 +94,7 @@ public:
         state_change.notify_all();
     }
 
-    bool establish()
+    bool connect()
     {
         if (state == ConnectionState::ESTABLISHED)
             return true;
@@ -96,14 +103,36 @@ public:
         local_next_message_number = 0;
         Packet p = empty_packet();
         p.data.header.syn = 1; // Dá pra simplificar essa parte
-        log_debug("establish: Sending SYN.");
+        log_debug("connect: Sending SYN.");
         send(p);
 
         std::unique_lock lock(mutex);
         while (state != ConnectionState::ESTABLISHED)
             state_change.wait(lock); // TODO: timeout
 
-        log_debug("establish: connection established successfully.");
+        log_debug("connect: connection established successfully.");
+        return true;
+    }
+
+    bool disconnect()
+    {
+        if (state == ConnectionState::CLOSED)
+            return true;
+
+        change_state(ConnectionState::FIN_WAIT);
+        local_next_message_number = 0;
+        remote_expected_message_number = 0;
+        local_unacknowlodged_message_number = 0;
+        Packet p = empty_packet();
+        p.data.header.fin = 1;
+        log_debug("disconnect: sending FIN.");
+        send(p);
+
+        std::unique_lock lock(mutex);
+        while (state != ConnectionState::CLOSED)
+            state_change.wait(lock); // TODO: timeout
+
+        log_debug("disconnect: connection closed successfully.");
         return true;
     }
 
@@ -199,11 +228,13 @@ public:
             Packet p = empty_packet();
             p.data.header.rst = 1;
             change_state(ConnectionState::CLOSED);
+            send(p);
         }
     }
 
     void established(Packet p)
     {
+        // validar numero = 0
         if (p.data.header.is_rst())
         {
             log_debug("established: received RST; closing.");
@@ -216,10 +247,89 @@ public:
             change_state(ConnectionState::CLOSED);
             Packet p = empty_packet();
             p.data.header.rst = 1;
+            send(p);
             return;
         }
 
-        // todo: enviar ack
+        if (p.data.header.is_fin())
+        {
+            log_debug("established: received FIN; sending FIN+ACK.");
+            local_next_message_number = 0;
+            remote_expected_message_number = 0;
+            local_unacknowlodged_message_number = 0;
+            change_state(ConnectionState::LAST_ACK);
+            Packet p = empty_packet();
+            p.data.header.ack = 1;
+            p.data.header.fin = 1;
+            send(p);
+            return;
+        }
+
+        // todo: enviar ack e seq
+    }
+
+    void fin_wait(Packet p)
+    {
+        if (p.data.header.is_rst())
+        {
+            log_debug("last_ack: received RST; closing.");
+            change_state(ConnectionState::CLOSED);
+            return;
+        }
+        if (p.data.header.is_syn())
+        {
+            log_debug("last_ack: received SYN; closing and sending RST.");
+            change_state(ConnectionState::CLOSED);
+            Packet p = empty_packet();
+            p.data.header.rst = 1;
+            send(p);
+            return;
+        }
+
+        if (p.data.header.is_fin())
+        {
+            if (p.data.header.is_ack())
+            {
+                log_debug("fin_wait: received FIN+ACK; closing and sending ACK.");
+                change_state(ConnectionState::CLOSED);
+                Packet p = empty_packet();
+                p.data.header.ack = 1;
+                send(p);
+                return;
+            }
+            log_debug("fin_wait: simultaneous termination; transitioning to last_ack and sending ACK.");
+            Packet p = empty_packet();
+            p.data.header.ack = 1;
+            send(p);
+            change_state(ConnectionState::LAST_ACK);
+        }
+    }
+
+    void last_ack(Packet p)
+    {
+        // graantir q o numero de seq é 0
+
+        if (p.data.header.is_rst())
+        {
+            log_debug("last_ack: received RST; closing.");
+            change_state(ConnectionState::CLOSED);
+            return;
+        }
+        if (p.data.header.is_syn())
+        {
+            log_debug("last_ack: received SYN; closing and sending RST.");
+            change_state(ConnectionState::CLOSED);
+            Packet p = empty_packet();
+            p.data.header.rst = 1;
+            send(p);
+            return;
+        }
+
+        if (p.data.header.is_ack())
+        {
+            log_debug("last_ack: received ACK; closing.");
+            change_state(ConnectionState::CLOSED);
+        }
     }
 
     const uint32_t &get_next_message_number()
