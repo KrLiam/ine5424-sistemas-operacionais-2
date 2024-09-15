@@ -1,0 +1,212 @@
+#pragma once
+
+#include <condition_variable>
+#include <mutex>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <cstring>
+#include <exception>
+
+#include "utils/config.h"
+#include "utils/format.h"
+#include "core/segment.h"
+#include "utils/log.h"
+#include "core/node.h"
+
+class Pipeline;
+
+enum ConnectionState
+{
+    CLOSED = 0,
+    SYN_SENT = 1,
+    SYN_RECEIVED = 2,
+    ESTABLISHED = 3
+};
+
+class Connection
+{
+    Pipeline &pipeline;
+
+    Node local_node;
+    Node remote_node;
+
+    uint32_t expected_message_number = 0;
+    uint32_t next_message_number = 0;
+
+    ConnectionState state = ConnectionState::CLOSED;
+    std::condition_variable state_change;
+    std::mutex mutex;
+
+public:
+    Connection(Pipeline &pipeline, Node local_node, Node remote_node) : pipeline(pipeline), local_node(local_node), remote_node(remote_node) {}
+
+    void send(Message message)
+    {
+        if (!establish())
+        {
+            log_warn("Unable to establish a connection to ", remote_node.get_address().to_string(), ".");
+            return;
+        }
+        // pipeline->send(message);
+    }
+    void send(Packet packet);
+
+    void receive(Packet packet)
+    {
+        switch (state)
+        {
+        case ConnectionState::ESTABLISHED:
+            established(packet);
+            break;
+
+        case ConnectionState::SYN_SENT:
+            syn_sent(packet);
+            break;
+
+        case ConnectionState::SYN_RECEIVED:
+            syn_received(packet);
+            break;
+
+        case ConnectionState::CLOSED:
+            closed(packet);
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    void change_state(ConnectionState new_state)
+    {
+        if (state == new_state)
+            return;
+        state = new_state;
+        state_change.notify_all();
+    }
+
+    bool establish()
+    {
+        if (state == ConnectionState::ESTABLISHED)
+        {
+            return true;
+        }
+
+        change_state(ConnectionState::SYN_SENT);
+        next_message_number = 0;
+        Packet p = empty_packet();
+        p.data.header.syn = 1; // Dá pra simplificar essa parte
+        log_debug("establish: Sending SYN.");
+        send(p);
+
+        std::unique_lock lock(mutex);
+        while (state != ConnectionState::ESTABLISHED)
+            state_change.wait(lock); // TODO: timeout
+
+        log_debug("establish: Connection established successfully.");
+        return true;
+    }
+
+    Packet empty_packet()
+    {
+        PacketHeader header;
+        memset(&header, 0, sizeof(PacketHeader));
+        header.msg_num = next_message_number;
+
+        PacketData data;
+        memset(&data, 0, sizeof(PacketData));
+        data.header = header;
+
+        Packet packet;
+        memset(&packet, 0, sizeof(Packet));
+        packet.meta.origin = local_node.get_address();
+        packet.meta.destination = remote_node.get_address();
+        packet.data = data;
+
+        expected_message_number = next_message_number + 1;
+        next_message_number = expected_message_number + 1;
+
+        return packet;
+    }
+
+    void closed(Packet p)
+    {
+        if (p.data.header.is_syn() && !p.data.header.is_ack())
+        {
+            log_debug("closed: received SYN; sending SYN+ACK.");
+            next_message_number = 1;
+            change_state(ConnectionState::SYN_RECEIVED);
+            Packet p = empty_packet();
+            p.data.header.syn = 1;
+            p.data.header.ack = 1;
+            send(p);
+        }
+    }
+
+    void syn_sent(Packet p)
+    {
+        if (p.data.header.is_ack() && p.data.header.is_syn())
+        {
+            log_debug("syn_sent: received SYN+ACK; sending ACK.");
+            change_state(ConnectionState::ESTABLISHED);
+            Packet p = empty_packet();
+            p.data.header.ack = 1;
+            send(p);
+            return;
+        }
+
+        // TODO: tratar caso os dois tentem se conectar ao msm tempo
+
+        // erro
+        close();
+    }
+
+    void syn_received(Packet p)
+    {
+        if (p.data.header.is_ack() && !p.data.header.is_syn())
+        {
+            log_debug("syn_received: received ACK.");
+            change_state(ConnectionState::ESTABLISHED);
+        }
+    }
+
+    void established(Packet p)
+    {
+        log_debug("Received packet ", p.to_string(), " on established state.");
+        // TODO
+    }
+
+    void close()
+    {
+        if (state == ConnectionState::CLOSED)
+        {
+            log_debug("Connection is already closed.");
+            return;
+        }
+
+        if (state == ConnectionState::SYN_SENT)
+        {
+            change_state(ConnectionState::CLOSED);
+            return;
+        }
+
+        // TODO: procedimento para encerrar conexão
+    }
+
+    const uint32_t &get_next_message_number()
+    {
+        return next_message_number;
+    }
+    void increment_next_message_number()
+    {
+        next_message_number++;
+    }
+
+    const uint32_t &get_expected_message_number()
+    {
+        return expected_message_number;
+    }
+    void increment_expected_message_number()
+    {
+        expected_message_number++;
+    }
+};

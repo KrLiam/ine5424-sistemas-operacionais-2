@@ -48,7 +48,7 @@ void TransmissionLayer::service()
 void TransmissionLayer::receiver_thread()
 {
     Packet packet = channel->receive();
-    if (packet != Packet{})
+    if (packet != Packet{}) // TODO: exceção
     {
         receive(packet);
     }
@@ -63,31 +63,34 @@ void TransmissionLayer::sender_thread()
     // pra etapa de fragmentacao antes de encaminhar a msg q o usuario quer enviar
 
     // TODO: atualmente, não tem controle de enviar 1 msg só por vez
-    for (auto &[id, queue] : queue_map)
+    /*for (auto &[id, queue] : queue_map)
     {
         queue->send_timedout_packets(channel);
         // if (queue.has_sent_everything()) queue_map.erase(id); <- mutex pra esse mapa
-    }
+    }*/
+    Packet p = send_buffer.consume();
+    channel->send(p);
 }
 
 void TransmissionLayer::send(Packet packet)
 {
     log_debug("Packet [", packet.to_string(), "] sent to transmission layer.");
+    send_buffer.produce(packet);
     // tinha pensado em fazer o send daqui aguardar sincronamente, mas aí ele poderia travar a receiver_thread
     // TODO:
-    Node destination = gr->get_node(packet.meta.destination);
+    /*Node destination = gr->get_node(packet.meta.destination);
     if (!queue_map.contains(destination.get_id()))
     {
         queue_map.emplace(destination.get_id(), new TransmissionQueue());
     }
-    queue_map.at(destination.get_id())->add_packet_to_queue(packet);
+    queue_map.at(destination.get_id())->add_packet_to_queue(packet);*/
     // esse aqui cospe no buffer da sender_thread
 }
 
 void TransmissionLayer::receive(Packet packet)
 {
     log_debug("Packet [", packet.to_string(), "] received on transmission layer.");
-
+    /*
     if (!gr->packet_originates_from_group(packet))
     {
         log_debug("Ignoring packet ", packet.to_string(), ", as it did not originate from the group.");
@@ -96,11 +99,10 @@ void TransmissionLayer::receive(Packet packet)
 
     if (process_ack_field_of_received_packet(packet))
         return;
-
+    
     Node origin = gr->get_node(packet.meta.origin);
     Connection connection = gr->get_connection(origin.get_id());
 
-    // TODO: Ver se pode ser int mesmo
     uint32_t message_number = packet.data.header.msg_num;
     if (message_number != connection.get_expected_message_number())
     {
@@ -114,10 +116,10 @@ void TransmissionLayer::receive(Packet packet)
         log_debug("Incoming buffer is full; ignoring packet ", packet.to_string(), ".");
         return;
     }
-
+    */
     handler.forward_receive(packet);
 }
-
+/*
 bool TransmissionLayer::process_ack_field_of_received_packet(Packet packet)
 {
     Node origin = gr->get_node(packet.meta.origin);
@@ -146,7 +148,8 @@ bool TransmissionLayer::process_ack_field_of_received_packet(Packet packet)
     send(ack_packet);
     return false;
 }
-
+*/
+/*
 Packet TransmissionLayer::create_ack_packet(Packet packet)
 {
     PacketData data;
@@ -172,3 +175,4 @@ Packet TransmissionLayer::create_ack_packet(Packet packet)
     };
     return ack_packet;
 }
+*/

@@ -9,6 +9,7 @@
 #include "communication/transmission_queue.h"
 #include "core/node.h"
 #include "core/segment.h"
+#include "core/buffer.h"
 
 class TransmissionLayer : public PipelineStep
 {
@@ -22,6 +23,8 @@ private:
 
     std::thread listener_thread_obj;
     std::thread sender_thread_obj;
+
+    Buffer<INTERMEDIARY_BUFFER_ITEMS, Packet> send_buffer{"send buffer"};
 
 public:
     std::atomic<bool> stop_threads; // TODO

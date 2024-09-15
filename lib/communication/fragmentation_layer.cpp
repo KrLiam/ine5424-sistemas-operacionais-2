@@ -15,7 +15,7 @@ void FragmentationLayer::service()
 
 void FragmentationLayer::send(Message message)
 {
-    log_debug("Message [", message.to_string(), "] sent to fragmentation layer.");
+    /*log_debug("Message [", message.to_string(), "] sent to fragmentation layer.");
 
     Node destination = gr->get_node(message.destination);
     Connection& connection = gr->get_connection(destination.get_id());
@@ -53,12 +53,18 @@ void FragmentationLayer::send(Message message)
         log_debug("Forwarding packet ", packet.to_string(), " to next step.");
         handler.forward_send(packet);
     }
-    connection.increment_next_message_number();
+    connection.increment_next_message_number();*/
+}
+
+void FragmentationLayer::send(Packet packet)
+{
+    log_debug("Packet [", packet.to_string(), "] sent to fragmentation layer.");
+    handler.forward_send(packet);   
 }
 
 void FragmentationLayer::receive(Packet packet)
 {
-    log_debug("Packet [", packet.to_string(), "] received on fragmentation layer.");
+    /*log_debug("Packet [", packet.to_string(), "] received on fragmentation layer.");
 
     Node origin = gr->get_node(packet.meta.origin);
     if (!assembler_map.contains(origin.get_id()))
@@ -85,5 +91,6 @@ void FragmentationLayer::receive(Packet packet)
         connection.increment_expected_message_number();
 
         handler.forward_receive(message);
-    }
+    }*/
+    handler.forward_receive(packet);
 }

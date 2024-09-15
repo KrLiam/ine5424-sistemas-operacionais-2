@@ -1,13 +1,14 @@
 #pragma once
 
 #include "channels/channel.h"
-#include "communication/group_registry.h"
 #include "communication/pipeline_handler.h"
+#include "communication/group_registry.h"
 #include "core/segment.h"
 #include "core/constants.h"
 #include "core/buffer.h"
 
 class ReliableCommunication;
+class GroupRegistry;
 
 class PipelineStep
 {
