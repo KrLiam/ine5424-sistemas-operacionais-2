@@ -1,4 +1,5 @@
 #include "communication/fragmentation_layer.h"
+#include "communication/fragmenter.h"
 
 FragmentationLayer::FragmentationLayer(PipelineHandler handler, GroupRegistry *gr)
     : PipelineStep(handler, gr)
@@ -15,74 +16,61 @@ void FragmentationLayer::service()
 
 void FragmentationLayer::send(Message message)
 {
-    log_debug("Message [", message.to_string(), "] sent to fragmentation layer.");
+    Fragmenter fragmenter(message);
 
-    Node destination = gr->get_node(message.destination);
-    Connection& connection = gr->get_connection(destination.get_id());
+    log_debug("Message [", message.to_string(), "] length is ", message.length, "; will fragment into ", fragmenter.get_total_fragments(), " packets.");
 
-    uint32_t required_packets = ceil((double)message.length / PacketData::MAX_MESSAGE_SIZE);
-    log_debug("Message [", message.to_string(), "] length is ", message.length, "; will fragment into ", required_packets, " packets.");
-    // Mutex para não ter duas threads usando o mesmo msg_num simultaneamente
-    for (uint32_t i = 0; i < required_packets; i++)
+    Packet packet;
+    while (fragmenter.has_next())
     {
-        PacketMetadata meta = {
-            origin : gr->get_local_node().get_address(),
-            destination : destination.get_address(),
-            time : 0,
-            message_length : static_cast<int>(message.length),
-        };
-        PacketData data;
-        bool more_fragments = i != required_packets - 1;
-        data.header = { // TODO: Definir checksum, window e reserved corretamente
-            msg_num : connection.get_next_message_number(),
-            fragment_num : i,
-            checksum : 0,
-            window : 0,
-            type : message.type,
-            ack : 0,
-            more_fragments : more_fragments,
-            reserved : 0
-        };
-        meta.message_length = std::min((int)(message.length - i * PacketData::MAX_MESSAGE_SIZE), (int)PacketData::MAX_MESSAGE_SIZE);
-        strncpy(data.message_data, &message.data[i * PacketData::MAX_MESSAGE_SIZE], meta.message_length);
-        Packet packet = {
-            data : data,
-            meta : meta
-        };
+        fragmenter.next(&packet);
 
         log_debug("Forwarding packet ", packet.to_string(), " to next step.");
         handler.forward_send(packet);
     }
-    connection.increment_next_message_number();
+}
+
+FragmentAssembler& FragmentationLayer::get_assembler(const std::string& id) {
+    assembler_map_mutex.lock();
+
+    if (!assembler_map.contains(id))
+    {
+        assembler_map.emplace(id, FragmentAssembler());
+    }
+    FragmentAssembler& assembler = assembler_map.at(id);
+
+    assembler_map_mutex.unlock();
+
+    return assembler;
+}
+
+void FragmentationLayer::discard_assembler(const std::string& id) {
+    assembler_map_mutex.lock();
+    assembler_map.erase(id);
+    assembler_map_mutex.unlock();
 }
 
 void FragmentationLayer::receive(Packet packet)
 {
+    if (packet.data.header.type != MessageType::DATA) {
+        handler.forward_receive(packet);
+        return;
+    }
+
     log_debug("Packet [", packet.to_string(), "] received on fragmentation layer.");
 
     Node origin = gr->get_node(packet.meta.origin);
-    if (!assembler_map.contains(origin.get_id()))
-    {
-        assembler_map.emplace(origin.get_id(), FragmentAssembler());
-    }
-    FragmentAssembler& assembler = assembler_map.at(origin.get_id());
+    FragmentAssembler& assembler = get_assembler(origin.get_id());
 
-    if (assembler.has_received(packet))
-    {
-        log_debug("Ignoring packet ", packet.to_string(), ", as it was already received.");
-        return;
-    }
-    assembler.add_packet(packet);
+    bool added = assembler.add_packet(packet);
+    if (!added) return;
 
-    if (assembler.has_received_all_packets())
+    if (assembler.is_complete())
     {
         log_debug("Received all fragments; forwarding message to next step.");
-        Message message = assembler.assemble();
-        assembler_map.erase(origin.get_id());
 
-        Node destination = gr->get_node(packet.meta.destination);
-        Connection& connection = gr->get_connection(origin.get_id());
-        connection.increment_expected_message_number();
+        Message message = assembler.assemble();
+        discard_assembler(origin.get_id());
 
         handler.forward_receive(message);
     }

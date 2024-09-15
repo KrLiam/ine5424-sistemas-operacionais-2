@@ -7,13 +7,21 @@
 #include <cstring>
 #include <cstdint>
 
+
+enum MessageType {
+    DATA = 0,
+    HANDSHAKE = 1,
+    DISCOVER = 2,
+    HEARTBEAT = 3
+};
+
 struct PacketHeader
 {
+    MessageType type;
     unsigned int msg_num : 32;
     unsigned int fragment_num : 32;
     unsigned int checksum : 16;
     unsigned int window : 16;
-    unsigned int type : 4;
     unsigned int ack: 1;
     unsigned int more_fragments : 1;
     unsigned int reserved : 11;
@@ -55,17 +63,12 @@ struct Packet
     }
 };
 
-enum MessageType {
-    DATA = 0,
-    HANDSHAKE = 1,
-    DISCOVER = 2,
-    HEARTBEAT = 3
-};
 
 struct Message
 {
     const static int MAX_MESSAGE_SIZE = 65536;
 
+    uint32_t number;
     SocketAddress origin;
     SocketAddress destination;
     MessageType type;

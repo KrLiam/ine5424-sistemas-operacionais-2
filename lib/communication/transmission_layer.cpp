@@ -151,11 +151,11 @@ Packet TransmissionLayer::create_ack_packet(Packet packet)
 {
     PacketData data;
     data.header = {// TODO: Definir corretamente checksum, window, e reserved.
+                   type : packet.data.header.type,
                    msg_num : packet.data.header.msg_num,
                    fragment_num : packet.data.header.fragment_num,
                    checksum : 0,
                    window : 0,
-                   type : packet.data.header.type,
                    ack : 1,
                    more_fragments : 0,
                    reserved : 0
