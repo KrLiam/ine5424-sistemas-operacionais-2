@@ -51,7 +51,7 @@ void client(ThreadArgs* args) {
         std::string id;
         std::cin >> id;
         if (id == "exit") break;
-        comm->send(id, msg);
+        comm->send(id, {msg, 4000});
     }
     log_info("Exited client.");
 }

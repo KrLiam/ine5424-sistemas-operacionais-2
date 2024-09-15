@@ -17,13 +17,22 @@
 
 class Pipeline;
 
+
+struct MessageData {
+    char* ptr;
+    std::size_t size = -1;
+
+    MessageData(char* ptr) : ptr(ptr) {}
+    MessageData(char* ptr, std::size_t size) : ptr(ptr), size(size) {}
+};
+
 class ReliableCommunication
 {
 public:
     ReliableCommunication(std::string _local_id, std::size_t _user_buffer_size);
     ~ReliableCommunication();
 
-    void send(std::string id, char *m);
+    void send(std::string id, MessageData data);
     Message receive(char *m);
 
     GroupRegistry *get_group_registry();

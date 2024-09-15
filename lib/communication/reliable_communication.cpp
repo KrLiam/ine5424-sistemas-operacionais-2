@@ -22,16 +22,18 @@ GroupRegistry *ReliableCommunication::get_group_registry()
     return gr;
 }
 
-void ReliableCommunication::send(std::string id, char *m)
+void ReliableCommunication::send(std::string id, MessageData data)
 {
+    if (data.size == -1) data.size = user_buffer_size;
+
     Message message = {
         origin : gr->get_local_node().get_address(),
         destination : gr->get_node(id).get_address(),
         type : MessageType::DATA, // TODO: Definir corretamente
         data : {0},
-        length : user_buffer_size
+        length : data.size
     };
-    strncpy(message.data, m, user_buffer_size);
+    strncpy(message.data, data.ptr, data.size);
     pipeline->send(&message.as_bytes()[0]);
 }
 
