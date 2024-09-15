@@ -87,9 +87,7 @@ public:
     bool establish()
     {
         if (state == ConnectionState::ESTABLISHED)
-        {
             return true;
-        }
 
         change_state(ConnectionState::SYN_SENT);
         next_message_number = 0;
@@ -102,7 +100,7 @@ public:
         while (state != ConnectionState::ESTABLISHED)
             state_change.wait(lock); // TODO: timeout
 
-        log_debug("establish: Connection established successfully.");
+        log_debug("establish: connection established successfully.");
         return true;
     }
 
@@ -144,52 +142,74 @@ public:
 
     void syn_sent(Packet p)
     {
-        if (p.data.header.is_ack() && p.data.header.is_syn())
+        if (p.data.header.is_syn())
         {
-            log_debug("syn_sent: received SYN+ACK; sending ACK.");
-            change_state(ConnectionState::ESTABLISHED);
+            if (p.data.header.is_ack())
+            {
+                log_debug("syn_sent: received SYN+ACK; sending ACK.");
+                change_state(ConnectionState::ESTABLISHED);
+                Packet p = empty_packet();
+                p.data.header.ack = 1;
+                send(p);
+                return;
+            }
+            log_debug("syn_sent: received SYN from simultaneous connection; transitioning to syn_received and sending SYN+ACK.");
+            change_state(ConnectionState::SYN_RECEIVED);
             Packet p = empty_packet();
+            p.data.header.syn = 1;
             p.data.header.ack = 1;
             send(p);
             return;
         }
 
-        // TODO: tratar caso os dois tentem se conectar ao msm tempo
-
-        // erro
-        close();
+        log_debug("syn_sent: received unexpected packet; closing connection.");
+        change_state(ConnectionState::CLOSED);
     }
 
     void syn_received(Packet p)
     {
-        if (p.data.header.is_ack() && !p.data.header.is_syn())
+        /*if (p.data.header.is_syn())
         {
-            log_debug("syn_received: received ACK.");
+            log_debug("syn_received: received SYN; closing.");
+            Packet p = empty_packet();
+            p.data.header.rst = 1;
+            change_state(ConnectionState::CLOSED);
+            return;
+        }*/
+
+        if (p.data.header.is_rst())
+        {
+            log_debug("syn_received: received RST; closing.");
+            change_state(ConnectionState::CLOSED);
+            return;
+        }
+
+        if (p.data.header.is_ack())
+        {
+            log_debug("syn_received: received ACK; connection established.");
             change_state(ConnectionState::ESTABLISHED);
         }
     }
 
     void established(Packet p)
     {
-        log_debug("Received packet ", p.to_string(), " on established state.");
-        // TODO
-    }
-
-    void close()
-    {
-        if (state == ConnectionState::CLOSED)
+        if (p.data.header.is_rst())
         {
-            log_debug("Connection is already closed.");
-            return;
-        }
-
-        if (state == ConnectionState::SYN_SENT)
-        {
+            log_debug("established: received RST; closing.");
             change_state(ConnectionState::CLOSED);
             return;
         }
 
-        // TODO: procedimento para encerrar conexão
+        if (p.data.header.is_syn())
+        {
+            log_debug("established: received SYN; closing and sending RST.");
+            change_state(ConnectionState::CLOSED);
+            Packet p = empty_packet();
+            p.data.header.rst = 1;
+            return;
+        }
+
+        // todo: enviar ack
     }
 
     const uint32_t &get_next_message_number()

@@ -40,7 +40,7 @@ struct IPv4
 
     std::string to_string() const;
 
-    bool operator==(const IPv4& other)
+    bool operator==(const IPv4& other) const
     {
         return other.a == a && other.b == b && other.c == c && other.d == d;
     }
@@ -55,7 +55,7 @@ struct SocketAddress
 
     static SocketAddress from(sockaddr_in& address);
 
-    bool operator==(const SocketAddress& other)
+    bool operator==(const SocketAddress& other) const
     {
         return other.address == address && other.port == port;
     }
