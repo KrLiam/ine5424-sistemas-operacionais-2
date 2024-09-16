@@ -63,27 +63,25 @@ void TransmissionLayer::sender_thread()
     // pra etapa de fragmentacao antes de encaminhar a msg q o usuario quer enviar
 
     // TODO: atualmente, não tem controle de enviar 1 msg só por vez
-    /*for (auto &[id, queue] : queue_map)
+    for (auto &[id, queue] : queue_map)
     {
         queue->send_timedout_packets(channel);
         // if (queue.has_sent_everything()) queue_map.erase(id); <- mutex pra esse mapa
-    }*/
-    Packet p = send_buffer.consume();
-    channel->send(p);
+    }
 }
 
 void TransmissionLayer::send(Packet packet)
 {
     log_debug("Packet [", packet.to_string(), "] sent to transmission layer.");
-    send_buffer.produce(packet);
+    // send_buffer.produce(packet);
     // tinha pensado em fazer o send daqui aguardar sincronamente, mas aí ele poderia travar a receiver_thread
     // TODO:
-    /*Node destination = gr->get_node(packet.meta.destination);
+    Node destination = gr->get_node(packet.meta.destination);
     if (!queue_map.contains(destination.get_id()))
     {
         queue_map.emplace(destination.get_id(), new TransmissionQueue());
     }
-    queue_map.at(destination.get_id())->add_packet_to_queue(packet);*/
+    queue_map.at(destination.get_id())->add_packet_to_queue(packet);
     // esse aqui cospe no buffer da sender_thread
 }
 

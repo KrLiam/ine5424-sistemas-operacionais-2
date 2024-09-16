@@ -43,17 +43,7 @@ class Connection
 public:
     Connection(Pipeline &pipeline, Node local_node, Node remote_node) : pipeline(pipeline), local_node(local_node), remote_node(remote_node) {}
 
-    void send(Message message)
-    {
-        if (!connect())
-        {
-            log_warn("Unable to establish a connection to ", remote_node.get_address().to_string(), ".");
-            return;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-        disconnect();
-        // pipeline->send(message);
-    }
+    void send(Message message);
     void send(Packet packet);
 
     void receive(Packet packet)
@@ -82,6 +72,33 @@ public:
 
         case ConnectionState::LAST_ACK:
             last_ack(packet);
+            break;
+        }
+    }
+
+    void receive(Message message)
+    {
+        if (state != ConnectionState::ESTABLISHED)
+        {
+            log_warn("conexao nao estabelecida, dropando.");
+            return;
+        }
+
+        if (message.number < remote_expected_message_number)
+        {
+            log_warn("ja recebeu, numero é ", message.number, " mas esperavamos ", remote_expected_message_number);
+            return;
+        }
+        remote_expected_message_number++;
+
+        switch (message.type)
+        {
+        case MessageType::DATA:
+            // forward pra aplicação
+            log_debug("recebeu msg da aplicacao: ", message.data);
+            break;
+
+        default:
             break;
         }
     }
@@ -140,7 +157,8 @@ public:
     {
         PacketHeader header;
         memset(&header, 0, sizeof(PacketHeader));
-        header.msg_num = local_next_message_number;
+        header.msg_num = 0;
+        header.type = MessageType::CONTROL;
 
         PacketData data;
         memset(&data, 0, sizeof(PacketData));
@@ -199,6 +217,15 @@ public:
             return;
         }
 
+        if (p.data.header.is_rst())
+        {
+            // reiniciar conexao
+            Packet p = empty_packet();
+            p.data.header.syn = 1; // Dá pra simplificar essa parte
+            send(p);
+            return;
+        }
+
         log_debug("syn_sent: received unexpected packet; closing connection.");
         change_state(ConnectionState::CLOSED);
     }
@@ -232,40 +259,32 @@ public:
         }
     }
 
-    void established(Packet p)
+    void established(Packet p);
+
+    Packet create_ack_packet(Packet packet)
     {
-        // validar numero = 0
-        if (p.data.header.is_rst())
-        {
-            log_debug("established: received RST; closing.");
-            change_state(ConnectionState::CLOSED);
-            return;
-        }
-        if (p.data.header.is_syn())
-        {
-            log_debug("established: received SYN; closing and sending RST.");
-            change_state(ConnectionState::CLOSED);
-            Packet p = empty_packet();
-            p.data.header.rst = 1;
-            send(p);
-            return;
-        }
-
-        if (p.data.header.is_fin())
-        {
-            log_debug("established: received FIN; sending FIN+ACK.");
-            local_next_message_number = 0;
-            remote_expected_message_number = 0;
-            local_unacknowlodged_message_number = 0;
-            change_state(ConnectionState::LAST_ACK);
-            Packet p = empty_packet();
-            p.data.header.ack = 1;
-            p.data.header.fin = 1;
-            send(p);
-            return;
-        }
-
-        // todo: enviar ack e seq
+        PacketData data;
+        data.header = {// TODO: Definir corretamente checksum, window, e reserved.
+                       msg_num : packet.data.header.msg_num,
+                       fragment_num : packet.data.header.fragment_num,
+                       checksum : 0,
+                       window : 0,
+                       type : MessageType::CONTROL,
+                       ack : 1,
+                       more_fragments : 0,
+                       reserved : 0
+        };
+        PacketMetadata meta = {
+            origin : local_node.get_address(),
+            destination : remote_node.get_address(),
+            time : 0,
+            message_length : 0
+        };
+        Packet ack_packet = {
+            data : data,
+            meta : meta
+        };
+        return ack_packet;
     }
 
     void fin_wait(Packet p)
@@ -332,13 +351,9 @@ public:
         }
     }
 
-    const uint32_t &get_next_message_number()
+    uint32_t new_message_number()
     {
-        return local_next_message_number;
-    }
-    void increment_next_message_number()
-    {
-        local_next_message_number++;
+        return local_next_message_number++;
     }
 
     const uint32_t &get_expected_message_number()

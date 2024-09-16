@@ -86,7 +86,7 @@ struct Packet
 enum MessageType
 {
     DATA = 0,
-    HANDSHAKE = 1,
+    CONTROL = 1,
     DISCOVER = 2,
     HEARTBEAT = 3
 };
@@ -95,6 +95,7 @@ struct Message
 {
     const static int MAX_MESSAGE_SIZE = 65536;
 
+    uint32_t number;
     SocketAddress origin;
     SocketAddress destination;
     MessageType type;

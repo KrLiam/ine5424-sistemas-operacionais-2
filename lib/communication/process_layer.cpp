@@ -15,14 +15,6 @@ void ProcessLayer::service()
 void ProcessLayer::send(Message message)
 {
     log_debug("Message [", message.to_string(), "] sent to process layer.");
-
-    /*Node destination = gr->get_node(message.destination);
-    Connection& connection = gr->get_connection(destination.get_id());
-    if (!connection.establish()) {
-        log_warn("Unable to establish a connection to ", destination.to_string(), "; dropping message.");
-        return;
-    }*/
-
     handler.forward_send(message);
 }
 
@@ -47,6 +39,8 @@ void ProcessLayer::receive(Message message)
         break;
     }
     */
+
+   handler.forward_receive(message);
 }
 
 void ProcessLayer::receive(Packet packet)

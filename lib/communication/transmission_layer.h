@@ -19,7 +19,6 @@ private:
     std::map<std::string, TransmissionQueue *> queue_map;
 
     bool process_ack_field_of_received_packet(Packet packet);
-    Packet create_ack_packet(Packet packet);
 
     std::thread listener_thread_obj;
     std::thread sender_thread_obj;
@@ -40,4 +39,13 @@ public:
     void send(Packet packet);
 
     void receive(Packet packet);
+
+    void stop_transmission(Packet packet)
+    {
+        Node origin = gr->get_node(packet.meta.origin);
+        if (queue_map.contains(origin.get_id()))
+        {
+            queue_map.at(origin.get_id())->mark_packet_as_acked(packet);
+        }
+    }
 };
