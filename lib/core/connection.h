@@ -2,9 +2,11 @@
 
 #include <condition_variable>
 #include <mutex>
+#include <map>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <cstring>
+#include <functional>
 #include <exception>
 
 #include "utils/config.h"
@@ -12,6 +14,8 @@
 #include "core/segment.h"
 #include "utils/log.h"
 #include "core/node.h"
+
+using namespace std::placeholders;
 
 class Pipeline;
 
@@ -27,6 +31,7 @@ enum ConnectionState
 
 class Connection
 {
+private:
     Pipeline &pipeline;
 
     Node local_node;
@@ -40,6 +45,14 @@ class Connection
     std::condition_variable state_change;
     std::mutex mutex;
 
+    const std::map<ConnectionState, std::function<void(Packet)>> packet_receive_handlers = {
+        {ESTABLISHED, std::bind(&Connection::established, this, _1)},
+        {SYN_SENT, std::bind(&Connection::syn_sent, this, _1)},
+        {SYN_RECEIVED, std::bind(&Connection::syn_received, this, _1)},
+        {CLOSED, std::bind(&Connection::closed, this, _1)},
+        {FIN_WAIT, std::bind(&Connection::fin_wait, this, _1)},
+        {LAST_ACK, std::bind(&Connection::last_ack, this, _1)}};
+
 public:
     Connection(Pipeline &pipeline, Node local_node, Node remote_node) : pipeline(pipeline), local_node(local_node), remote_node(remote_node) {}
 
@@ -48,39 +61,14 @@ public:
 
     void receive(Packet packet)
     {
-        switch (state)
-        {
-        case ConnectionState::ESTABLISHED:
-            established(packet);
-            break;
-
-        case ConnectionState::SYN_SENT:
-            syn_sent(packet);
-            break;
-
-        case ConnectionState::SYN_RECEIVED:
-            syn_received(packet);
-            break;
-
-        case ConnectionState::CLOSED:
-            closed(packet);
-            break;
-
-        case ConnectionState::FIN_WAIT:
-            fin_wait(packet);
-            break;
-
-        case ConnectionState::LAST_ACK:
-            last_ack(packet);
-            break;
-        }
+        packet_receive_handlers.at(state)(packet);
     }
 
     void receive(Message message)
     {
         if (state != ConnectionState::ESTABLISHED)
         {
-            log_warn("conexao nao estabelecida, dropando.");
+            log_warn("Connection is not established; dropping message ", message.to_string(), ".");
             return;
         }
 
