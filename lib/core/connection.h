@@ -188,6 +188,19 @@ public:
             p.data.header.ack = 1;
             send(p);
         }
+
+        /* pro reschedule: também tem q fazer alterar o número dos pacotes no transmissionlayer
+        // atualmente, dá problema caso B tenha enviado 1 mensagem pra A, A cai, B tenta enviar a 2a
+        // da pra resolver isso tanto por reschedule quanto por timeout
+        if (p.data.header.msg_num != 0)
+        {
+            log_warn("closed: received message packet.");
+            Packet p = empty_packet();
+            p.data.header.syn = 1; // Dá pra simplificar essa parte
+            change_state(ConnectionState::SYN_SENT);
+            send(p);
+            return;
+        }*/
     }
 
     void syn_sent(Packet p)
