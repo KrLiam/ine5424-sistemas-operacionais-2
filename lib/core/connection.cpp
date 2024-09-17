@@ -20,26 +20,17 @@ void Connection::send(Packet packet)
 void Connection::established(Packet p)
 {
     // validar numero = 0
-    if (p.data.header.is_rst())
-    {
-        log_debug("established: received RST; closing.");
-        change_state(ConnectionState::CLOSED);
+    if (close_on_rst(p))
         return;
-    }
-    if (p.data.header.is_syn())
-    {
-        log_debug("established: received SYN; closing and sending RST.");
-        change_state(ConnectionState::CLOSED);
-        fsend(RST);
+    if (rst_on_syn(p))
         return;
-    }
 
     if (p.data.header.is_fin())
     {
-        reset_message_numbers();
+        set_message_numbers(0);
         log_debug("established: received FIN; sending FIN+ACK.");
         change_state(ConnectionState::LAST_ACK);
-        fsend(ACK | FIN);
+        send_flag(ACK | FIN);
         return;
     }
 
@@ -60,6 +51,5 @@ void Connection::established(Packet p)
     }
 
     log_debug("Received a packet ", p.to_string(), " that expects confirmation; sending ACK.");
-    Packet ack_packet = create_ack_packet(p);
-    send(ack_packet);
+    send_ack(p);
 }
