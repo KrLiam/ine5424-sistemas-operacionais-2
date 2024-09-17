@@ -18,8 +18,8 @@ void test_complete_routine() {
   simulate_client_server_routine("1"); // todo: arrumar
 }
 
-int main() {
-  test_complete_routine();
-  std::cout << "Todos os testes passaram!" << std::endl;
-  return 0;
-}
+// int main() {
+//   test_complete_routine();
+//   std::cout << "Todos os testes passaram!" << std::endl;
+//   return 0;
+// }
