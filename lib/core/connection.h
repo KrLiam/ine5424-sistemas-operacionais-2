@@ -69,54 +69,6 @@ private:
         FIN = 0x08,
     };
 
-    void set_message_numbers(uint32_t number)
-    {
-        expected_number = number;
-        unacknowledged_number = number;
-        next_number = number;
-    }
-
-    std::string get_current_state_name()
-    {
-        return state_names.at(state);
-    }
-
-public:
-    Connection(Pipeline &pipeline, Node local_node, Node remote_node) : pipeline(pipeline), local_node(local_node), remote_node(remote_node) {}
-
-    void change_state(ConnectionState new_state)
-    {
-        if (state == new_state)
-            return;
-        state = new_state;
-        state_change.notify_all();
-    }
-
-    void send(Message message);
-    void send(Packet packet);
-
-    void receive(Packet packet)
-    {
-        packet_receive_handlers.at(state)(packet);
-    }
-    void receive(Message message)
-    {
-        if (state != ConnectionState::ESTABLISHED)
-        {
-            log_warn("Connection is not established; dropping message ", message.to_string(), ".");
-            return;
-        }
-
-        if (message.number < expected_number)
-        {
-            log_warn("Message ", message.to_string(), " was already received; dropping it.");
-            return;
-        }
-        expected_number++;
-
-        // TODO: forward pra aplicação por meio de um buffer compartilhado entre as conexões
-    }
-
     bool connect()
     {
         if (state == ConnectionState::ESTABLISHED)
@@ -339,5 +291,53 @@ public:
     uint32_t new_message_number()
     {
         return next_number++;
+    }
+
+    void set_message_numbers(uint32_t number)
+    {
+        expected_number = number;
+        unacknowledged_number = number;
+        next_number = number;
+    }
+
+    std::string get_current_state_name()
+    {
+        return state_names.at(state);
+    }
+
+    void change_state(ConnectionState new_state)
+    {
+        if (state == new_state)
+            return;
+        state = new_state;
+        state_change.notify_all();
+    }
+
+public:
+    Connection(Pipeline &pipeline, Node local_node, Node remote_node) : pipeline(pipeline), local_node(local_node), remote_node(remote_node) {}
+
+    void send(Message message);
+    void send(Packet packet);
+
+    void receive(Packet packet)
+    {
+        packet_receive_handlers.at(state)(packet);
+    }
+    void receive(Message message)
+    {
+        if (state != ConnectionState::ESTABLISHED)
+        {
+            log_warn("Connection is not established; dropping message ", message.to_string(), ".");
+            return;
+        }
+
+        if (message.number < expected_number)
+        {
+            log_warn("Message ", message.to_string(), " was already received; dropping it.");
+            return;
+        }
+        expected_number++;
+
+        // TODO: forward pra aplicação por meio de um buffer compartilhado entre as conexões
     }
 };
