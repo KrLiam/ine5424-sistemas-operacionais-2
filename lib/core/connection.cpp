@@ -30,23 +30,16 @@ void Connection::established(Packet p)
     {
         log_debug("established: received SYN; closing and sending RST.");
         change_state(ConnectionState::CLOSED);
-        Packet p = empty_packet();
-        p.data.header.rst = 1;
-        send(p);
+        fsend(RST);
         return;
     }
 
     if (p.data.header.is_fin())
     {
+        reset_message_numbers();
         log_debug("established: received FIN; sending FIN+ACK.");
-        local_next_message_number = 0;
-        remote_expected_message_number = 0;
-        local_unacknowlodged_message_number = 0;
         change_state(ConnectionState::LAST_ACK);
-        Packet p = empty_packet();
-        p.data.header.ack = 1;
-        p.data.header.fin = 1;
-        send(p);
+        fsend(ACK | FIN);
         return;
     }
 
@@ -60,9 +53,9 @@ void Connection::established(Packet p)
     }
 
     uint32_t message_number = p.data.header.msg_num;
-    if (message_number > remote_expected_message_number)
+    if (message_number > expected_number)
     {
-        log_debug("Received a packet ", p.to_string(), " that expects confirmation, but message number ", message_number, " is higher than the expected ", remote_expected_message_number, ".");
+        log_debug("Received a packet ", p.to_string(), " that expects confirmation, but message number ", message_number, " is higher than the expected ", expected_number, ".");
         return;
     }
 

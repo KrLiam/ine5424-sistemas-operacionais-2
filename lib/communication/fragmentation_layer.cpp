@@ -37,9 +37,9 @@ void FragmentationLayer::send(Message message)
             fragment_num : i,
             checksum : 0,
             window : 0,
-            type : message.type,
             ack : 0,
             more_fragments : more_fragments,
+            type : message.type,
             reserved : 0
         };
         meta.message_length = std::min((int)(message.length - i * PacketData::MAX_MESSAGE_SIZE), (int)PacketData::MAX_MESSAGE_SIZE);
