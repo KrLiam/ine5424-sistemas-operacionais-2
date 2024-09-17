@@ -34,19 +34,17 @@ void Connection::established(Packet p)
         return;
     }
 
-    // todo: enviar ack e seq
-    bool is_ack = p.data.header.ack;
-    if (is_ack)
+    if (p.data.header.is_ack())
     {
         log_debug("Received ACK for packet ", p.to_string(), "; removing from list of packets with pending ACKs.");
         pipeline.stop_transmission(p);
         return;
     }
 
-    uint32_t message_number = p.data.header.msg_num;
+    uint32_t message_number = p.data.header.get_message_number();
     if (message_number > expected_number)
     {
-        log_debug("Received a packet ", p.to_string(), " that expects confirmation, but message number ", message_number, " is higher than the expected ", expected_number, ".");
+        log_debug("Received a packet ", p.to_string(), " that expects confirmation, but message number ", message_number, " is higher than the expected ", expected_number, "; ignoring it.");
         return;
     }
 
