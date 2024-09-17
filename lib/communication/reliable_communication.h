@@ -6,6 +6,7 @@
 #include <semaphore>
 
 #include "channels/channel.h"
+#include "core/connection.h"
 #include "core/buffer.h"
 #include "core/constants.h"
 #include "core/segment.h"
@@ -17,13 +18,13 @@
 
 class Pipeline;
 
-
-struct MessageData {
-    char* ptr;
+struct MessageData
+{
+    char *ptr;
     std::size_t size = -1;
 
-    MessageData(char* ptr) : ptr(ptr) {}
-    MessageData(char* ptr, std::size_t size) : ptr(ptr), size(size) {}
+    MessageData(char *ptr) : ptr(ptr) {}
+    MessageData(char *ptr, std::size_t size) : ptr(ptr), size(size) {}
 };
 
 class ReliableCommunication
@@ -44,4 +45,6 @@ private:
     GroupRegistry *gr;
 
     std::size_t user_buffer_size;
+
+    void establish_connections();
 };

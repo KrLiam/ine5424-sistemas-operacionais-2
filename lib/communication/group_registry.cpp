@@ -3,7 +3,6 @@
 GroupRegistry::GroupRegistry(std::string local_id) : local_id(local_id)
 {
     read_nodes_from_configuration(local_id);
-    establish_connections();
 }
 
 GroupRegistry::~GroupRegistry()
@@ -42,11 +41,6 @@ const Node &GroupRegistry::get_local_node()
     return get_node(local_id);
 }
 
-Connection &GroupRegistry::get_connection(std::string id)
-{
-    return connections.at(id);
-}
-
 void GroupRegistry::read_nodes_from_configuration(std::string local_id)
 {
     nodes.clear();
@@ -56,15 +50,6 @@ void GroupRegistry::read_nodes_from_configuration(std::string local_id)
         bool is_remote = local_id != node_config.id;
         Node node(node_config.id, node_config.address, is_remote);
         nodes.emplace(node.get_id(), node);
-    }
-}
-
-void GroupRegistry::establish_connections()
-{
-    // TODO: implementar handshake e fazer as conexões serem dinamicas
-    for (auto &[id, node] : nodes)
-    {
-        connections.emplace(id, Connection());
     }
 }
 
@@ -78,4 +63,13 @@ bool GroupRegistry::packet_originates_from_group(Packet packet)
         }
     }
     return false;
+}
+
+void GroupRegistry::establish_connections(Pipeline &pipeline)
+{
+    Node local_node = get_local_node();
+    for (auto &[id, node] : nodes)
+    {
+        connections.emplace(std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple(pipeline, local_node, node));
+    }
 }

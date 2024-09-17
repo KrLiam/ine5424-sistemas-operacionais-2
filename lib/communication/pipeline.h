@@ -19,6 +19,8 @@ class Pipeline
 
     Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> incoming_buffer{"incoming messages"};
 
+    GroupRegistry *gr;
+
     friend PipelineHandler;
 
     PipelineStep* get_step(int step_index);
@@ -34,8 +36,14 @@ public:
     ~Pipeline();
 
     void send(Message);
+    void send(Packet);
 
     bool can_forward_to_application();
     void forward_to_application(Message message);
     Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &get_incoming_buffer();
+
+    void stop_transmission(Packet packet)
+    {
+        reinterpret_cast<TransmissionLayer*>(layers.at(0))->stop_transmission(packet);
+    }
 };

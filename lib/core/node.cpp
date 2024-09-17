@@ -1,9 +1,5 @@
 #include "core/node.h"
 
-Connection::Connection()
-{
-}
-
 Node::Node(std::string id, SocketAddress address, bool remote)
     : id(id), address(address), remote(remote) {};
 

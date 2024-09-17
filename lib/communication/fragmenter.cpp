@@ -25,13 +25,13 @@ Packet Fragmenter::create_packet() {
 
     PacketData data = {
         header : {
-            type : message.type,
             msg_num : message.number,
             fragment_num : i,
             checksum : 0,
             window : 0,
             ack : 0,
             more_fragments : !last_fragment,
+            type : message.type,
             reserved : 0
         }
     };

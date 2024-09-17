@@ -48,7 +48,7 @@ void TransmissionLayer::service()
 void TransmissionLayer::receiver_thread()
 {
     Packet packet = channel->receive();
-    if (packet != Packet{})
+    if (packet != Packet{}) // TODO: exceção
     {
         receive(packet);
     }
@@ -73,6 +73,7 @@ void TransmissionLayer::sender_thread()
 void TransmissionLayer::send(Packet packet)
 {
     log_debug("Packet [", packet.to_string(), "] sent to transmission layer.");
+    // send_buffer.produce(packet);
     // tinha pensado em fazer o send daqui aguardar sincronamente, mas aí ele poderia travar a receiver_thread
     // TODO:
     Node destination = gr->get_node(packet.meta.destination);
@@ -87,7 +88,7 @@ void TransmissionLayer::send(Packet packet)
 void TransmissionLayer::receive(Packet packet)
 {
     log_debug("Packet [", packet.to_string(), "] received on transmission layer.");
-
+    /*
     if (!gr->packet_originates_from_group(packet))
     {
         log_debug("Ignoring packet ", packet.to_string(), ", as it did not originate from the group.");
@@ -96,11 +97,10 @@ void TransmissionLayer::receive(Packet packet)
 
     if (process_ack_field_of_received_packet(packet))
         return;
-
+    
     Node origin = gr->get_node(packet.meta.origin);
     Connection connection = gr->get_connection(origin.get_id());
 
-    // TODO: Ver se pode ser int mesmo
     uint32_t message_number = packet.data.header.msg_num;
     if (message_number != connection.get_expected_message_number())
     {
@@ -114,10 +114,10 @@ void TransmissionLayer::receive(Packet packet)
         log_debug("Incoming buffer is full; ignoring packet ", packet.to_string(), ".");
         return;
     }
-
+    */
     handler.forward_receive(packet);
 }
-
+/*
 bool TransmissionLayer::process_ack_field_of_received_packet(Packet packet)
 {
     Node origin = gr->get_node(packet.meta.origin);
@@ -146,16 +146,17 @@ bool TransmissionLayer::process_ack_field_of_received_packet(Packet packet)
     send(ack_packet);
     return false;
 }
-
+*/
+/*
 Packet TransmissionLayer::create_ack_packet(Packet packet)
 {
     PacketData data;
     data.header = {// TODO: Definir corretamente checksum, window, e reserved.
-                   type : packet.data.header.type,
                    msg_num : packet.data.header.msg_num,
                    fragment_num : packet.data.header.fragment_num,
                    checksum : 0,
                    window : 0,
+                   type : packet.data.header.type,
                    ack : 1,
                    more_fragments : 0,
                    reserved : 0
@@ -172,3 +173,4 @@ Packet TransmissionLayer::create_ack_packet(Packet packet)
     };
     return ack_packet;
 }
+*/

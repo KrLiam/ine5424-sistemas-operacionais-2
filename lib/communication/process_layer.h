@@ -12,6 +12,8 @@ public:
     void service();
 
     void send(Message);
+    void send(Packet);
 
     void receive(Message);
+    void receive(Packet);
 };

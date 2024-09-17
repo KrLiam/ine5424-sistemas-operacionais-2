@@ -8,6 +8,7 @@ ReliableCommunication::ReliableCommunication(std::string _local_id, std::size_t 
     channel = new Channel(local_node.get_address());
 
     pipeline = new Pipeline(gr, channel);
+    gr->establish_connections(*pipeline);
 }
 
 ReliableCommunication::~ReliableCommunication()
@@ -24,7 +25,8 @@ GroupRegistry *ReliableCommunication::get_group_registry()
 
 void ReliableCommunication::send(std::string id, MessageData data)
 {
-    if (data.size == -1) data.size = user_buffer_size;
+    if (data.size == -1)
+        data.size = user_buffer_size;
 
     Message message = {
         origin : gr->get_local_node().get_address(),
@@ -34,7 +36,9 @@ void ReliableCommunication::send(std::string id, MessageData data)
         length : data.size
     };
     strncpy(message.data, data.ptr, data.size);
-    pipeline->send(message);
+
+    Connection &conn = gr->get_connection(gr->get_node(id).get_address());
+    conn.send(message);
 }
 
 Message ReliableCommunication::receive(char *m)

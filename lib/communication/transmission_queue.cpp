@@ -59,6 +59,13 @@ void TransmissionQueue::send_timedout_packets(Channel *channel)
             continue;
         }
 
+        bool is_control = packet.data.header.type == MessageType::CONTROL;
+        if (is_control)
+        {
+            indexes_to_remove.push_back(i);
+            continue;
+        }
+
         fragments_to_send[i].meta.time = now;
         fragments_awaiting_ack.push_back((uint32_t)packet.data.header.fragment_num); // melhor usar set pra isso
     }
