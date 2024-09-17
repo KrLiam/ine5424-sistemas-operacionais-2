@@ -246,6 +246,10 @@ private:
                        checksum : 0,
                        window : 0,
                        ack : 1,
+                       rst : 0,
+                       syn : 0,
+                       fin : 0,
+                       extra : 0,
                        more_fragments : 0,
                        type : MessageType::CONTROL,
                        reserved : 0

@@ -38,6 +38,10 @@ void FragmentationLayer::send(Message message)
             checksum : 0,
             window : 0,
             ack : 0,
+            rst : 0,
+            syn : 0,
+            fin : 0,
+            extra : 0,
             more_fragments : more_fragments,
             type : message.type,
             reserved : 0

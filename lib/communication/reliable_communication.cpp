@@ -25,15 +25,16 @@ GroupRegistry *ReliableCommunication::get_group_registry()
 
 void ReliableCommunication::send(std::string id, MessageData data)
 {
-    if (data.size == -1)
+    if (data.size == std::size_t(-1))
         data.size = user_buffer_size;
 
     Message message = {
+        number : 0,
         origin : gr->get_local_node().get_address(),
         destination : gr->get_node(id).get_address(),
         type : MessageType::DATA, // TODO: Definir corretamente
         data : {0},
-        length : data.size
+        length : data.size,
     };
     strncpy(message.data, data.ptr, data.size);
 

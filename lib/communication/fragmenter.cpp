@@ -30,10 +30,15 @@ Packet Fragmenter::create_packet() {
             checksum : 0,
             window : 0,
             ack : 0,
+            rst : 0,
+            syn : 0,
+            fin : 0,
+            extra : 0,
             more_fragments : !last_fragment,
             type : message.type,
             reserved : 0
-        }
+        },
+        message_data : 0
     };
     strncpy(data.message_data, &message.data[i * PacketData::MAX_MESSAGE_SIZE], meta.message_length);
 
@@ -43,7 +48,7 @@ Packet Fragmenter::create_packet() {
     };
 }
 
-int Fragmenter::get_total_fragments() {
+unsigned int Fragmenter::get_total_fragments() {
     return total_fragments;
 }
 
