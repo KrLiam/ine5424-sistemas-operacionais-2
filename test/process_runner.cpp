@@ -1,6 +1,5 @@
-#include <iostream>
-#include <vector>
-#include <thread>
+// process_runner.cpp
+#include "process_runner.h"
 #include "utils/log.h"
 #include "core/node.h"
 #include "core/constants.h"
@@ -8,10 +7,6 @@
 #include "communication/reliable_communication.h"
 
 const std::size_t BUFFER_SIZE = 50000;
-
-struct Arguments {
-    std::string node_id;
-};
 
 Arguments parse_arguments(int argc, char* argv[]) {
     if (argc < 2) {
@@ -28,10 +23,6 @@ Arguments parse_arguments(int argc, char* argv[]) {
     }
     return Arguments{node_id};
 }
-
-struct ThreadArgs {
-    ReliableCommunication* communication;
-};
 
 void server(ThreadArgs* args) {
     ReliableCommunication* comm = args->communication;
@@ -58,8 +49,12 @@ void client(ThreadArgs* args) {
 
 void run_process(const std::string& node_id) {
     ReliableCommunication comm(node_id, BUFFER_SIZE);
-    Node local_node = comm.get_group_registry()->get_local_node();
-    log_info("Local node endpoint is ", local_node.get_address().to_string(), ".");
+    try {
+        Node local_node = comm.get_group_registry()->get_local_node();
+        log_info("Local node endpoint is ", local_node.get_address().to_string(), ".");
+    } catch (const std::exception& e) {
+        throw std::invalid_argument("Nodo não encontrado no registro.");
+    }
 
     ThreadArgs targs = { &comm };
 
@@ -68,14 +63,4 @@ void run_process(const std::string& node_id) {
 
     client_thread.join();
     server_thread.detach();
-}
-
-int main(int argc, char* argv[]) {
-    try {
-        Arguments args = parse_arguments(argc, argv);
-        run_process(args.node_id);
-    }
-    catch (const std::exception& error) {
-        log_error(error.what());
-    }
 }

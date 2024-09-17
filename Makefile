@@ -74,23 +74,31 @@ $(LIB_PATH)/$(LIB_FILENAME): $(LIB_OBJECTS)
 	ar rcs $(LIB_PATH)/$(LIB_FILENAME) $(LIB_OBJECTS)
 
 
+# Nome do arquivo binário para os testes unitários
+UNITARY_TEST_BIN = unitaryTests
+
+# Caminho para os arquivos de teste
+TEST_PATH = test
+
 # make test
 #
-# Comando para compilar programa de testes. Irá compilar a biblioteca em conjunto.
+# Comando para compilar programa de testes a partir de unitaryTests.cpp e process_runner.cpp
 .PHONY: test
 test: export CXXFLAGS := $(CXXFLAGS) $(COMPILE_FLAGS)
-test: dirs $(BIN_PATH)/$(TEST_BIN_FILENAME)
-	@$(RM) $(TEST_BIN_FILENAME)
-	@ln -s $(BIN_PATH)/$(TEST_BIN_FILENAME) $(TEST_BIN_FILENAME)
+test: dirs $(BIN_PATH)/$(UNITARY_TEST_BIN)
+	@$(RM) $(UNITARY_TEST_BIN)
+	@ln -s $(BIN_PATH)/$(UNITARY_TEST_BIN) $(UNITARY_TEST_BIN)
 
--include $(TEST_DEPS)
-
-$(BUILD_PATH)/test/%.o: $(TEST_PATH)/%.$(SRC_EXT)
+$(BUILD_PATH)/test/unitaryTests.o: $(TEST_PATH)/unitaryTests.$(SRC_EXT)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -MP -MMD -c $< -o $@
 
-$(BIN_PATH)/$(TEST_BIN_FILENAME): $(LIB_PATH)/$(LIB_FILENAME) $(TEST_OBJECTS)
-	$(CXX) -o $@ $(TEST_OBJECTS) -L $(LIB_PATH) -l$(LIB_NAME)
+# Compila o process_runner.cpp que está no diretório test/
+$(BUILD_PATH)/test/process_runner.o: $(TEST_PATH)/process_runner.$(SRC_EXT)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -MP -MMD -c $< -o $@
 
+# Agora, ao compilar unitaryTests, também linkamos o process_runner.o
+$(BIN_PATH)/$(UNITARY_TEST_BIN): $(LIB_PATH)/$(LIB_FILENAME) $(BUILD_PATH)/test/unitaryTests.o $(BUILD_PATH)/test/process_runner.o
+	$(CXX) -o $@ $(BUILD_PATH)/test/unitaryTests.o $(BUILD_PATH)/test/process_runner.o -L $(LIB_PATH) -l$(LIB_NAME)
 
 # make run id=...
 #
