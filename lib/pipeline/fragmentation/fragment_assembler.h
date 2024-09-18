@@ -8,11 +8,10 @@
 
 class FragmentAssembler
 {
-private:
     unsigned int bytes_received;
     uint32_t last_fragment_number;
     std::vector<uint32_t> received_fragments;
-    Message message;
+    Message message{};
 
 public:
     FragmentAssembler();
