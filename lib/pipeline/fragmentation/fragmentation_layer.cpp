@@ -1,4 +1,4 @@
-#include "communication/fragmentation_layer.h"
+#include "pipeline/fragmentation/fragmentation_layer.h"
 
 FragmentationLayer::FragmentationLayer(PipelineHandler handler, GroupRegistry *gr)
     : PipelineStep(handler, gr)

@@ -2,7 +2,8 @@
 
 #include <functional>
 
-#include "core/segment.h"
+#include "core/message.h"
+#include "core/packet.h"
 
 class Pipeline;
 

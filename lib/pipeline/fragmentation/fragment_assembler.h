@@ -2,7 +2,8 @@
 
 #include <vector>
 
-#include "core/segment.h"
+#include "core/message.h"
+#include "core/packet.h"
 #include "utils/log.h"
 
 class FragmentAssembler

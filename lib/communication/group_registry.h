@@ -3,9 +3,10 @@
 #include <string>
 #include <map>
 
-#include "core/connection.h"
+#include "communication/connection.h"
 #include "core/node.h"
-#include "core/segment.h"
+#include "core/message.h"
+#include "core/packet.h"
 #include "core/buffer.h"
 
 class Pipeline;

@@ -6,13 +6,14 @@
 #include <semaphore>
 
 #include "channels/channel.h"
-#include "core/connection.h"
+#include "communication/connection.h"
 #include "core/buffer.h"
 #include "core/constants.h"
-#include "core/segment.h"
+#include "core/message.h"
+#include "core/packet.h"
 #include "core/node.h"
 #include "communication/group_registry.h"
-#include "communication/pipeline.h"
+#include "pipeline/pipeline.h"
 #include "utils/format.h"
 
 class Pipeline;

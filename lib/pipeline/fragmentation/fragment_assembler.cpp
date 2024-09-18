@@ -1,4 +1,4 @@
-#include "fragment_assembler.h"
+#include "pipeline/fragmentation/fragment_assembler.h"
 
 FragmentAssembler::FragmentAssembler() : bytes_received(0), last_fragment_number(INT_MAX), received_fragments()
 {

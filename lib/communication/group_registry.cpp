@@ -1,4 +1,4 @@
-#include "group_registry.h"
+#include "communication/group_registry.h"
 
 GroupRegistry::GroupRegistry(std::string local_id) : local_id(local_id)
 {

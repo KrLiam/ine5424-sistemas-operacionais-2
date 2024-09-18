@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "channels/channel.h"
-#include "core/segment.h"
+#include "core/packet.h"
 #include "utils/date.h"
 
 class TransmissionQueue

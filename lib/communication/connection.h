@@ -11,7 +11,8 @@
 
 #include "utils/config.h"
 #include "utils/format.h"
-#include "core/segment.h"
+#include "core/message.h"
+#include "core/packet.h"
 #include "utils/log.h"
 #include "core/node.h"
 #include "core/buffer.h"

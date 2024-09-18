@@ -1,5 +1,5 @@
-#include "core/connection.h"
-#include "communication/pipeline.h"
+#include "communication/connection.h"
+#include "pipeline/pipeline.h"
 
 void Connection::send(Message message)
 {

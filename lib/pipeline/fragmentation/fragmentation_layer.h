@@ -3,8 +3,8 @@
 #include <cmath>
 #include <map>
 
-#include "communication/fragment_assembler.h"
-#include "communication/pipeline_step.h"
+#include "pipeline/fragmentation/fragment_assembler.h"
+#include "pipeline/pipeline_step.h"
 
 class FragmentationLayer : public PipelineStep
 {

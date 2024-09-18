@@ -1,4 +1,4 @@
-#include "pipeline.h"
+#include "pipeline/pipeline.h"
 
 Pipeline::Pipeline(GroupRegistry *gr, Channel *channel) : gr(gr)
 {
@@ -6,7 +6,6 @@ Pipeline::Pipeline(GroupRegistry *gr, Channel *channel) : gr(gr)
 
     layers.push_back(new TransmissionLayer(handler.at_index(0), gr, channel));
     layers.push_back(new FragmentationLayer(handler.at_index(1), gr));
-    layers.push_back(new ProcessLayer(handler.at_index(2), gr));
 }
 
 Pipeline::~Pipeline()

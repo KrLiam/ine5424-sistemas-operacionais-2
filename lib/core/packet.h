@@ -1,34 +1,6 @@
 #pragma once
 
-#include "utils/config.h"
-#include "utils/format.h"
-#include "constants.h"
-#include <cstring>
-#include <cstdint>
-
-enum MessageType
-{
-    APPLICATION = 0,
-    CONTROL = 1,
-};
-
-struct Message
-{
-    const static int MAX_MESSAGE_SIZE = 65536;
-
-    uint32_t number;
-    SocketAddress origin;
-    SocketAddress destination;
-    MessageType type;
-
-    char data[MAX_MESSAGE_SIZE];
-    std::size_t length;
-
-    std::string to_string() const
-    {
-        return format("%s -> %s", origin.to_string().c_str(), destination.to_string().c_str());
-    }
-};
+#include "core/message.h"
 
 struct PacketHeader
 {
@@ -81,11 +53,8 @@ struct PacketData
     static const int MAX_PACKET_SIZE = 1280;
     static const int MAX_MESSAGE_SIZE = MAX_PACKET_SIZE - sizeof(PacketHeader);
 
-    static PacketData from(PacketHeader packet_header, const char *buffer);
-
     PacketHeader header;
     char message_data[MAX_MESSAGE_SIZE];
-    // int message_length;
 };
 
 struct PacketMetadata

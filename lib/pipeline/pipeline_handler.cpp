@@ -1,5 +1,5 @@
-#include "pipeline_handler.h"
-#include "pipeline.h"
+#include "pipeline/pipeline_handler.h"
+#include "pipeline/pipeline.h"
 
 PipelineHandler::PipelineHandler(Pipeline& pipeline, int step_index)
     : pipeline(pipeline), step_index(step_index)

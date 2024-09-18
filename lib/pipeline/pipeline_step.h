@@ -1,9 +1,10 @@
 #pragma once
 
 #include "channels/channel.h"
-#include "communication/pipeline_handler.h"
+#include "pipeline/pipeline_handler.h"
 #include "communication/group_registry.h"
-#include "core/segment.h"
+#include "core/message.h"
+#include "core/packet.h"
 #include "core/constants.h"
 #include "core/buffer.h"
 

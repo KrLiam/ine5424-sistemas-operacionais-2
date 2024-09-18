@@ -1,6 +1,6 @@
 #include <cmath>
 
-#include "communication/fragmenter.h"
+#include "pipeline/fragmentation/fragmenter.h"
 
 
 Fragmenter::Fragmenter(const Message& message) : message(message) {

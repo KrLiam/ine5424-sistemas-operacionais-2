@@ -9,7 +9,7 @@
 
 #include "utils/config.h"
 #include "utils/format.h"
-#include "core/segment.h"
+#include "core/message.h"
 
 class Node
 {

@@ -8,7 +8,8 @@
 
 #include "utils/config.h"
 #include "utils/log.h"
-#include "core/segment.h"
+#include "core/message.h"
+#include "core/packet.h"
 #include "core/node.h"
 
 class Channel

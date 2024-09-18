@@ -1,4 +1,5 @@
-#include "core/segment.h"
+#include "core/message.h"
+#include "core/packet.h"
 
 class Fragmenter {
     const Message& message;

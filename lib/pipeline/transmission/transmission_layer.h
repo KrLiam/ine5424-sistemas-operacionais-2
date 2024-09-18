@@ -5,10 +5,11 @@
 #include <atomic>
 
 #include "channels/channel.h"
-#include "communication/pipeline_step.h"
-#include "communication/transmission_queue.h"
+#include "pipeline/pipeline_step.h"
+#include "pipeline/transmission/transmission_queue.h"
 #include "core/node.h"
-#include "core/segment.h"
+#include "core/message.h"
+#include "core/packet.h"
 #include "core/buffer.h"
 
 class TransmissionLayer : public PipelineStep
