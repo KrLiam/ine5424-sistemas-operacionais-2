@@ -2,7 +2,6 @@
 
 #include "utils/config.h"
 #include "utils/format.h"
-#include "utils/hash.h"
 #include "constants.h"
 #include <cstring>
 #include <cstdint>

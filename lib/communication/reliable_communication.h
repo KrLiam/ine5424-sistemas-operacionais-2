@@ -14,7 +14,6 @@
 #include "communication/group_registry.h"
 #include "communication/pipeline.h"
 #include "utils/format.h"
-#include "utils/hash.h"
 
 class Pipeline;
 
