@@ -43,7 +43,7 @@ private:
     uint32_t next_number = 0;
     uint32_t expected_number = 0;
 
-    ConnectionState state = ConnectionState::CLOSED;
+    ConnectionState state = CLOSED;
     std::condition_variable state_change;
     std::mutex mutex;
 
@@ -90,15 +90,15 @@ private:
     }
     bool disconnect()
     {
-        if (state == ConnectionState::CLOSED)
+        if (state == CLOSED)
             return true;
 
         log_debug("disconnect: sending FIN.");
-        change_state(ConnectionState::FIN_WAIT);
+        change_state(FIN_WAIT);
         send_flag(FIN);
 
         std::unique_lock lock(mutex);
-        while (state != ConnectionState::CLOSED)
+        while (state != CLOSED)
             state_change.wait(lock); // TODO: timeout
 
         log_debug("disconnect: connection closed successfully.");
@@ -111,7 +111,7 @@ private:
         {
             expected_number++;
             log_debug("closed: received SYN; sending SYN+ACK.");
-            change_state(ConnectionState::SYN_RECEIVED);
+            change_state(SYN_RECEIVED);
             send_flag(SYN | ACK);
         }
 
@@ -123,7 +123,7 @@ private:
             log_warn("closed: received message packet.");
             Packet p = empty_packet();
             p.data.header.syn = 1; // Dá pra simplificar essa parte
-            change_state(ConnectionState::SYN_SENT);
+            change_state(SYN_SENT);
             send(p);
             return;
         }*/
@@ -138,12 +138,12 @@ private:
             {
                 log_debug("syn_sent: received SYN+ACK; sending ACK.");
                 log_info("syn_sent: connection established.");
-                change_state(ConnectionState::ESTABLISHED);
+                change_state(ESTABLISHED);
                 send_flag(ACK);
                 return;
             }
             log_debug("syn_sent: received SYN from simultaneous connection; transitioning to syn_received and sending SYN+ACK.");
-            change_state(ConnectionState::SYN_RECEIVED);
+            change_state(SYN_RECEIVED);
             send_flag(SYN | ACK);
             return;
         }
@@ -158,7 +158,7 @@ private:
 
         log_debug("syn_sent: received unexpected packet; closing connection.");
         reset_message_numbers();
-        change_state(ConnectionState::CLOSED);
+        change_state(CLOSED);
     }
 
     void syn_received(Packet p)
@@ -171,7 +171,7 @@ private:
             expected_number++;
             log_debug("syn_received: received ACK.");
             log_info("syn_received: connection established.");
-            change_state(ConnectionState::ESTABLISHED);
+            change_state(ESTABLISHED);
             return;
         }
 
@@ -194,13 +194,13 @@ private:
             if (p.data.header.is_ack())
             {
                 log_debug("fin_wait: received FIN+ACK; closing and sending ACK.");
-                change_state(ConnectionState::CLOSED);
+                change_state(CLOSED);
                 send_flag(ACK);
                 reset_message_numbers();
                 return;
             }
             log_debug("fin_wait: simultaneous termination; transitioning to last_ack and sending ACK.");
-            change_state(ConnectionState::LAST_ACK);
+            change_state(LAST_ACK);
             send_flag(ACK);
         }
     }
@@ -219,7 +219,7 @@ private:
             log_debug("last_ack: received ACK.");
             log_info("last_ack: connection closed.");
             reset_message_numbers();
-            change_state(ConnectionState::CLOSED);
+            change_state(CLOSED);
         }
     }
 
@@ -282,7 +282,7 @@ private:
             log_debug(get_current_state_name(), ": received RST.");
             log_info(get_current_state_name(), ": connection closed.");
             reset_message_numbers();
-            change_state(ConnectionState::CLOSED);
+            change_state(CLOSED);
             return true;
         }
         return false;
@@ -296,7 +296,7 @@ private:
             log_info(get_current_state_name(), ": connection closed.");
             next_number = 0;
             expected_number = p.data.header.get_message_number() + 1;
-            change_state(ConnectionState::CLOSED);
+            change_state(CLOSED);
             send_flag(RST);
             return true;
         }
@@ -339,7 +339,7 @@ public:
     }
     void receive(Message message)
     {
-        if (state != ConnectionState::ESTABLISHED)
+        if (state != ESTABLISHED)
         {
             log_warn("Connection is not established; dropping message ", message.to_string(), ".");
             return;
