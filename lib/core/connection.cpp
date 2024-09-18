@@ -58,6 +58,7 @@ void Connection::established(Packet p)
 
     if (p.data.header.get_message_type() == MessageType::APPLICATION & pipeline.is_message_complete(remote_node.get_id()))
     {
+        log_debug("Message from ", remote_Node.to_string(), " is complete; receiving it.");
         receive(pipeline.assemble_message(remote_node.get_id()));
     }
 }

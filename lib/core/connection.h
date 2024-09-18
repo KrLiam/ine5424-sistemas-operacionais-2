@@ -343,7 +343,6 @@ public:
             return;
         }
         expected_number++;
-        log_debug("expected is now ", expected_number);
         
         application_buffer.produce(message);
     }
