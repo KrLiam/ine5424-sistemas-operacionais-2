@@ -1,4 +1,5 @@
 #include "pipeline/fragmentation/fragmentation_layer.h"
+#include <cmath>
 
 FragmentationLayer::FragmentationLayer(PipelineHandler handler, GroupRegistry *gr)
     : PipelineStep(handler, gr)
@@ -18,7 +19,7 @@ void FragmentationLayer::send(Message message)
 
     Node destination = gr->get_node(message.destination);
 
-    uint32_t required_packets = ceil((double)message.length / PacketData::MAX_MESSAGE_SIZE);
+    uint32_t required_packets = std::ceil(static_cast<double>(message.length) / PacketData::MAX_MESSAGE_SIZE);
     log_debug("Message [", message.to_string(), "] length is ", message.length, "; will fragment into ", required_packets, " packets.");
     // Mutex para não ter duas threads usando o mesmo msg_num simultaneamente
     for (uint32_t i = 0; i < required_packets; i++)
