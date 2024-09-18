@@ -41,7 +41,6 @@ private:
     Node remote_node;
 
     uint32_t next_number = 0;
-    uint32_t unacknowledged_number = 0;
     uint32_t expected_number = 0;
 
     ConnectionState state = ConnectionState::CLOSED;
@@ -74,16 +73,16 @@ private:
 
     bool connect()
     {
-        if (state == ConnectionState::ESTABLISHED)
+        if (state == ESTABLISHED)
             return true;
 
         log_debug("connect: sending SYN.");
-        set_message_numbers(0);
-        change_state(ConnectionState::SYN_SENT);
+        reset_message_numbers();
+        change_state(SYN_SENT);
         send_flag(SYN);
 
         std::unique_lock lock(mutex);
-        while (state != ConnectionState::ESTABLISHED)
+        while (state != ESTABLISHED)
             state_change.wait(lock); // TODO: timeout
 
         log_debug("connect: connection established successfully.");
@@ -95,7 +94,6 @@ private:
             return true;
 
         log_debug("disconnect: sending FIN.");
-        set_message_numbers(0);
         change_state(ConnectionState::FIN_WAIT);
         send_flag(FIN);
 
@@ -111,6 +109,7 @@ private:
     {
         if (p.data.header.is_syn() && !p.data.header.is_ack())
         {
+            expected_number++;
             log_debug("closed: received SYN; sending SYN+ACK.");
             change_state(ConnectionState::SYN_RECEIVED);
             send_flag(SYN | ACK);
@@ -132,11 +131,11 @@ private:
 
     void syn_sent(Packet p)
     {
-        if (p.data.header.is_syn())
+        if (p.data.header.is_syn() && p.data.header.get_message_number() <= expected_number)
         {
+            expected_number++;
             if (p.data.header.is_ack())
             {
-                set_message_numbers(1);
                 log_debug("syn_sent: received SYN+ACK; sending ACK.");
                 log_info("syn_sent: connection established.");
                 change_state(ConnectionState::ESTABLISHED);
@@ -151,12 +150,14 @@ private:
 
         if (p.data.header.is_rst())
         {
+            expected_number++;
             log_debug("syn_sent: received RST; sending SYN.");
             send_flag(SYN);
             return;
         }
 
         log_debug("syn_sent: received unexpected packet; closing connection.");
+        reset_message_numbers();
         change_state(ConnectionState::CLOSED);
     }
 
@@ -165,9 +166,9 @@ private:
         if (close_on_rst(p))
             return;
 
-        if (p.data.header.is_ack())
+        if (p.data.header.is_ack() && p.data.header.get_message_number() == expected_number)
         {
-            set_message_numbers(1);
+            expected_number++;
             log_debug("syn_received: received ACK.");
             log_info("syn_received: connection established.");
             change_state(ConnectionState::ESTABLISHED);
@@ -189,11 +190,13 @@ private:
 
         if (p.data.header.is_fin())
         {
+            expected_number++;
             if (p.data.header.is_ack())
             {
                 log_debug("fin_wait: received FIN+ACK; closing and sending ACK.");
                 change_state(ConnectionState::CLOSED);
                 send_flag(ACK);
+                reset_message_numbers();
                 return;
             }
             log_debug("fin_wait: simultaneous termination; transitioning to last_ack and sending ACK.");
@@ -215,6 +218,7 @@ private:
         {
             log_debug("last_ack: received ACK.");
             log_info("last_ack: connection closed.");
+            reset_message_numbers();
             change_state(ConnectionState::CLOSED);
         }
     }
@@ -223,7 +227,7 @@ private:
     {
         PacketHeader header;
         memset(&header, 0, sizeof(PacketHeader));
-        header.msg_num = 0;
+        header.msg_num = next_number;
         header.type = MessageType::CONTROL;
         memcpy(reinterpret_cast<unsigned char *>(&header) + 12, &flags, 1);
 
@@ -237,6 +241,7 @@ private:
         packet.meta.destination = remote_node.get_address();
         packet.data = data;
 
+        next_number++;
         send(packet);
     }
 
@@ -276,6 +281,7 @@ private:
         {
             log_debug(get_current_state_name(), ": received RST.");
             log_info(get_current_state_name(), ": connection closed.");
+            reset_message_numbers();
             change_state(ConnectionState::CLOSED);
             return true;
         }
@@ -288,6 +294,8 @@ private:
         {
             log_debug(get_current_state_name(), ": received SYN; sending RST.");
             log_info(get_current_state_name(), ": connection closed.");
+            next_number = 0;
+            expected_number = p.data.header.get_message_number() + 1;
             change_state(ConnectionState::CLOSED);
             send_flag(RST);
             return true;
@@ -300,11 +308,10 @@ private:
         return next_number++;
     }
 
-    void set_message_numbers(uint32_t number)
+    void reset_message_numbers()
     {
-        expected_number = number;
-        unacknowledged_number = number;
-        next_number = number;
+        expected_number = 0;
+        next_number = 0;
     }
 
     std::string get_current_state_name()
@@ -344,7 +351,7 @@ public:
             return;
         }
         expected_number++;
-        
+
         application_buffer.produce(message);
     }
 };
