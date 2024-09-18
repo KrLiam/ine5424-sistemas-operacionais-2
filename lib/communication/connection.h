@@ -16,6 +16,8 @@
 #include "utils/log.h"
 #include "core/node.h"
 #include "core/buffer.h"
+#include "utils/date.h"
+#include "core/constants.h"
 
 using namespace std::placeholders;
 
@@ -46,6 +48,8 @@ private:
     ConnectionState state = CLOSED;
     std::condition_variable state_change;
     std::mutex mutex;
+
+    Timer timer{};
 
     const std::map<ConnectionState, std::function<void(Packet)>> packet_receive_handlers = {
         {ESTABLISHED, std::bind(&Connection::established, this, _1)},
@@ -80,10 +84,18 @@ private:
         reset_message_numbers();
         change_state(SYN_SENT);
         send_flag(SYN);
+        int timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
 
         std::unique_lock lock(mutex);
-        while (state != ESTABLISHED)
-            state_change.wait(lock); // TODO: timeout
+        while (state != ESTABLISHED && state != CLOSED)
+            state_change.wait(lock);
+
+        if (state == CLOSED)
+        {
+            log_warn("connect: unable to establish connection.");
+            return false;
+        }
+        timer.cancel(timer_id);
 
         log_trace("connect: connection established successfully.");
         return true;
@@ -96,12 +108,14 @@ private:
         log_trace("disconnect: sending FIN.");
         change_state(FIN_WAIT);
         send_flag(FIN);
+        int timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
 
         std::unique_lock lock(mutex);
         while (state != CLOSED)
-            state_change.wait(lock); // TODO: timeout
+            state_change.wait(lock);
+        timer.cancel(timer_id);
 
-        log_trace("disconnect: connection closed successfully.");
+        log_trace("disconnect: connection closed.");
         return true;
     }
 
@@ -299,6 +313,12 @@ private:
             return true;
         }
         return false;
+    }
+
+    void connection_timeout()
+    {
+        log_warn(get_current_state_name(), ": timed out.");
+        change_state(CLOSED);
     }
 
     uint32_t new_message_number()
