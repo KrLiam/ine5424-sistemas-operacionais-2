@@ -38,7 +38,7 @@ void TransmissionQueue::mark_packet_as_acked(Packet packet)
     queue_mutex.unlock();
 }
 
-void TransmissionQueue::send_timedout_packets(Channel *channel)
+void TransmissionQueue::send_timedout_packets(PipelineHandler& handler)
 {
     uint64_t now = DateUtils::now();
     std::vector<std::size_t> indexes_to_remove = std::vector<std::size_t>();
@@ -50,7 +50,7 @@ void TransmissionQueue::send_timedout_packets(Channel *channel)
 
         if (now - packet.meta.time < ACK_TIMEOUT)
             continue;
-        channel->send(packet);
+        handler.forward_send(packet);
 
         bool is_ack = packet.data.header.ack;
         if (is_ack)

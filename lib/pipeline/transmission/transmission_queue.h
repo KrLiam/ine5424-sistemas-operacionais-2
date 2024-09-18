@@ -6,6 +6,7 @@
 #include "channels/channel.h"
 #include "core/packet.h"
 #include "utils/date.h"
+#include "pipeline/pipeline_handler.h"
 
 class TransmissionQueue
 {
@@ -30,5 +31,5 @@ public:
     /**
      * Used by the sender thread to send packets from the send queue.
     */
-    void send_timedout_packets(Channel *channel);
+    void send_timedout_packets(PipelineHandler& handler);
 };

@@ -1,11 +1,16 @@
 #include "pipeline/pipeline.h"
+#include "pipeline/channel/channel_layer.h"
+#include "pipeline/fault_injection/fault_injection_layer.h"
+
 
 Pipeline::Pipeline(GroupRegistry *gr, Channel *channel) : gr(gr)
 {
     PipelineHandler handler = PipelineHandler(*this, -1);
 
-    layers.push_back(new TransmissionLayer(handler.at_index(0), gr, channel));
-    layers.push_back(new FragmentationLayer(handler.at_index(1), gr));
+    layers.push_back(new ChannelLayer(handler.at_index(0), *channel));
+    layers.push_back(new FaultInjectionLayer(handler.at_index(1)));
+    layers.push_back(new TransmissionLayer(handler.at_index(2), gr, channel));
+    layers.push_back(new FragmentationLayer(handler.at_index(3), gr));
 }
 
 Pipeline::~Pipeline()

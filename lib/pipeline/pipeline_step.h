@@ -21,7 +21,7 @@ public:
 
     virtual ~PipelineStep();
 
-    virtual void service() = 0;
+    virtual void service();
 
     virtual void send(Packet packet);
     virtual void send(Message);

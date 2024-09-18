@@ -1,15 +1,5 @@
 #include "pipeline/transmission/transmission_layer.h"
 
-static void run_receiver_thread(TransmissionLayer *manager)
-{
-    log_info("Initialized transmission layer receiver thread.");
-    while (!manager->stop_threads)
-    {
-        manager->receiver_thread();
-    }
-    log_info("Closing transmission layer receiver thread.");
-}
-
 static void run_sender_thread(TransmissionLayer *manager)
 {
     log_info("Initialized transmission layer sender thread.");
@@ -20,7 +10,7 @@ static void run_sender_thread(TransmissionLayer *manager)
     log_info("Closing transmission layer sender thread.");
 }
 
-TransmissionLayer::TransmissionLayer(PipelineHandler handler, GroupRegistry *gr, Channel *channel) : PipelineStep(handler, gr), channel(channel), stop_threads(false)
+TransmissionLayer::TransmissionLayer(PipelineHandler handler, GroupRegistry *gr, Channel* channel) : PipelineStep(handler, gr), channel(channel), stop_threads(false)
 {
     service();
 }
@@ -30,8 +20,6 @@ TransmissionLayer::~TransmissionLayer()
     stop_threads = true;
     channel->shutdown_socket();
 
-    if (listener_thread_obj.joinable())
-        listener_thread_obj.join();
     if (sender_thread_obj.joinable())
         sender_thread_obj.join();
 
@@ -41,17 +29,7 @@ TransmissionLayer::~TransmissionLayer()
 
 void TransmissionLayer::service()
 {
-    listener_thread_obj = std::thread(run_receiver_thread, this);
     sender_thread_obj = std::thread(run_sender_thread, this);
-}
-
-void TransmissionLayer::receiver_thread()
-{
-    Packet packet = channel->receive();
-    if (packet != Packet{}) // TODO: exceção
-    {
-        receive(packet);
-    }
 }
 
 void TransmissionLayer::sender_thread()
@@ -65,7 +43,7 @@ void TransmissionLayer::sender_thread()
     // TODO: atualmente, não tem controle de enviar 1 msg só por vez
     for (auto &[id, queue] : queue_map)
     {
-        queue->send_timedout_packets(channel);
+        queue->send_timedout_packets(handler);
         // if (queue.has_sent_everything()) queue_map.erase(id); <- mutex pra esse mapa
     }
 }

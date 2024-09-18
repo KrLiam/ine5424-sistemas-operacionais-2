@@ -39,15 +39,15 @@ public:
 
     void stop_transmission(Packet packet)
     {
-        reinterpret_cast<TransmissionLayer *>(layers.at(0))->stop_transmission(packet);
+        reinterpret_cast<TransmissionLayer *>(layers.at(2))->stop_transmission(packet);
     }
 
     bool is_message_complete(std::string node_id)
     {
-        return reinterpret_cast<FragmentationLayer *>(layers.at(1))->is_message_complete(node_id);
+        return reinterpret_cast<FragmentationLayer *>(layers.at(3))->is_message_complete(node_id);
     }
     Message assemble_message(std::string node_id)
     {
-        return reinterpret_cast<FragmentationLayer *>(layers.at(1))->assemble_message(node_id);
+        return reinterpret_cast<FragmentationLayer *>(layers.at(3))->assemble_message(node_id);
     }
 };

@@ -21,7 +21,6 @@ private:
 
     bool process_ack_field_of_received_packet(Packet packet);
 
-    std::thread listener_thread_obj;
     std::thread sender_thread_obj;
 
     Buffer<INTERMEDIARY_BUFFER_ITEMS, Packet> send_buffer{"send buffer"};

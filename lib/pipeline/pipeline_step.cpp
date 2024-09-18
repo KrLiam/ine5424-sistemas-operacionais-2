@@ -8,6 +8,10 @@ PipelineStep::~PipelineStep()
 {
 }
 
+void PipelineStep::service()
+{
+}
+
 void PipelineStep::send(Message message)
 {
     handler.forward_send(message);
