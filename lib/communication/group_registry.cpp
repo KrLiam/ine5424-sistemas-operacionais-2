@@ -65,11 +65,9 @@ bool GroupRegistry::packet_originates_from_group(Packet packet)
     return false;
 }
 
-void GroupRegistry::establish_connections(Pipeline &pipeline)
+void GroupRegistry::establish_connections(Pipeline &pipeline, Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &application_buffer)
 {
     Node local_node = get_local_node();
     for (auto &[id, node] : nodes)
-    {
-        connections.emplace(std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple(pipeline, local_node, node));
-    }
+        connections.emplace(std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple(pipeline, application_buffer, local_node, node));
 }

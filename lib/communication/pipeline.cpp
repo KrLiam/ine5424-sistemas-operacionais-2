@@ -70,18 +70,3 @@ void Pipeline::receive(Packet packet, int step_index)
     Connection &conn = gr->get_connection(packet.meta.origin);
     conn.receive(packet);
 }
-
-bool Pipeline::can_forward_to_application()
-{
-    return incoming_buffer.can_produce();
-}
-
-void Pipeline::forward_to_application(Message message)
-{
-    incoming_buffer.produce(message);
-}
-
-Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &Pipeline::get_incoming_buffer()
-{
-    return incoming_buffer;
-}

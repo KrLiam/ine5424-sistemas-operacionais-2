@@ -8,7 +8,7 @@ ReliableCommunication::ReliableCommunication(std::string _local_id, std::size_t 
     channel = new Channel(local_node.get_address());
 
     pipeline = new Pipeline(gr, channel);
-    gr->establish_connections(*pipeline);
+    gr->establish_connections(*pipeline, application_buffer);
 }
 
 ReliableCommunication::~ReliableCommunication()
@@ -44,7 +44,7 @@ void ReliableCommunication::send(std::string id, MessageData data)
 
 Message ReliableCommunication::receive(char *m)
 {
-    Message message = pipeline->get_incoming_buffer().consume();
+    Message message = application_buffer.consume();
 
     if (user_buffer_size >= message.length)
     {

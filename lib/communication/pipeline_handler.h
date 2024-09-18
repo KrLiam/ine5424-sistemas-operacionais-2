@@ -29,7 +29,4 @@ public:
 
     void forward_receive(Packet);
     void forward_receive(Message);
-    
-    bool can_forward_to_application();
-    void forward_to_application(Message);
 };

@@ -7,6 +7,32 @@
 #include <cstring>
 #include <cstdint>
 
+enum MessageType
+{
+    DATA = 0,
+    CONTROL = 1,
+    DISCOVER = 2,
+    HEARTBEAT = 3
+};
+
+struct Message
+{
+    const static int MAX_MESSAGE_SIZE = 65536;
+
+    uint32_t number;
+    SocketAddress origin;
+    SocketAddress destination;
+    MessageType type;
+
+    char data[MAX_MESSAGE_SIZE];
+    std::size_t length;
+
+    std::string to_string() const
+    {
+        return format("%s -> %s", origin.to_string().c_str(), destination.to_string().c_str());
+    }
+};
+
 struct PacketHeader
 {
     unsigned int msg_num : 32;
@@ -46,6 +72,11 @@ struct PacketHeader
     {
         return (bool)fin;
     }
+
+    MessageType get_message_type()
+    {
+        return static_cast<MessageType>(type);
+    }
 };
 
 struct PacketData
@@ -81,31 +112,5 @@ struct Packet
     bool operator==(const Packet &other) const
     {
         return meta.origin == other.meta.origin && meta.destination == other.meta.destination && meta.message_length == other.meta.message_length && data.header.msg_num == other.data.header.msg_num && data.header.fragment_num == other.data.header.fragment_num;
-    }
-};
-
-enum MessageType
-{
-    DATA = 0,
-    CONTROL = 1,
-    DISCOVER = 2,
-    HEARTBEAT = 3
-};
-
-struct Message
-{
-    const static int MAX_MESSAGE_SIZE = 65536;
-
-    uint32_t number;
-    SocketAddress origin;
-    SocketAddress destination;
-    MessageType type;
-
-    char data[MAX_MESSAGE_SIZE];
-    std::size_t length;
-
-    std::string to_string() const
-    {
-        return format("%s -> %s", origin.to_string().c_str(), destination.to_string().c_str());
     }
 };

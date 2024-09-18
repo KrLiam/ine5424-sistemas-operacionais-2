@@ -33,11 +33,9 @@ public:
     void service();
 
     void sender_thread();
-
     void receiver_thread();
 
     void send(Packet packet);
-
     void receive(Packet packet);
 
     void stop_transmission(Packet packet)

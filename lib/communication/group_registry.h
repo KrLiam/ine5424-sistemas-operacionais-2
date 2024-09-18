@@ -6,6 +6,7 @@
 #include "core/connection.h"
 #include "core/node.h"
 #include "core/segment.h"
+#include "core/buffer.h"
 
 class Pipeline;
 
@@ -28,7 +29,7 @@ public:
 
     bool packet_originates_from_group(Packet packet);
 
-    void establish_connections(Pipeline& pipeline);
+    void establish_connections(Pipeline& pipeline, Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &application_buffer);
 
 private:
     std::string local_id;

@@ -15,21 +15,21 @@ class ReliableCommunication;
 
 class Pipeline
 {
+private:
     std::vector<PipelineStep *> layers;
-
-    Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> incoming_buffer{"incoming messages"};
 
     GroupRegistry *gr;
 
     friend PipelineHandler;
 
-    PipelineStep* get_step(int step_index);
+    PipelineStep *get_step(int step_index);
 
     void send(Message message, int step_index);
     void send(Packet packet, int step_index);
-    
+
     void receive(Message message, int step_index);
     void receive(Packet packet, int step_index);
+
 public:
     Pipeline(GroupRegistry *gr, Channel *channel);
 
@@ -38,12 +38,17 @@ public:
     void send(Message);
     void send(Packet);
 
-    bool can_forward_to_application();
-    void forward_to_application(Message message);
-    Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &get_incoming_buffer();
-
     void stop_transmission(Packet packet)
     {
-        reinterpret_cast<TransmissionLayer*>(layers.at(0))->stop_transmission(packet);
+        reinterpret_cast<TransmissionLayer *>(layers.at(0))->stop_transmission(packet);
+    }
+
+    bool is_message_complete(std::string node_id)
+    {
+        return reinterpret_cast<FragmentationLayer *>(layers.at(1))->is_message_complete(node_id);
+    }
+    Message assemble_message(std::string node_id)
+    {
+        return reinterpret_cast<FragmentationLayer *>(layers.at(1))->assemble_message(node_id);
     }
 };

@@ -61,34 +61,37 @@ void FragmentationLayer::send(Message message)
 void FragmentationLayer::send(Packet packet)
 {
     log_debug("Packet [", packet.to_string(), "] sent to fragmentation layer.");
-    handler.forward_send(packet);   
+    handler.forward_send(packet);
 }
 
 void FragmentationLayer::receive(Packet packet)
 {
     log_debug("Packet [", packet.to_string(), "] received on fragmentation layer.");
+
+    if (packet.data.header.type == MessageType::DATA)
+    {
+        Node origin = gr->get_node(packet.meta.origin);
+        if (!assembler_map.contains(origin.get_id()))
+        {
+            assembler_map.emplace(origin.get_id(), FragmentAssembler());
+        }
+        FragmentAssembler &assembler = assembler_map.at(origin.get_id());
+
+        if (assembler.has_received(packet))
+        {
+            log_debug("Ignoring packet ", packet.to_string(), ", as it was already received.");
+            return;
+        }
+        assembler.add_packet(packet);
+    }
+
     handler.forward_receive(packet);
-    if (packet.data.header.type == MessageType::CONTROL) return;
 
-    Node origin = gr->get_node(packet.meta.origin);
-    if (!assembler_map.contains(origin.get_id()))
-    {
-        assembler_map.emplace(origin.get_id(), FragmentAssembler());
-    }
-    FragmentAssembler& assembler = assembler_map.at(origin.get_id());
-
-    if (assembler.has_received(packet))
-    {
-        log_debug("Ignoring packet ", packet.to_string(), ", as it was already received.");
-        return;
-    }
-    assembler.add_packet(packet);
-
-    if (assembler.has_received_all_packets())
+    /*if (assembler.has_received_all_packets())
     {
         log_debug("Received all fragments; forwarding message to next step.");
         Message message = assembler.assemble();
         assembler_map.erase(origin.get_id());
         handler.forward_receive(message);
-    }
+    }*/
 }

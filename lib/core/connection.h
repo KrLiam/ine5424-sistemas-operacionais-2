@@ -14,6 +14,7 @@
 #include "core/segment.h"
 #include "utils/log.h"
 #include "core/node.h"
+#include "core/buffer.h"
 
 using namespace std::placeholders;
 
@@ -33,6 +34,7 @@ class Connection
 {
 private:
     Pipeline &pipeline;
+    Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &application_buffer;
 
     Node local_node;
     Node remote_node;
@@ -116,8 +118,8 @@ private:
         /* pro reschedule: também tem q fazer alterar o número dos pacotes no transmissionlayer
         // atualmente, dá problema caso B tenha enviado 1 mensagem pra A, A cai, B tenta enviar a 2a
         // da pra resolver isso tanto por reschedule quanto por timeout
-        if (p.data.header.msg_num != 0)
         {
+        if (p.data.header.msg_num != 0)
             log_warn("closed: received message packet.");
             Packet p = empty_packet();
             p.data.header.syn = 1; // Dá pra simplificar essa parte
@@ -318,7 +320,7 @@ private:
     }
 
 public:
-    Connection(Pipeline &pipeline, Node local_node, Node remote_node) : pipeline(pipeline), local_node(local_node), remote_node(remote_node) {}
+    Connection(Pipeline &pipeline, Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &application_buffer, Node local_node, Node remote_node) : pipeline(pipeline), application_buffer(application_buffer), local_node(local_node), remote_node(remote_node) {}
 
     void send(Message message);
     void send(Packet packet);
@@ -341,7 +343,8 @@ public:
             return;
         }
         expected_number++;
-
-        // TODO: forward pra aplicação por meio de um buffer compartilhado entre as conexões
+        log_debug("expected is now ", expected_number);
+        
+        application_buffer.produce(message);
     }
 };
