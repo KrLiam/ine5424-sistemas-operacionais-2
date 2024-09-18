@@ -68,7 +68,7 @@ void FragmentationLayer::receive(Packet packet)
 {
     log_debug("Packet [", packet.to_string(), "] received on fragmentation layer.");
 
-    if (packet.data.header.type == MessageType::DATA)
+    if (packet.data.header.type == MessageType::APPLICATION)
     {
         Node origin = gr->get_node(packet.meta.origin);
         if (!assembler_map.contains(origin.get_id()))

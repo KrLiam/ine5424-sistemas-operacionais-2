@@ -32,7 +32,7 @@ void ReliableCommunication::send(std::string id, MessageData data)
         number : 0,
         origin : gr->get_local_node().get_address(),
         destination : gr->get_node(id).get_address(),
-        type : MessageType::DATA, // TODO: Definir corretamente
+        type : MessageType::APPLICATION, // TODO: Definir corretamente
         data : {0},
         length : data.size,
     };

@@ -47,7 +47,7 @@ void Connection::established(Packet p)
         return;
     }
 
-    if (p.data.header.get_message_type() == MessageType::DATA && !application_buffer.can_produce())
+    if (p.data.header.get_message_type() == MessageType::APPLICATION && !application_buffer.can_produce())
     {
         log_warn("Application buffer is full; ignoring packet.");
         return;
@@ -56,7 +56,7 @@ void Connection::established(Packet p)
     log_debug("Received a packet ", p.to_string(), " that expects confirmation; sending ACK.");
     send_ack(p);
 
-    if (p.data.header.get_message_type() == MessageType::DATA & pipeline.is_message_complete(remote_node.get_id()))
+    if (p.data.header.get_message_type() == MessageType::APPLICATION & pipeline.is_message_complete(remote_node.get_id()))
     {
         receive(pipeline.assemble_message(remote_node.get_id()));
     }

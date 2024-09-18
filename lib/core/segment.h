@@ -9,10 +9,8 @@
 
 enum MessageType
 {
-    DATA = 0,
+    APPLICATION = 0,
     CONTROL = 1,
-    DISCOVER = 2,
-    HEARTBEAT = 3
 };
 
 struct Message
