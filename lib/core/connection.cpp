@@ -56,7 +56,7 @@ void Connection::established(Packet p)
     log_debug("Received a packet ", p.to_string(), " that expects confirmation; sending ACK.");
     send_ack(p);
 
-    if (p.data.header.get_message_type() == MessageType::APPLICATION & pipeline.is_message_complete(remote_node.get_id()))
+    if (p.data.header.get_message_type() == MessageType::APPLICATION && pipeline.is_message_complete(remote_node.get_id()))
     {
         log_debug("Message from ", remote_node.to_string(), " is complete; receiving it.");
         receive(pipeline.assemble_message(remote_node.get_id()));
