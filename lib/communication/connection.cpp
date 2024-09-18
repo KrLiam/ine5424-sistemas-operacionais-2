@@ -19,11 +19,11 @@ void Connection::send(Packet packet)
 
 void Connection::established(Packet p)
 {
-    // validar numero = 0
     if (close_on_rst(p))
         return;
     if (rst_on_syn(p))
         return;
+
     if (p.data.header.is_fin())
     {
         log_trace("established: received FIN; sending FIN+ACK.");

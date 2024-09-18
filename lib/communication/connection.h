@@ -207,8 +207,6 @@ private:
 
     void last_ack(Packet p)
     {
-        // graantir q o numero de seq é 0
-
         if (close_on_rst(p))
             return;
         if (rst_on_syn(p))
