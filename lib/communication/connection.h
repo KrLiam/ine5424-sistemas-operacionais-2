@@ -368,8 +368,15 @@ public:
             log_warn("Message ", message.to_string(), " was already received; dropping it.");
             return;
         }
-        expected_number++;
 
+        if (message.number > expected_number)
+        {
+            log_warn("Message ", message.to_string(), " is unexpected, current number expected is ", expected_number, "; dropping it.");
+            return;
+        }
+
+
+        expected_number++;
         application_buffer.produce(message);
     }
 };
