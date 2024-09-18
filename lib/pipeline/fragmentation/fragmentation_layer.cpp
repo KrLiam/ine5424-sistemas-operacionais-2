@@ -29,7 +29,7 @@ void FragmentationLayer::send(Message message)
             time : 0,
             message_length : static_cast<int>(message.length),
         };
-        PacketData data;
+        PacketData data{};
         bool more_fragments = i != required_packets - 1;
         data.header = { // TODO: Definir checksum, window e reserved corretamente
             msg_num : message.number,
