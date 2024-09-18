@@ -70,12 +70,10 @@ void FragmentationLayer::receive(Packet packet)
 
     if (packet.data.header.type == MessageType::APPLICATION)
     {
-        Node origin = gr->get_node(packet.meta.origin);
-        if (!assembler_map.contains(origin.get_id()))
-        {
-            assembler_map.emplace(origin.get_id(), FragmentAssembler());
-        }
-        FragmentAssembler &assembler = assembler_map.at(origin.get_id());
+        std::string id = get_message_identifier(packet);
+        if (!assembler_map.contains(id))
+            assembler_map.emplace(id, FragmentAssembler());
+        FragmentAssembler &assembler = assembler_map.at(id);
 
         if (assembler.has_received(packet))
         {

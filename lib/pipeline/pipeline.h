@@ -42,12 +42,12 @@ public:
         reinterpret_cast<TransmissionLayer *>(layers.at(2))->stop_transmission(packet);
     }
 
-    bool is_message_complete(std::string node_id)
+    bool is_message_complete(Packet p)
     {
-        return reinterpret_cast<FragmentationLayer *>(layers.at(4))->is_message_complete(node_id);
+        return reinterpret_cast<FragmentationLayer *>(layers.at(4))->is_message_complete(p);
     }
-    Message assemble_message(std::string node_id)
+    Message assemble_message(Packet p)
     {
-        return reinterpret_cast<FragmentationLayer *>(layers.at(4))->assemble_message(node_id);
+        return reinterpret_cast<FragmentationLayer *>(layers.at(4))->assemble_message(p);
     }
 };
