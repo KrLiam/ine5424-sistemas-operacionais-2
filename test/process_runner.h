@@ -10,7 +10,7 @@ struct Arguments {
 Arguments parse_arguments(int argc, char* argv[]);
 
 struct ThreadArgs {
-    ReliableCommunication* communication;
+    ReliableCommunication* communication{};
 };
 
 void server(ThreadArgs* args);
