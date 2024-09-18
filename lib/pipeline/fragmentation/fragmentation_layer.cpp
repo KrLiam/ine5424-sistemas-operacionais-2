@@ -6,8 +6,7 @@ FragmentationLayer::FragmentationLayer(PipelineHandler handler, GroupRegistry *g
 }
 
 FragmentationLayer::~FragmentationLayer()
-{
-}
+= default;
 
 void FragmentationLayer::service()
 {
