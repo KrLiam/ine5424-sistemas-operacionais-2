@@ -46,6 +46,4 @@ private:
 
     std::size_t user_buffer_size;
     Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> application_buffer{"application receive"};
-
-    void establish_connections();
 };
