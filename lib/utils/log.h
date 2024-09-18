@@ -10,28 +10,34 @@
 #define LOG_LEVEL 2
 #endif
 
-#if LOG_LEVEL <= 3
+#if LOG_LEVEL <= 4
 #define log_error(...) Logger::log("ERROR", __FILE__, __LINE__, ##__VA_ARGS__)
 #else
 #define log_error(...)
 #endif
 
-#if LOG_LEVEL <= 2
+#if LOG_LEVEL <= 3
 #define log_warn(...) Logger::log("WARN", __FILE__, __LINE__, ##__VA_ARGS__)
 #else
 #define log_warn(...)
 #endif
 
-#if LOG_LEVEL <= 1
+#if LOG_LEVEL <= 2
 #define log_info(...) Logger::log("INFO", __FILE__, __LINE__, ##__VA_ARGS__)
 #else
 #define log_info(...)
 #endif
 
-#if LOG_LEVEL <= 0
+#if LOG_LEVEL <= 1
 #define log_debug(...) Logger::log("DEBUG", __FILE__, __LINE__, ##__VA_ARGS__)
 #else
 #define log_debug(...)
+#endif
+
+#if LOG_LEVEL <= 0
+#define log_trace(...) Logger::log("TRACE", __FILE__, __LINE__, ##__VA_ARGS__)
+#else
+#define log_trace(...)
 #endif
 
 static std::mutex log_mutex;

@@ -21,7 +21,7 @@ public:
         buffer.pop();
 
         mutex.unlock();
-        log_debug("Consumed item from [", name, "] buffer.");
+        log_trace("Consumed item from [", name, "] buffer.");
         producer.release();
 
         return item;
@@ -33,7 +33,7 @@ public:
         mutex.lock();
         buffer.push(item);
         mutex.unlock();
-        log_debug("Produced item to [", name, "] buffer.");
+        log_trace("Produced item to [", name, "] buffer.");
         consumer.release();
 
     }

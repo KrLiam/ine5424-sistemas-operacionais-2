@@ -2,12 +2,12 @@
 
 static void run_sender_thread(TransmissionLayer *manager)
 {
-    log_info("Initialized transmission layer sender thread.");
+    log_trace("Initialized transmission layer sender thread.");
     while (!manager->stop_threads)
     {
         manager->sender_thread();
     }
-    log_info("Closing transmission layer sender thread.");
+    log_trace("Closing transmission layer sender thread.");
 }
 
 TransmissionLayer::TransmissionLayer(PipelineHandler handler, GroupRegistry *gr, Channel* channel) : PipelineStep(handler, gr), channel(channel), stop_threads(false)
@@ -50,7 +50,7 @@ void TransmissionLayer::sender_thread()
 
 void TransmissionLayer::send(Packet packet)
 {
-    log_debug("Packet [", packet.to_string(), "] sent to transmission layer.");
+    log_trace("Packet [", packet.to_string(), "] sent to transmission layer.");
     // send_buffer.produce(packet);
     // tinha pensado em fazer o send daqui aguardar sincronamente, mas aí ele poderia travar a receiver_thread
     // TODO:
@@ -65,7 +65,7 @@ void TransmissionLayer::send(Packet packet)
 
 void TransmissionLayer::receive(Packet packet)
 {
-    log_debug("Packet [", packet.to_string(), "] received on transmission layer.");
+    log_trace("Packet [", packet.to_string(), "] received on transmission layer.");
     /*
     if (!gr->packet_originates_from_group(packet))
     {

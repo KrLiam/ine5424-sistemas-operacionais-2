@@ -40,7 +40,7 @@ void Channel::open_socket()
 void Channel::close_socket()
 {
     close(socket_descriptor);
-    log_debug("Closed channel");
+    log_trace("Closed channel");
 }
 
 void Channel::shutdown_socket()
@@ -76,7 +76,7 @@ Packet Channel::receive()
     Packet packet;
     socklen_t in_address_len = sizeof(in_address);
 
-    log_debug("Waiting to receive data.");
+    log_trace("Waiting to receive data.");
     int bytes_received = recvfrom(
         socket_descriptor,
         (char *)&packet.data,

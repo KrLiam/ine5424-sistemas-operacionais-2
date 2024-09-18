@@ -6,7 +6,7 @@ ChecksumLayer::ChecksumLayer(PipelineHandler handler) : PipelineStep(handler, nu
 ChecksumLayer::~ChecksumLayer() {}
 
 void ChecksumLayer::send(Packet packet) {
-    log_debug("Packet [", packet.to_string(), "] sent to checksum layer.");
+    log_trace("Packet [", packet.to_string(), "] sent to checksum layer.");
 
     PacketData& data = packet.data;
 
@@ -18,7 +18,7 @@ void ChecksumLayer::send(Packet packet) {
 }
 
 void ChecksumLayer::receive(Packet packet) {
-    log_debug("Packet [", packet.to_string(), "] received on checksum layer.");
+    log_trace("Packet [", packet.to_string(), "] received on checksum layer.");
 
     unsigned int checksum = packet.data.header.checksum;
     PacketData& data = packet.data;

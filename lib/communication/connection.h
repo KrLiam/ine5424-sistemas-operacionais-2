@@ -76,7 +76,7 @@ private:
         if (state == ESTABLISHED)
             return true;
 
-        log_debug("connect: sending SYN.");
+        log_trace("connect: sending SYN.");
         reset_message_numbers();
         change_state(SYN_SENT);
         send_flag(SYN);
@@ -85,7 +85,7 @@ private:
         while (state != ESTABLISHED)
             state_change.wait(lock); // TODO: timeout
 
-        log_debug("connect: connection established successfully.");
+        log_trace("connect: connection established successfully.");
         return true;
     }
     bool disconnect()
@@ -93,7 +93,7 @@ private:
         if (state == CLOSED)
             return true;
 
-        log_debug("disconnect: sending FIN.");
+        log_trace("disconnect: sending FIN.");
         change_state(FIN_WAIT);
         send_flag(FIN);
 
@@ -101,7 +101,7 @@ private:
         while (state != CLOSED)
             state_change.wait(lock); // TODO: timeout
 
-        log_debug("disconnect: connection closed successfully.");
+        log_trace("disconnect: connection closed successfully.");
         return true;
     }
 
@@ -110,7 +110,7 @@ private:
         if (p.data.header.is_syn() && !p.data.header.is_ack())
         {
             expected_number++;
-            log_debug("closed: received SYN; sending SYN+ACK.");
+            log_trace("closed: received SYN; sending SYN+ACK.");
             change_state(SYN_RECEIVED);
             send_flag(SYN | ACK);
         }
@@ -136,13 +136,13 @@ private:
             expected_number++;
             if (p.data.header.is_ack())
             {
-                log_debug("syn_sent: received SYN+ACK; sending ACK.");
+                log_trace("syn_sent: received SYN+ACK; sending ACK.");
                 log_info("syn_sent: connection established.");
                 change_state(ESTABLISHED);
                 send_flag(ACK);
                 return;
             }
-            log_debug("syn_sent: received SYN from simultaneous connection; transitioning to syn_received and sending SYN+ACK.");
+            log_trace("syn_sent: received SYN from simultaneous connection; transitioning to syn_received and sending SYN+ACK.");
             change_state(SYN_RECEIVED);
             send_flag(SYN | ACK);
             return;
@@ -151,12 +151,12 @@ private:
         if (p.data.header.is_rst())
         {
             expected_number++;
-            log_debug("syn_sent: received RST; sending SYN.");
+            log_trace("syn_sent: received RST; sending SYN.");
             send_flag(SYN);
             return;
         }
 
-        log_debug("syn_sent: received unexpected packet; closing connection.");
+        log_trace("syn_sent: received unexpected packet; closing connection.");
         reset_message_numbers();
         change_state(CLOSED);
     }
@@ -169,7 +169,7 @@ private:
         if (p.data.header.is_ack() && p.data.header.get_message_number() == expected_number)
         {
             expected_number++;
-            log_debug("syn_received: received ACK.");
+            log_trace("syn_received: received ACK.");
             log_info("syn_received: connection established.");
             change_state(ESTABLISHED);
             return;
@@ -193,13 +193,13 @@ private:
             expected_number++;
             if (p.data.header.is_ack())
             {
-                log_debug("fin_wait: received FIN+ACK; closing and sending ACK.");
+                log_trace("fin_wait: received FIN+ACK; closing and sending ACK.");
                 change_state(CLOSED);
                 send_flag(ACK);
                 reset_message_numbers();
                 return;
             }
-            log_debug("fin_wait: simultaneous termination; transitioning to last_ack and sending ACK.");
+            log_trace("fin_wait: simultaneous termination; transitioning to last_ack and sending ACK.");
             change_state(LAST_ACK);
             send_flag(ACK);
         }
@@ -216,7 +216,7 @@ private:
 
         if (p.data.header.is_ack())
         {
-            log_debug("last_ack: received ACK.");
+            log_trace("last_ack: received ACK.");
             log_info("last_ack: connection closed.");
             reset_message_numbers();
             change_state(CLOSED);

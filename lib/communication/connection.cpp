@@ -26,7 +26,7 @@ void Connection::established(Packet p)
         return;
     if (p.data.header.is_fin())
     {
-        log_debug("established: received FIN; sending FIN+ACK.");
+        log_trace("established: received FIN; sending FIN+ACK.");
         change_state(LAST_ACK);
         send_flag(ACK | FIN);
         return;
