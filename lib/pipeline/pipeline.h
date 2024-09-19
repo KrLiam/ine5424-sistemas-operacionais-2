@@ -29,7 +29,22 @@ private:
     void receive(Message message, int step_index);
     void receive(Packet packet, int step_index);
 
+    TransmissionLayer *get_transmission_layer()
+    {
+        return reinterpret_cast<TransmissionLayer *>(layers.at(TRANSMISSION_LAYER));
+    }
+    FragmentationLayer *get_fragmentation_layer()
+    {
+        return reinterpret_cast<FragmentationLayer *>(layers.at(FRAGMENTATION_LAYER));
+    }
+
 public:
+    static const unsigned int CHANNEL_LAYER = 0;
+    static const unsigned int FAUL_INJECTION_LAYER = 1;
+    static const unsigned int TRANSMISSION_LAYER = 2;
+    static const unsigned int CHECKSUM_LAYER = 3;
+    static const unsigned int FRAGMENTATION_LAYER = 4;
+
     Pipeline(GroupRegistry *gr, Channel *channel);
 
     ~Pipeline();
@@ -39,15 +54,15 @@ public:
 
     void stop_transmission(Packet packet)
     {
-        reinterpret_cast<TransmissionLayer *>(layers.at(2))->stop_transmission(packet);
+        get_transmission_layer()->stop_transmission(packet);
     }
 
     bool is_message_complete(Packet p)
     {
-        return reinterpret_cast<FragmentationLayer *>(layers.at(4))->is_message_complete(p);
+        return get_fragmentation_layer()->is_message_complete(p);
     }
     Message assemble_message(Packet p)
     {
-        return reinterpret_cast<FragmentationLayer *>(layers.at(4))->assemble_message(p);
+        return get_fragmentation_layer()->assemble_message(p);
     }
 };
