@@ -50,7 +50,6 @@ private:
     std::mutex mutex;
 
     Timer timer{};
-    int connect_timer = -1;
 
     const std::map<ConnectionState, std::function<void(Packet)>> packet_receive_handlers = {
         {ESTABLISHED, std::bind(&Connection::established, this, _1)},
@@ -76,7 +75,7 @@ private:
         FIN = 0x08,
     };
 
-    void connect();
+    bool connect();
     bool disconnect();
 
     void closed(Packet p);

@@ -1,29 +1,35 @@
 #include "communication/connection.h"
 #include "pipeline/pipeline.h"
 
-void Connection::connect() {
+bool Connection::connect() {
     if (state == ESTABLISHED)
-        return;
+        return true;
 
     log_trace("connect: sending SYN.");
     reset_message_numbers();
     change_state(SYN_SENT);
     send_flag(SYN);
-    connect_timer = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
+    int timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
 
-    // std::unique_lock lock(mutex);
-    // while (state != ESTABLISHED && state != CLOSED)
-    //     state_change.wait(lock);
+    std::unique_lock lock(mutex);
+    while (state != ESTABLISHED && state != CLOSED)
+        state_change.wait(lock);
 
-    // if (state == CLOSED)
-    // {
-    //     log_warn("connect: unable to establish connection.");
-    //     return false;
-    // }
-    // timer.cancel(timer_id);
+    if (state == CLOSED)
+    {
+        log_warn("connect: unable to establish connection.");
+        return false;
+    }
+    timer.cancel(timer_id);
 
-    // log_trace("connect: connection established successfully.");
-    // return true;
+    log_trace("connect: connection established successfully.");
+    return true;
+}
+
+void Connection::connection_timeout()
+{
+    log_warn(get_current_state_name(), ": timed out.");
+    change_state(CLOSED);
 }
 
 bool Connection::disconnect()
