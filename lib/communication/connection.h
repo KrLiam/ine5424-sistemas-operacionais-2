@@ -50,6 +50,7 @@ private:
     std::mutex mutex;
 
     Timer timer{};
+    int connect_timer = -1;
 
     const std::map<ConnectionState, std::function<void(Packet)>> packet_receive_handlers = {
         {ESTABLISHED, std::bind(&Connection::established, this, _1)},
@@ -75,275 +76,38 @@ private:
         FIN = 0x08,
     };
 
-    bool connect()
-    {
-        if (state == ESTABLISHED)
-            return true;
+    void connect();
+    bool disconnect();
 
-        log_trace("connect: sending SYN.");
-        reset_message_numbers();
-        change_state(SYN_SENT);
-        send_flag(SYN);
-        int timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
+    void closed(Packet p);
 
-        std::unique_lock lock(mutex);
-        while (state != ESTABLISHED && state != CLOSED)
-            state_change.wait(lock);
+    void syn_sent(Packet p);
 
-        if (state == CLOSED)
-        {
-            log_warn("connect: unable to establish connection.");
-            return false;
-        }
-        timer.cancel(timer_id);
-
-        log_trace("connect: connection established successfully.");
-        return true;
-    }
-    bool disconnect()
-    {
-        if (state == CLOSED)
-            return true;
-
-        log_trace("disconnect: sending FIN.");
-        change_state(FIN_WAIT);
-        send_flag(FIN);
-        int timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
-
-        std::unique_lock lock(mutex);
-        while (state != CLOSED)
-            state_change.wait(lock);
-        timer.cancel(timer_id);
-
-        log_trace("disconnect: connection closed.");
-        return true;
-    }
-
-    void closed(Packet p)
-    {
-        if (p.data.header.is_syn() && !p.data.header.is_ack())
-        {
-            expected_number++;
-            log_trace("closed: received SYN; sending SYN+ACK.");
-            change_state(SYN_RECEIVED);
-            send_flag(SYN | ACK);
-        }
-
-        /* pro reschedule: também tem q fazer alterar o número dos pacotes no transmissionlayer
-        // atualmente, dá problema caso B tenha enviado 1 mensagem pra A, A cai, B tenta enviar a 2a
-        // da pra resolver isso tanto por reschedule quanto por timeout
-        {
-        if (p.data.header.msg_num != 0)
-            log_warn("closed: received message packet.");
-            Packet p = empty_packet();
-            p.data.header.syn = 1; // Dá pra simplificar essa parte
-            change_state(SYN_SENT);
-            send(p);
-            return;
-        }*/
-    }
-
-    void syn_sent(Packet p)
-    {
-        if (p.data.header.is_syn() && p.data.header.get_message_number() <= expected_number)
-        {
-            expected_number++;
-            if (p.data.header.is_ack())
-            {
-                log_trace("syn_sent: received SYN+ACK; sending ACK.");
-                log_info("syn_sent: connection established.");
-                change_state(ESTABLISHED);
-                send_flag(ACK);
-                return;
-            }
-            log_trace("syn_sent: received SYN from simultaneous connection; transitioning to syn_received and sending SYN+ACK.");
-            change_state(SYN_RECEIVED);
-            send_flag(SYN | ACK);
-            return;
-        }
-
-        if (p.data.header.is_rst())
-        {
-            expected_number++;
-            log_trace("syn_sent: received RST; sending SYN.");
-            send_flag(SYN);
-            return;
-        }
-
-        log_trace("syn_sent: received unexpected packet; closing connection.");
-        reset_message_numbers();
-        change_state(CLOSED);
-    }
-
-    void syn_received(Packet p)
-    {
-        if (close_on_rst(p))
-            return;
-
-        if (p.data.header.is_ack() && p.data.header.get_message_number() == expected_number)
-        {
-            expected_number++;
-            log_trace("syn_received: received ACK.");
-            log_info("syn_received: connection established.");
-            change_state(ESTABLISHED);
-            return;
-        }
-
-        if (rst_on_syn(p))
-            return;
-    }
+    void syn_received(Packet p);
 
     void established(Packet p);
 
-    void fin_wait(Packet p)
-    {
-        if (close_on_rst(p))
-            return;
-        if (rst_on_syn(p))
-            return;
+    void fin_wait(Packet p);
 
-        if (p.data.header.is_fin())
-        {
-            expected_number++;
-            if (p.data.header.is_ack())
-            {
-                log_trace("fin_wait: received FIN+ACK; closing and sending ACK.");
-                change_state(CLOSED);
-                send_flag(ACK);
-                reset_message_numbers();
-                return;
-            }
-            log_trace("fin_wait: simultaneous termination; transitioning to last_ack and sending ACK.");
-            change_state(LAST_ACK);
-            send_flag(ACK);
-        }
-    }
+    void last_ack(Packet p);
 
-    void last_ack(Packet p)
-    {
-        if (close_on_rst(p))
-            return;
-        if (rst_on_syn(p))
-            return;
+    void send_flag(unsigned char flags);
 
-        if (p.data.header.is_ack())
-        {
-            log_trace("last_ack: received ACK.");
-            log_info("last_ack: connection closed.");
-            reset_message_numbers();
-            change_state(CLOSED);
-        }
-    }
+    void send_ack(Packet packet);
 
-    void send_flag(unsigned char flags)
-    {
-        PacketHeader header;
-        memset(&header, 0, sizeof(PacketHeader));
-        header.msg_num = next_number;
-        header.type = MessageType::CONTROL;
-        memcpy(reinterpret_cast<unsigned char *>(&header) + 12, &flags, 1);
+    bool close_on_rst(Packet p);
 
-        PacketData data;
-        memset(&data, 0, sizeof(PacketData));
-        data.header = header;
+    bool rst_on_syn(Packet p);
 
-        Packet packet;
-        memset(&packet, 0, sizeof(Packet));
-        packet.meta.origin = local_node.get_address();
-        packet.meta.destination = remote_node.get_address();
-        packet.data = data;
+    void connection_timeout();
 
-        next_number++;
-        send(packet);
-    }
+    uint32_t new_message_number();
 
-    void send_ack(Packet packet)
-    {
-        PacketData data;
-        data.header = {// TODO: Definir corretamente checksum, window, e reserved.
-                       msg_num : packet.data.header.msg_num,
-                       fragment_num : packet.data.header.fragment_num,
-                       checksum : 0,
-                       window : 0,
-                       ack : 1,
-                       rst : 0,
-                       syn : 0,
-                       fin : 0,
-                       extra : 0,
-                       more_fragments : 0,
-                       type : MessageType::CONTROL,
-                       reserved : 0
-        };
-        PacketMetadata meta = {
-            origin : local_node.get_address(),
-            destination : remote_node.get_address(),
-            time : 0,
-            message_length : 0
-        };
-        Packet ack_packet = {
-            data : data,
-            meta : meta
-        };
-        send(ack_packet);
-    }
+    void reset_message_numbers();
 
-    bool close_on_rst(Packet p)
-    {
-        if (p.data.header.is_rst())
-        {
-            log_debug(get_current_state_name(), ": received RST.");
-            log_info(get_current_state_name(), ": connection closed.");
-            reset_message_numbers();
-            change_state(CLOSED);
-            return true;
-        }
-        return false;
-    }
+    std::string get_current_state_name();
 
-    bool rst_on_syn(Packet p)
-    {
-        if (p.data.header.is_syn())
-        {
-            log_debug(get_current_state_name(), ": received SYN; sending RST.");
-            log_info(get_current_state_name(), ": connection closed.");
-            next_number = 0;
-            expected_number = p.data.header.get_message_number() + 1;
-            change_state(CLOSED);
-            send_flag(RST);
-            return true;
-        }
-        return false;
-    }
-
-    void connection_timeout()
-    {
-        log_warn(get_current_state_name(), ": timed out.");
-        change_state(CLOSED);
-    }
-
-    uint32_t new_message_number()
-    {
-        return next_number++;
-    }
-
-    void reset_message_numbers()
-    {
-        expected_number = 0;
-        next_number = 0;
-    }
-
-    std::string get_current_state_name()
-    {
-        return state_names.at(state);
-    }
-
-    void change_state(ConnectionState new_state)
-    {
-        if (state == new_state)
-            return;
-        state = new_state;
-        state_change.notify_all();
-    }
+    void change_state(ConnectionState new_state);
 
 public:
     Connection(Pipeline &pipeline, Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &application_buffer, Node local_node, Node remote_node) : pipeline(pipeline), application_buffer(application_buffer), local_node(local_node), remote_node(remote_node) {}
@@ -351,32 +115,6 @@ public:
     void send(Message message);
     void send(Packet packet);
 
-    void receive(Packet packet)
-    {
-        packet_receive_handlers.at(state)(packet);
-    }
-    void receive(Message message)
-    {
-        if (state != ESTABLISHED)
-        {
-            log_warn("Connection is not established; dropping message ", message.to_string(), ".");
-            return;
-        }
-
-        if (message.number < expected_number)
-        {
-            log_warn("Message ", message.to_string(), " was already received; dropping it.");
-            return;
-        }
-
-        if (message.number > expected_number)
-        {
-            log_warn("Message ", message.to_string(), " is unexpected, current number expected is ", expected_number, "; dropping it.");
-            return;
-        }
-
-
-        expected_number++;
-        application_buffer.produce(message);
-    }
+    void receive(Packet packet);
+    void receive(Message message);
 };
