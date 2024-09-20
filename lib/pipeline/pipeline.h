@@ -65,13 +65,4 @@ public:
 
     void send(Message);
     void send(Packet);
-
-    bool is_message_complete(Packet p)
-    {
-        return get_fragmentation_layer()->is_message_complete(p);
-    }
-    Message assemble_message(Packet p)
-    {
-        return get_fragmentation_layer()->assemble_message(p);
-    }
 };

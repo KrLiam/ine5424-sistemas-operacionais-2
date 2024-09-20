@@ -17,7 +17,6 @@ public:
     FragmentAssembler();
     ~FragmentAssembler();
 
-    bool has_received(Packet packet);
     bool has_received_all_packets();
     void add_packet(Packet packet);
     Message &assemble();

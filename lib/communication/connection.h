@@ -18,6 +18,8 @@
 #include "core/buffer.h"
 #include "utils/date.h"
 #include "core/constants.h"
+#include "core/event.h"
+#include "utils/observer.h"
 
 using namespace std::placeholders;
 
@@ -79,37 +81,33 @@ private:
     bool disconnect();
 
     void closed(Packet p);
-
     void syn_sent(Packet p);
-
     void syn_received(Packet p);
-
     void established(Packet p);
-
     void fin_wait(Packet p);
-
     void last_ack(Packet p);
 
     void send_flag(unsigned char flags);
-
     void send_ack(Packet packet);
 
     bool close_on_rst(Packet p);
-
     bool rst_on_syn(Packet p);
 
     void connection_timeout();
 
     uint32_t new_message_number();
-
     void reset_message_numbers();
 
     std::string get_current_state_name();
-
     void change_state(ConnectionState new_state);
 
+    void observe_pipeline();
+
+    Observer<MessageDefragmentationIsComplete> obs_message_defragmentation_is_complete;
+    void message_defragmentation_is_complete(const MessageDefragmentationIsComplete& event);
+
 public:
-    Connection(Pipeline &pipeline, Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &application_buffer, Node local_node, Node remote_node) : pipeline(pipeline), application_buffer(application_buffer), local_node(local_node), remote_node(remote_node) {}
+    Connection(Pipeline &pipeline, Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &application_buffer, Node local_node, Node remote_node);
 
     void send(Message message);
     void send(Packet packet);

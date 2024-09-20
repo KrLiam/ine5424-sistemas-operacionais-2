@@ -6,8 +6,7 @@ FragmentationLayer::FragmentationLayer(PipelineHandler handler, GroupRegistry *g
 {
 }
 
-FragmentationLayer::~FragmentationLayer()
-= default;
+FragmentationLayer::~FragmentationLayer() = default;
 
 void FragmentationLayer::service()
 {
@@ -32,19 +31,19 @@ void FragmentationLayer::send(Message message)
         };
         PacketData data{};
         bool more_fragments = i != required_packets - 1;
-        data.header = { // TODO: Definir checksum, window e reserved corretamente
-            msg_num : message.number,
-            fragment_num : i,
-            checksum : 0,
-            window : 0,
-            ack : 0,
-            rst : 0,
-            syn : 0,
-            fin : 0,
-            extra : 0,
-            more_fragments : more_fragments,
-            type : message.type,
-            reserved : 0
+        data.header = {// TODO: Definir checksum, window e reserved corretamente
+                       msg_num : message.number,
+                       fragment_num : i,
+                       checksum : 0,
+                       window : 0,
+                       ack : 0,
+                       rst : 0,
+                       syn : 0,
+                       fin : 0,
+                       extra : 0,
+                       more_fragments : more_fragments,
+                       type : message.type,
+                       reserved : 0
         };
         meta.message_length = std::min((int)(message.length - i * PacketData::MAX_MESSAGE_SIZE), (int)PacketData::MAX_MESSAGE_SIZE);
         strncpy(data.message_data, &message.data[i * PacketData::MAX_MESSAGE_SIZE], meta.message_length);
@@ -67,29 +66,47 @@ void FragmentationLayer::send(Packet packet)
 void FragmentationLayer::receive(Packet packet)
 {
     log_trace("Packet [", packet.to_string(), "] received on fragmentation layer.");
-
-    if (packet.data.header.type == MessageType::APPLICATION)
-    {
-        std::string id = get_message_identifier(packet);
-        if (!assembler_map.contains(id))
-            assembler_map.emplace(id, FragmentAssembler());
-        FragmentAssembler &assembler = assembler_map.at(id);
-
-        if (assembler.has_received(packet))
-        {
-            log_debug("Ignoring packet ", packet.to_string(), ", as it was already received.");
-            return;
-        }
-        assembler.add_packet(packet);
-    }
-
     handler.forward_receive(packet);
 
-    /*if (assembler.has_received_all_packets())
+    if (packet.data.header.get_message_type() != MessageType::APPLICATION)
+        return;
+
+    std::string message_id = get_message_identifier(packet);
+
+    assembler_map_mutex.lock();
+    if (!assembler_map.contains(message_id))
+        assembler_map.emplace(message_id, FragmentAssembler());
+
+    FragmentAssembler &assembler = assembler_map.at(message_id);
+    assembler.add_packet(packet);
+
+    if (!assembler.has_received_all_packets())
     {
-        log_debug("Received all fragments; forwarding message to next step.");
-        Message message = assembler.assemble();
-        assembler_map.erase(origin.get_id());
-        handler.forward_receive(message);
-    }*/
+        assembler_map_mutex.unlock();
+        return;
+    }
+
+    assembler_map_mutex.unlock();
+    log_debug("Received all fragments; notifying connection.");
+    handler.notify(MessageDefragmentationIsComplete(packet));
+}
+
+void FragmentationLayer::attach(EventBus &bus)
+{
+    obs_forward_defragmented_message.on(std::bind(&FragmentationLayer::forward_defragmented_message, this, _1));
+    bus.attach(obs_forward_defragmented_message);
+}
+
+void FragmentationLayer::forward_defragmented_message(const ForwardDefragmentedMessage &event)
+{
+    log_debug("pipipi");
+    Packet &packet = event.packet;
+    std::string message_id = get_message_identifier(packet);
+
+    assembler_map_mutex.lock();
+    Message const message = assembler_map.at(message_id).assemble();
+    assembler_map.erase(message_id);
+    assembler_map_mutex.unlock();
+
+    handler.forward_receive(message);
 }

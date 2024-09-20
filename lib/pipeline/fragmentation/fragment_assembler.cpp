@@ -8,12 +8,6 @@ FragmentAssembler::~FragmentAssembler()
 {
 }
 
-bool FragmentAssembler::has_received(Packet packet)
-{
-    uint32_t fragment_number = (uint32_t)packet.data.header.fragment_num;
-    return std::find(received_fragments.begin(), received_fragments.end(), fragment_number) != received_fragments.end();
-}
-
 bool FragmentAssembler::has_received_all_packets()
 {
     return last_fragment_number == received_fragments.size() - 1;

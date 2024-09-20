@@ -1,7 +1,25 @@
 #include "communication/connection.h"
 #include "pipeline/pipeline.h"
 
-bool Connection::connect() {
+Connection::Connection(Pipeline &pipeline, Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &application_buffer, Node local_node, Node remote_node) : pipeline(pipeline), application_buffer(application_buffer), local_node(local_node), remote_node(remote_node)
+{
+    observe_pipeline();
+}
+
+void Connection::observe_pipeline()
+{
+    obs_message_defragmentation_is_complete.on(std::bind(&Connection::message_defragmentation_is_complete, this, _1));
+    pipeline.attach(obs_message_defragmentation_is_complete);
+}
+
+void Connection::message_defragmentation_is_complete(const MessageDefragmentationIsComplete& event)
+{
+    if (application_buffer.can_produce())
+        pipeline.notify(ForwardDefragmentedMessage(event.packet));
+}
+
+bool Connection::connect()
+{
     if (state == ESTABLISHED)
         return true;
 
@@ -50,7 +68,6 @@ bool Connection::disconnect()
     log_trace("disconnect: connection closed.");
     return true;
 }
-
 
 void Connection::closed(Packet p)
 {
@@ -163,12 +180,6 @@ void Connection::established(Packet p)
 
     log_debug("Received a packet ", p.to_string(), " that expects confirmation; sending ACK.");
     send_ack(p);
-
-    if (p.data.header.get_message_type() == MessageType::APPLICATION && pipeline.is_message_complete(p))
-    {
-        log_debug("Message from ", remote_node.to_string(), " is complete; receiving it.");
-        receive(pipeline.assemble_message(p));
-    }
 }
 
 void Connection::fin_wait(Packet p)
@@ -211,7 +222,6 @@ void Connection::last_ack(Packet p)
     }
 }
 
-
 void Connection::send_flag(unsigned char flags)
 {
     PacketHeader header;
@@ -238,18 +248,18 @@ void Connection::send_ack(Packet packet)
 {
     PacketData data;
     data.header = {// TODO: Definir corretamente checksum, window, e reserved.
-                    msg_num : packet.data.header.msg_num,
-                    fragment_num : packet.data.header.fragment_num,
-                    checksum : 0,
-                    window : 0,
-                    ack : 1,
-                    rst : 0,
-                    syn : 0,
-                    fin : 0,
-                    extra : 0,
-                    more_fragments : 0,
-                    type : MessageType::CONTROL,
-                    reserved : 0
+                   msg_num : packet.data.header.msg_num,
+                   fragment_num : packet.data.header.fragment_num,
+                   checksum : 0,
+                   window : 0,
+                   ack : 1,
+                   rst : 0,
+                   syn : 0,
+                   fin : 0,
+                   extra : 0,
+                   more_fragments : 0,
+                   type : MessageType::CONTROL,
+                   reserved : 0
     };
     PacketMetadata meta = {
         origin : local_node.get_address(),
@@ -316,7 +326,6 @@ void Connection::change_state(ConnectionState new_state)
     state_change.notify_all();
 }
 
-
 void Connection::send(Message message)
 {
     if (!connect())
@@ -332,7 +341,6 @@ void Connection::send(Packet packet)
 {
     pipeline.send(packet);
 }
-
 
 void Connection::receive(Packet packet)
 {
