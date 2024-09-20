@@ -22,6 +22,11 @@ struct PacketHeader
         return (uint32_t)msg_num;
     }
 
+    uint32_t get_fragment_number()
+    {
+        return (uint32_t)fragment_num;
+    }
+
     bool is_ack()
     {
         return (bool)ack;

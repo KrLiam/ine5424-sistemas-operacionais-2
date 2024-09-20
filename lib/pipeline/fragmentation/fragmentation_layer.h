@@ -4,6 +4,7 @@
 #include <mutex>
 
 #include "pipeline/fragmentation/fragment_assembler.h"
+#include "pipeline/fragmentation/fragmenter.h"
 #include "pipeline/pipeline_step.h"
 
 class FragmentationLayer final : public PipelineStep
