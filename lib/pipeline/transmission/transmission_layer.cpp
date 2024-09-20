@@ -48,6 +48,21 @@ void TransmissionLayer::sender_thread()
     }
 }
 
+void TransmissionLayer::attach(EventBus& bus) {
+    obs_ack_received.on(std::bind(&TransmissionLayer::ack_received, this, _1));
+    bus.attach(obs_ack_received);
+}
+
+void TransmissionLayer::ack_received(PacketAckReceived event) {
+    Packet& packet = event.ack_packet;
+    
+    Node origin = gr->get_node(packet.meta.origin);
+    if (queue_map.contains(origin.get_id()))
+    {
+        queue_map.at(origin.get_id())->mark_packet_as_acked(packet);
+    }
+}
+
 void TransmissionLayer::send(Packet packet)
 {
     log_trace("Packet [", packet.to_string(), "] sent to transmission layer.");

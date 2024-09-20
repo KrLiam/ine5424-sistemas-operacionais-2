@@ -62,11 +62,15 @@ class Observer {
     friend class Subject<T>;
 public:
 
-    Observer() : func([](const T& _) {}) {}
+    Observer() : func([](const T&) {}) {}
     Observer(std::function<void(const T&)> func) : func(func) {}
 
     ~Observer() {
         detach();
+    }
+
+    void on(std::function<void(const T&)> func) {
+        this->func = func;
     }
 
     bool detach() {

@@ -25,6 +25,9 @@ private:
 
     Buffer<INTERMEDIARY_BUFFER_ITEMS, Packet> send_buffer{"send buffer"};
 
+    Observer<PacketAckReceived> obs_ack_received;
+    void ack_received(PacketAckReceived event);
+
 public:
     std::atomic<bool> stop_threads; // TODO
     TransmissionLayer(PipelineHandler handler, GroupRegistry *gr, Channel *channel);
@@ -32,18 +35,11 @@ public:
 
     void service();
 
+    void attach(EventBus&);
+
     void sender_thread();
     void receiver_thread();
 
     void send(Packet packet);
     void receive(Packet packet);
-
-    void stop_transmission(Packet packet)
-    {
-        Node origin = gr->get_node(packet.meta.origin);
-        if (queue_map.contains(origin.get_id()))
-        {
-            queue_map.at(origin.get_id())->mark_packet_as_acked(packet);
-        }
-    }
 };

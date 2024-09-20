@@ -144,7 +144,8 @@ void Connection::established(Packet p)
     if (p.data.header.is_ack())
     {
         log_debug("Received ACK for packet ", p.to_string(), "; removing from list of packets with pending ACKs.");
-        pipeline.stop_transmission(p);
+        PacketAckReceived event{ack_packet : p};
+        pipeline.notify(event);
         return;
     }
 

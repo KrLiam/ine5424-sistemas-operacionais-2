@@ -66,11 +66,6 @@ public:
     void send(Message);
     void send(Packet);
 
-    void stop_transmission(Packet packet)
-    {
-        get_transmission_layer()->stop_transmission(packet);
-    }
-
     bool is_message_complete(Packet p)
     {
         return get_fragmentation_layer()->is_message_complete(p);
