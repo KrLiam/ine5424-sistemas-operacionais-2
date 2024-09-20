@@ -12,6 +12,8 @@ Pipeline::Pipeline(GroupRegistry *gr, Channel *channel) : gr(gr)
     layers.push_back(new TransmissionLayer(handler.at_index(TRANSMISSION_LAYER), gr, channel));
     layers.push_back(new ChecksumLayer(handler.at_index(CHECKSUM_LAYER)));
     layers.push_back(new FragmentationLayer(handler.at_index(FRAGMENTATION_LAYER), gr));
+
+    attach_layers();
 }
 
 Pipeline::~Pipeline()
@@ -30,6 +32,14 @@ PipelineStep *Pipeline::get_step(int step_index)
     }
 
     return layers.at(step_index);
+}
+
+void Pipeline::attach_layers() {
+    event_bus.clear();
+
+    for (PipelineStep* layer : layers) {
+        layer->attach(event_bus);
+    }
 }
 
 void Pipeline::send(Message message)

@@ -8,6 +8,7 @@
 #include "communication/group_registry.h"
 #include "pipeline/transmission/transmission_layer.h"
 #include "pipeline/fragmentation/fragmentation_layer.h"
+#include "core/event_bus.h"
 
 class PipelineStep;
 class ReliableCommunication;
@@ -16,12 +17,15 @@ class Pipeline
 {
 private:
     std::vector<PipelineStep *> layers;
+    EventBus event_bus;
 
     GroupRegistry *gr;
 
     friend PipelineHandler;
 
     PipelineStep *get_step(int step_index);
+
+    void attach_layers();
 
     void send(Message message, int step_index);
     void send(Packet packet, int step_index);
@@ -48,6 +52,16 @@ public:
     Pipeline(GroupRegistry *gr, Channel *channel);
 
     ~Pipeline();
+
+    template <typename T>
+    void attach(Observer<T>& observer) {
+        event_bus.attach(observer);
+    };
+
+    template <typename T>
+    void notify(const T& event) {
+        event_bus.notify(event);
+    };
 
     void send(Message);
     void send(Packet);

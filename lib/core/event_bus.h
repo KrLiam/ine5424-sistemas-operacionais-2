@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 #include <functional>
 #include "utils/log.h"
@@ -9,6 +11,9 @@ class EventBus {
     std::unordered_map<EventType, Subject<Event>> subjects;
 
 public:
+    void clear() {
+        subjects.clear();
+    }
 
     template <typename T>
     void attach(Observer<T>& observer) {

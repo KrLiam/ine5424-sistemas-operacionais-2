@@ -11,7 +11,21 @@ template <typename T>
 class Subject {
     std::vector<Observer<T>*> observers;
 
+    void pop_observer(int i) {
+        Observer<T>* observer = observers.at(i);
+
+        observers.erase(observers.begin() + i);
+        observer->subject = NULL;
+        log_debug("Detached observer ", &observer);
+    }
+
 public:
+
+    ~Subject() {
+        for (int i = observers.size() - 1; i >= 0; i--) {
+            pop_observer(i);
+        }
+    }
 
     bool attach(Observer<T>& observer) {
         if (observer.subject) return false;
@@ -26,9 +40,7 @@ public:
         int size = observers.size();
         for (int i = 0; i < size; i++) {
             if (&observer == observers[i]) {
-                observers.erase(observers.begin() + i);
-                observer.subject = NULL;
-                log_debug("Detached observer ", &observer);
+                pop_observer(i);
                 return;
             }
         }

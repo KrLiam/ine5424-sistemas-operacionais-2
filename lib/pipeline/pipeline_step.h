@@ -7,6 +7,7 @@
 #include "core/packet.h"
 #include "core/constants.h"
 #include "core/buffer.h"
+#include "core/event_bus.h"
 
 class ReliableCommunication;
 class GroupRegistry;
@@ -22,6 +23,8 @@ public:
     virtual ~PipelineStep();
 
     virtual void service();
+
+    virtual void attach(EventBus&);
 
     virtual void send(Packet packet);
     virtual void send(Message);

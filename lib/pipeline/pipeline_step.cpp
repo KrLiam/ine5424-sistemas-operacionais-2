@@ -12,6 +12,8 @@ void PipelineStep::service()
 {
 }
 
+void PipelineStep::attach(EventBus& bus) {}
+
 void PipelineStep::send(Message message)
 {
     handler.forward_send(message);
