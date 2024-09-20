@@ -86,7 +86,7 @@ Packet Channel::receive()
         &in_address_len);
 
     if (bytes_received <= 0 || errno != 0)
-        return Packet{};
+        throw std::runtime_error("Socket closed.");
 
     SocketAddress origin = SocketAddress::from(in_address);
 

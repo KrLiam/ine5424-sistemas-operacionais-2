@@ -3,6 +3,7 @@
 #include "pipeline/pipeline_step.h"
 #include "core/packet.h"
 #include "utils/date.h"
+#include "utils/log.h"
 
 class ChannelLayer : public PipelineStep {
     Channel& channel;
