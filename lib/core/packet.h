@@ -13,7 +13,7 @@ struct PacketHeader
     unsigned int syn : 1;
     unsigned int fin : 1;
     unsigned int extra : 4;
-    unsigned int more_fragments : 1;
+    unsigned int end : 1;
     unsigned int type : 4;
     unsigned int reserved : 4;
 
@@ -30,6 +30,11 @@ struct PacketHeader
     bool is_ack()
     {
         return (bool)ack;
+    }
+
+    bool is_end()
+    {
+        return (bool)end;
     }
 
     bool is_syn()

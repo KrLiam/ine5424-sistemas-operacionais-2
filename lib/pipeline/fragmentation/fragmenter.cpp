@@ -34,7 +34,7 @@ Packet Fragmenter::create_packet() {
             syn : 0,
             fin : 0,
             extra : 0,
-            more_fragments : !last_fragment,
+            end : last_fragment,
             type : message.type,
             reserved : 0
         },

@@ -261,7 +261,7 @@ void Connection::send_ack(Packet packet)
                    syn : 0,
                    fin : 0,
                    extra : 0,
-                   more_fragments : 0,
+                   end : 1,
                    type : MessageType::CONTROL,
                    reserved : 0
     };

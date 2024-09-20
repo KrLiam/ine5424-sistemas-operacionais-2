@@ -42,8 +42,7 @@ void FragmentAssembler::add_packet(Packet &packet)
     message.origin = meta.origin;
     message.destination = meta.destination;
 
-    bool more_fragments = header.more_fragments;
-    if (!more_fragments)
+    if (header.is_end())
     {
         log_trace("Packet ", packet.to_string(), " is the last one of its message.");
         last_fragment_number = fragment_number;
