@@ -24,7 +24,7 @@ void ChannelLayer::receiver()
             Packet packet = channel.receive();
             receive(packet);
         }
-        catch (const std::exception &e)
+        catch (const std::runtime_error &e)
         {
             break;
         }
