@@ -73,7 +73,6 @@ void FragmentationLayer::receive(Packet packet)
 
     std::string message_id = get_message_identifier(packet);
 
-    assembler_map_mutex.lock();
     if (!assembler_map.contains(message_id))
         assembler_map.emplace(message_id, FragmentAssembler());
 
@@ -82,11 +81,9 @@ void FragmentationLayer::receive(Packet packet)
 
     if (!assembler.has_received_all_packets())
     {
-        assembler_map_mutex.unlock();
         return;
     }
 
-    assembler_map_mutex.unlock();
     log_debug("Received all fragments; notifying connection.");
     handler.notify(MessageDefragmentationIsComplete(packet));
 }
@@ -99,14 +96,11 @@ void FragmentationLayer::attach(EventBus &bus)
 
 void FragmentationLayer::forward_defragmented_message(const ForwardDefragmentedMessage &event)
 {
-    log_debug("pipipi");
     Packet &packet = event.packet;
     std::string message_id = get_message_identifier(packet);
 
-    assembler_map_mutex.lock();
     Message const message = assembler_map.at(message_id).assemble();
     assembler_map.erase(message_id);
-    assembler_map_mutex.unlock();
 
     handler.forward_receive(message);
 }

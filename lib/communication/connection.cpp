@@ -14,8 +14,12 @@ void Connection::observe_pipeline()
 
 void Connection::message_defragmentation_is_complete(const MessageDefragmentationIsComplete& event)
 {
+    Packet& packet = event.packet;
+    if (packet.meta.origin != remote_node.get_address())
+        return;
+
     if (application_buffer.can_produce())
-        pipeline.notify(ForwardDefragmentedMessage(event.packet));
+        pipeline.notify(ForwardDefragmentedMessage(packet));
 }
 
 bool Connection::connect()

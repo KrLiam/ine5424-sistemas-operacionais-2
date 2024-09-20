@@ -9,7 +9,6 @@
 class FragmentationLayer final : public PipelineStep
 {
     std::map<std::string, FragmentAssembler> assembler_map;
-    std::mutex assembler_map_mutex;
 
     Observer<ForwardDefragmentedMessage> obs_forward_defragmented_message;
     void forward_defragmented_message(const ForwardDefragmentedMessage& event);
