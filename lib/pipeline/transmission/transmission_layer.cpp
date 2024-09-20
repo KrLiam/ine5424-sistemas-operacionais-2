@@ -53,7 +53,7 @@ void TransmissionLayer::attach(EventBus& bus) {
     bus.attach(obs_ack_received);
 }
 
-void TransmissionLayer::ack_received(PacketAckReceived event) {
+void TransmissionLayer::ack_received(const PacketAckReceived& event) {    
     Packet& packet = event.ack_packet;
     
     Node origin = gr->get_node(packet.meta.origin);

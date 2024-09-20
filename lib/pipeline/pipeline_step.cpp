@@ -12,7 +12,7 @@ void PipelineStep::service()
 {
 }
 
-void PipelineStep::attach(EventBus& bus) {}
+void PipelineStep::attach(EventBus&) {}
 
 void PipelineStep::send(Message message)
 {

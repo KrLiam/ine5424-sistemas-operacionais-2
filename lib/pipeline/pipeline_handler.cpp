@@ -1,8 +1,8 @@
 #include "pipeline/pipeline_handler.h"
 #include "pipeline/pipeline.h"
 
-PipelineHandler::PipelineHandler(Pipeline& pipeline, int step_index)
-    : pipeline(pipeline), step_index(step_index)
+PipelineHandler::PipelineHandler(Pipeline& pipeline, EventBus& event_bus, int step_index)
+    : pipeline(pipeline), event_bus(event_bus), step_index(step_index)
 {
 }
 

@@ -5,7 +5,7 @@
 
 Pipeline::Pipeline(GroupRegistry *gr, Channel *channel) : gr(gr)
 {
-    PipelineHandler handler = PipelineHandler(*this, -1);
+    PipelineHandler handler = PipelineHandler(*this, event_bus, -1);
 
     layers.push_back(new ChannelLayer(handler.at_index(CHANNEL_LAYER), *channel));
     layers.push_back(new FaultInjectionLayer(handler.at_index(FAUL_INJECTION_LAYER)));

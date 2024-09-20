@@ -26,7 +26,7 @@ private:
     Buffer<INTERMEDIARY_BUFFER_ITEMS, Packet> send_buffer{"send buffer"};
 
     Observer<PacketAckReceived> obs_ack_received;
-    void ack_received(PacketAckReceived event);
+    void ack_received(const PacketAckReceived& event);
 
 public:
     std::atomic<bool> stop_threads; // TODO
