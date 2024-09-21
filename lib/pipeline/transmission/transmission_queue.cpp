@@ -52,7 +52,6 @@ void TransmissionQueue::timeout(uint32_t num)
 void TransmissionQueue::reset() {
     for (auto& pair : entries) {
         QueueEntry& entry = pair.second;
-        uint32_t frag_num = entry.packet.data.header.get_fragment_number();
 
         if (entry.timeout_id != -1)
         {

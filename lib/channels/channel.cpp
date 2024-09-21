@@ -90,9 +90,6 @@ Packet Channel::receive()
 
     SocketAddress origin = SocketAddress::from(in_address);
 
-    const PacketHeader& header = packet.data.header;
-    // log_info("Received packet ", header.msg_num, "/", header.fragment_num, " (", bytes_received, " bytes) from ", origin.to_string(), ".");
-
     packet.meta.origin = origin;
     packet.meta.destination = address;
     // packet.meta.time = now();

@@ -15,6 +15,10 @@ void ChecksumLayer::send(Packet packet) {
 
     packet.data.header.checksum = checksum;
     handler.forward_send(packet);
+
+    IGNORE_UNUSED(data);
+    IGNORE_UNUSED(packet);
+    IGNORE_UNUSED(checksum);
 }
 
 void ChecksumLayer::receive(Packet packet) {
@@ -29,4 +33,7 @@ void ChecksumLayer::receive(Packet packet) {
     if (valid) {
         handler.forward_receive(packet);
     }
+
+    IGNORE_UNUSED(data);
+    IGNORE_UNUSED(checksum);
 }
