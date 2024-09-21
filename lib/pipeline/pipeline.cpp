@@ -8,7 +8,7 @@ Pipeline::Pipeline(GroupRegistry *gr, Channel *channel) : gr(gr)
     PipelineHandler handler = PipelineHandler(*this, event_bus, -1);
 
     layers.push_back(new ChannelLayer(handler.at_index(CHANNEL_LAYER), *channel));
-    layers.push_back(new FaultInjectionLayer(handler.at_index(FAUL_INJECTION_LAYER), 0, 0, 0));
+    layers.push_back(new FaultInjectionLayer(handler.at_index(FAUL_INJECTION_LAYER), 100, 200, 0.5));
     layers.push_back(new TransmissionLayer(handler.at_index(TRANSMISSION_LAYER), gr, channel));
     layers.push_back(new ChecksumLayer(handler.at_index(CHECKSUM_LAYER)));
     layers.push_back(new FragmentationLayer(handler.at_index(FRAGMENTATION_LAYER), gr));

@@ -25,6 +25,8 @@ private:
     std::map<uint32_t, QueueEntry> entries;
 
     std::unordered_set<uint32_t> pending;
+
+    uint32_t message_num = UINT32_MAX;
     uint32_t end_fragment_num = UINT32_MAX;
 
     std::mutex mutex_packets;
@@ -42,5 +44,5 @@ public:
 
     void add_packet(const Packet& packet);
 
-    void mark_acked(uint32_t num);
+    void receive_ack(const Packet& packet);
 };

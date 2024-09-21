@@ -10,12 +10,6 @@ TransmissionLayer::~TransmissionLayer()
     channel->shutdown_socket();
 }
 
-
-const std::string& TransmissionLayer::get_id(const Packet& packet) {
-    Node destination = gr->get_node(packet.meta.destination);
-    return destination.get_id();
-}
-
 TransmissionQueue& TransmissionLayer::get_queue(const std::string& id) {
     if (!queue_map.contains(id))
     {
@@ -36,12 +30,13 @@ void TransmissionLayer::send(Packet packet)
 
     if (!packet.meta.expects_ack)
     {
-        log_debug("Packet [", packet.to_string(), "] does not require transmission, sending forward.");
+        log_debug("Packet [", packet.to_string(), "] does not require ack, sending forward.");
         handler.forward_send(packet);
         return;
     }
 
-    const std::string& id = get_id(packet);
+    const Node& destination = gr->get_node(packet.meta.destination);
+    const std::string& id = destination.get_id();
     TransmissionQueue& queue = get_queue(id);
     queue.add_packet(packet);
 }
@@ -49,11 +44,11 @@ void TransmissionLayer::send(Packet packet)
 void TransmissionLayer::ack_received(const PacketAckReceived& event) {    
     Packet& packet = event.ack_packet;
 
-    const std::string& id = get_id(packet);
+    const Node& origin = gr->get_node(packet.meta.origin);
+    const std::string& id = origin.get_id();
     TransmissionQueue& queue = get_queue(id);
 
-    uint32_t num = packet.data.header.get_fragment_number();
-    queue.mark_acked(num);
+    queue.receive_ack(packet);
 }
 
 

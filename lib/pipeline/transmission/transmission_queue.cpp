@@ -13,8 +13,6 @@ void TransmissionQueue::send(uint32_t num) {
     handler.forward_send(entry.packet);
     entry.tries++;
 
-    log_debug("Sending packet [", entry.packet.to_string(), "], try number ", entry.tries, ". Setting timer.");
-
     pending.emplace(num);
     entry.timeout_id = timer.add(ACK_TIMEOUT, [this, num]() { timeout(num); });
 }
@@ -29,13 +27,12 @@ void TransmissionQueue::timeout(uint32_t num)
         return;
     };
 
-
     QueueEntry& entry = entries.at(num);
     Packet& packet = entry.packet;
 
-    if (entry.tries >= MAX_PACKET_TRIES)
+    if (entry.tries > MAX_PACKET_TRIES)
     {
-        log_debug("Packet [", packet.to_string(), "] expired. Transmission failed.");
+        log_error("Packet [", packet.to_string(), "] expired. Transmission failed.");
 
         TransmissionFail event(entry.packet);
         reset();
@@ -48,18 +45,25 @@ void TransmissionQueue::timeout(uint32_t num)
 
     mutex_timeout.unlock();
 
-    log_debug("Packet [", packet.to_string(), "] timed out. Resending.");
+    log_warn("Packet [", packet.to_string(), "] timed out. Sending again, already tried ", entry.tries, " time(s).");
     send(num);
 }
 
 void TransmissionQueue::reset() {
-    for (const auto& pair : entries) {
-        const QueueEntry& entry = pair.second;
-        timer.cancel(entry.timeout_id);
+    for (auto& pair : entries) {
+        QueueEntry& entry = pair.second;
+        uint32_t frag_num = entry.packet.data.header.get_fragment_number();
+
+        if (entry.timeout_id != -1)
+        {
+            timer.cancel(entry.timeout_id);
+            entry.timeout_id = -1;
+        }
     }
 
     pending.clear();
     entries.clear();
+    message_num = UINT32_MAX;
     end_fragment_num = UINT32_MAX;
 }
 
@@ -70,7 +74,24 @@ bool TransmissionQueue::completed()
 
 void TransmissionQueue::add_packet(const Packet& packet)
 {
+    uint32_t msg_num = packet.data.header.get_message_number();
     uint32_t num = packet.data.header.get_fragment_number();
+
+    if (message_num == UINT32_MAX)
+    {
+        message_num = msg_num;
+    }
+    else if (message_num != msg_num)
+    {
+        log_warn(
+            "Transmission queue received packet with message number of ",
+            msg_num,
+            " during transmission of message of number ",
+            message_num,
+            ". Ignoring it."
+        );
+        return;
+    }
     
     entries.emplace(num, QueueEntry{packet : packet});
     send(num);
@@ -81,13 +102,26 @@ void TransmissionQueue::add_packet(const Packet& packet)
     }
 }
 
-void TransmissionQueue::mark_acked(uint32_t num)
+void TransmissionQueue::receive_ack(const Packet& ack_packet)
 {
-    QueueEntry& entry = entries.at(num);
+    uint32_t msg_num = ack_packet.data.header.get_message_number();
+    uint32_t frag_num = ack_packet.data.header.get_fragment_number();
+
+    if (msg_num != message_num) return;
+
+    if (!entries.contains(frag_num)) return;
+    QueueEntry& entry = entries.at(frag_num);
+    
     const Packet& packet = entry.packet;
 
-    timer.cancel(entry.timeout_id);
-    pending.erase(num);
+    if (entry.timeout_id != -1)
+    {
+        log_debug("Cancelling timer of packet ", message_num, "/", frag_num, ".");
+        timer.cancel(entry.timeout_id);
+        entry.timeout_id = -1;
+    }
+
+    pending.erase(frag_num);
 
     if (completed()) {
         SocketAddress remote_address = packet.meta.destination;
@@ -102,5 +136,4 @@ void TransmissionQueue::mark_acked(uint32_t num)
         return;
     }
 
-    log_debug("Received ack for packet [", packet.to_string(), "].");
 }

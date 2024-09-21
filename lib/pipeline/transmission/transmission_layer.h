@@ -24,8 +24,6 @@ private:
     Observer<PacketAckReceived> obs_ack_received;
     void ack_received(const PacketAckReceived& event);
 
-    const std::string& get_id(const Packet& packet);
-
     TransmissionQueue& get_queue(const std::string& id);
 
 public:
