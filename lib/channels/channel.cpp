@@ -68,7 +68,7 @@ void Channel::send(Packet packet)
         log_warn("Unable to send message to ", destination.to_string(), ".");
         return;
     }
-    log_info("Sent packet ", header.msg_num, "/", header.fragment_num, " (", bytes_sent, " bytes) to ", destination.to_string(), ".");
+    log_info("Sent packet ", packet.to_string(), " (", bytes_sent, " bytes).");
 }
 
 Packet Channel::receive()
@@ -91,7 +91,7 @@ Packet Channel::receive()
     SocketAddress origin = SocketAddress::from(in_address);
 
     const PacketHeader& header = packet.data.header;
-    log_info("Received packet ", header.msg_num, "/", header.fragment_num, " (", bytes_received, " bytes) from ", origin.to_string(), ".");
+    // log_info("Received packet ", header.msg_num, "/", header.fragment_num, " (", bytes_received, " bytes) from ", origin.to_string(), ".");
 
     packet.meta.origin = origin;
     packet.meta.destination = address;

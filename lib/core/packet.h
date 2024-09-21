@@ -83,7 +83,23 @@ struct Packet
 
     std::string to_string() const
     {
-        return format("%s --> %s | %s/%s", meta.origin.to_string().c_str(), meta.destination.to_string().c_str(), std::to_string((uint32_t)data.header.msg_num).c_str(), std::to_string((uint32_t)data.header.fragment_num).c_str());
+        const PacketHeader& header = data.header;
+
+        std::string flags;
+        if (header.type == MessageType::APPLICATION) flags += "DATA";
+        if (header.is_syn()) flags += flags.length() ? "+SYN" : "SYN";
+        if (header.is_fin()) flags += flags.length() ? "+FIN" : "FIN";
+        if (header.is_ack()) flags += flags.length() ? "+ACK" : "ACK";
+        if (header.is_end()) flags += flags.length() ? "+END" : "SYN";
+
+        return format(
+            "%s --> %s | %s %s/%s",
+            meta.origin.to_string().c_str(),
+            meta.destination.to_string().c_str(),
+            flags.c_str(),
+            std::to_string((uint32_t)data.header.msg_num).c_str(),
+            std::to_string((uint32_t)data.header.fragment_num).c_str()
+        );
     }
 
     bool operator==(const Packet &other) const

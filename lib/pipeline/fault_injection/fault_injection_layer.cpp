@@ -48,6 +48,6 @@ void FaultInjectionLayer::proceed_receive(Packet packet) {
     unsigned int msg_num = packet.data.header.msg_num;
     unsigned int fragment_num = packet.data.header.fragment_num;
 
-    log_info("Received packet ", msg_num, "/", fragment_num, " (", packet.meta.message_length, " bytes) from ", packet.meta.origin.to_string(), ".");
+    log_info("Received packet ", packet.to_string(), " (", packet.meta.message_length, " bytes).");
     handler.forward_receive(packet);
 }
