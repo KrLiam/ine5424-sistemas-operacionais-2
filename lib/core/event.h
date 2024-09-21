@@ -35,7 +35,7 @@ struct TransmissionFail : public Event {
 };
 
 struct TransmissionComplete : public Event {
-    static EventType type() { return EventType::TRANSMISSION_FAIL; }
+    static EventType type() { return EventType::TRANSMISSION_COMPLETE; }
 
     SocketAddress remote_address;
     uint32_t msg_num;
