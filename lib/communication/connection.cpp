@@ -269,7 +269,8 @@ void Connection::send_ack(Packet packet)
         origin : local_node.get_address(),
         destination : remote_node.get_address(),
         time : 0,
-        message_length : 0
+        message_length : 0,
+        expects_ack : 0
     };
     Packet ack_packet = {
         data : data,

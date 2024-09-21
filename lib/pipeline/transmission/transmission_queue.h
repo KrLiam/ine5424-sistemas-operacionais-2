@@ -2,34 +2,45 @@
 
 #include <mutex>
 #include <vector>
+#include <unordered_set>
+#include <map>
 
 #include "channels/channel.h"
 #include "core/packet.h"
 #include "utils/date.h"
 #include "pipeline/pipeline_handler.h"
 
+struct QueueEntry {
+    Packet packet;
+    int timeout_id = -1;
+    int tries = 0;
+};
+
 class TransmissionQueue
 {
 private:
-    std::vector<uint32_t> fragments_awaiting_ack;
-    std::vector<Packet> fragments_to_send;
+    Timer& timer;
+    PipelineHandler& handler;
 
-    std::mutex queue_mutex;
+    std::map<uint32_t, QueueEntry> entries;
 
+    std::unordered_set<uint32_t> pending;
+    uint32_t end_fragment_num = UINT32_MAX;
+
+    std::mutex mutex_packets;
+    std::mutex mutex_timeout;
+
+    void reset();
+
+    void send(uint32_t num);
+
+    void timeout(uint32_t num);
 public:
-    TransmissionQueue();
+    TransmissionQueue(Timer& timer, PipelineHandler& handler);
 
-    bool has_sent_everything();
-    /**
-     * Used by the received thread to insert a packet into the send queue.
-    */
-    void add_packet_to_queue(Packet packet);
-    /**
-     * Used by the sender thread to remove a packet from the pending ACK list and the send queue.
-    */
-    void mark_packet_as_acked(Packet packet);
-    /**
-     * Used by the sender thread to send packets from the send queue.
-    */
-    void send_timedout_packets(PipelineHandler& handler);
+    bool completed();
+
+    void add_packet(const Packet& packet);
+
+    void mark_acked(uint32_t num);
 };

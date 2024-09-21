@@ -1,51 +1,28 @@
 #include "pipeline/transmission/transmission_layer.h"
 
-static void run_sender_thread(TransmissionLayer *manager)
-{
-    log_trace("Initialized transmission layer sender thread.");
-    while (!manager->stop_threads)
-    {
-        manager->sender_thread();
-    }
-    log_trace("Closing transmission layer sender thread.");
-}
-
-TransmissionLayer::TransmissionLayer(PipelineHandler handler, GroupRegistry *gr, Channel* channel) : PipelineStep(handler, gr), channel(channel), stop_threads(false)
+TransmissionLayer::TransmissionLayer(PipelineHandler handler, GroupRegistry *gr, Channel* channel) : PipelineStep(handler, gr), channel(channel)
 {
     service();
 }
 
 TransmissionLayer::~TransmissionLayer()
 {
-    stop_threads = true;
     channel->shutdown_socket();
-
-    if (sender_thread_obj.joinable())
-        sender_thread_obj.join();
-
-    for (auto [id, queue] : queue_map)
-        delete queue;
 }
 
-void TransmissionLayer::service()
-{
-    sender_thread_obj = std::thread(run_sender_thread, this);
+
+const std::string& TransmissionLayer::get_id(const Packet& packet) {
+    Node destination = gr->get_node(packet.meta.destination);
+    return destination.get_id();
 }
 
-void TransmissionLayer::sender_thread()
-{
-    // TODO: essa thread tá consumindo 100% de cpu. tem q fazer algum semáforo pra travar ela, aí libera no send() e timeout de msg
-    // adicionar process_step() ao inicio do pipeline de send
-
-    // anotacao: o process step poderia, no send, ver se já existe conexao, e se nao, encaminhar msgs de handshake
-    // pra etapa de fragmentacao antes de encaminhar a msg q o usuario quer enviar
-
-    // TODO: atualmente, não tem controle de enviar 1 msg só por vez
-    for (auto &[id, queue] : queue_map)
+TransmissionQueue& TransmissionLayer::get_queue(const std::string& id) {
+    if (!queue_map.contains(id))
     {
-        queue->send_timedout_packets(handler);
-        // if (queue.has_sent_everything()) queue_map.erase(id); <- mutex pra esse mapa
+        queue_map.insert({id, std::make_unique<TransmissionQueue>(timer, handler)});
     }
+
+    return *queue_map.at(id);
 }
 
 void TransmissionLayer::attach(EventBus& bus) {
@@ -53,117 +30,36 @@ void TransmissionLayer::attach(EventBus& bus) {
     bus.attach(obs_ack_received);
 }
 
-void TransmissionLayer::ack_received(const PacketAckReceived& event) {    
-    Packet& packet = event.ack_packet;
-    
-    Node origin = gr->get_node(packet.meta.origin);
-    if (queue_map.contains(origin.get_id()))
-    {
-        queue_map.at(origin.get_id())->mark_packet_as_acked(packet);
-    }
-}
-
 void TransmissionLayer::send(Packet packet)
 {
     log_trace("Packet [", packet.to_string(), "] sent to transmission layer.");
-    // send_buffer.produce(packet);
-    // tinha pensado em fazer o send daqui aguardar sincronamente, mas aí ele poderia travar a receiver_thread
-    // TODO:
-    Node destination = gr->get_node(packet.meta.destination);
-    if (!queue_map.contains(destination.get_id()))
+
+    if (!packet.meta.expects_ack)
     {
-        queue_map.emplace(destination.get_id(), new TransmissionQueue());
+        log_debug("Packet [", packet.to_string(), "] does not require transmission, sending forward.");
+        handler.forward_send(packet);
+        return;
     }
-    queue_map.at(destination.get_id())->add_packet_to_queue(packet);
-    // esse aqui cospe no buffer da sender_thread
+
+    const std::string& id = get_id(packet);
+    TransmissionQueue& queue = get_queue(id);
+    queue.add_packet(packet);
 }
+
+void TransmissionLayer::ack_received(const PacketAckReceived& event) {    
+    Packet& packet = event.ack_packet;
+
+    const std::string& id = get_id(packet);
+    TransmissionQueue& queue = get_queue(id);
+
+    uint32_t num = packet.data.header.get_fragment_number();
+    queue.mark_acked(num);
+}
+
 
 void TransmissionLayer::receive(Packet packet)
 {
     log_trace("Packet [", packet.to_string(), "] received on transmission layer.");
-    /*
-    if (!gr->packet_originates_from_group(packet))
-    {
-        log_debug("Ignoring packet ", packet.to_string(), ", as it did not originate from the group.");
-        return;
-    }
 
-    if (process_ack_field_of_received_packet(packet))
-        return;
-    
-    Node origin = gr->get_node(packet.meta.origin);
-    Connection connection = gr->get_connection(origin.get_id());
-
-    uint32_t message_number = packet.data.header.msg_num;
-    if (message_number != connection.get_expected_message_number())
-    {
-        log_debug("Received message with number ", message_number, ", but expected ", connection.get_expected_message_number(), ".");
-        return;
-    }
-
-    uint8_t type = (uint8_t)packet.data.header.type;
-    if (type == MessageType::DATA && !handler.can_forward_to_application())
-    {
-        log_debug("Incoming buffer is full; ignoring packet ", packet.to_string(), ".");
-        return;
-    }
-    */
     handler.forward_receive(packet);
 }
-/*
-bool TransmissionLayer::process_ack_field_of_received_packet(Packet packet)
-{
-    Node origin = gr->get_node(packet.meta.origin);
-    Connection connection = gr->get_connection(origin.get_id()); // melhorar pra n precisar pegar o ndo toda vez q quer pegar a conexao
-
-    bool is_ack = packet.data.header.ack;
-    if (is_ack)
-    {
-        log_debug("Received ACK for packet ", packet.to_string(), "; removing from list of packets with pending ACKs.");
-        if (queue_map.contains(origin.get_id()))
-        {
-            queue_map.at(origin.get_id())->mark_packet_as_acked(packet);
-        }
-        return true;
-    }
-
-    uint32_t message_number = packet.data.header.msg_num;
-    if (message_number > connection.get_expected_message_number())
-    {
-        log_debug("Received a packet ", packet.to_string(), " that expects confirmation, but message number ", message_number ," is higher than the expected ", connection.get_expected_message_number(), ".");
-        return false;
-    }
-
-    log_debug("Received a packet ", packet.to_string(), " that expects confirmation; sending ACK.");
-    Packet ack_packet = create_ack_packet(packet);
-    send(ack_packet);
-    return false;
-}
-*/
-/*
-Packet TransmissionLayer::create_ack_packet(Packet packet)
-{
-    PacketData data;
-    data.header = {// TODO: Definir corretamente checksum, window, e reserved.
-                   msg_num : packet.data.header.msg_num,
-                   fragment_num : packet.data.header.fragment_num,
-                   checksum : 0,
-                   window : 0,
-                   type : packet.data.header.type,
-                   ack : 1,
-                   more_fragments : 0,
-                   reserved : 0
-    };
-    PacketMetadata meta = {
-        origin : gr->get_local_node().get_address(),
-        destination : gr->get_node(packet.meta.origin).get_address(),
-        time : 0,
-        message_length : 0
-    };
-    Packet ack_packet = {
-        data : data,
-        meta : meta
-    };
-    return ack_packet;
-}
-*/

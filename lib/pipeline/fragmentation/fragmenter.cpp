@@ -21,6 +21,7 @@ Packet Fragmenter::create_packet() {
         destination : message.destination,
         time : 0,
         message_length : message_length,
+        expects_ack : 1
     };
 
     PacketData data = {

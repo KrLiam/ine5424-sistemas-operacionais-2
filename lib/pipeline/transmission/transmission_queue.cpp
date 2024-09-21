@@ -1,80 +1,106 @@
 #include "pipeline/transmission/transmission_queue.h"
+#include "core/constants.h"
+#include "core/event.h"
 
-TransmissionQueue::TransmissionQueue() : fragments_awaiting_ack(), fragments_to_send()
+TransmissionQueue::TransmissionQueue(Timer& timer, PipelineHandler& handler)
+    : timer(timer), handler(handler)
 {
 }
 
-bool TransmissionQueue::has_sent_everything()
-{
-    queue_mutex.lock();
-    bool result = fragments_to_send.size() == 0;
-    queue_mutex.unlock();
-    return result;
+void TransmissionQueue::send(uint32_t num) {
+    QueueEntry& entry = entries.at(num);
+
+    handler.forward_send(entry.packet);
+    entry.tries++;
+
+    log_debug("Sending packet [", entry.packet.to_string(), "], try number ", entry.tries, ". Setting timer.");
+
+    pending.emplace(num);
+    entry.timeout_id = timer.add(ACK_TIMEOUT, [this, num]() { timeout(num); });
 }
 
-void TransmissionQueue::add_packet_to_queue(Packet packet)
+void TransmissionQueue::timeout(uint32_t num)
 {
-    queue_mutex.lock();
-    fragments_to_send.push_back(packet);
-    queue_mutex.unlock();
-}
+    mutex_timeout.lock();
 
-void TransmissionQueue::mark_packet_as_acked(Packet packet)
-{
-    uint32_t fragment_number = (uint32_t)packet.data.header.fragment_num;
-    fragments_awaiting_ack.erase(std::remove(fragments_awaiting_ack.begin(), fragments_awaiting_ack.end(), fragment_number), fragments_awaiting_ack.end());
-    // fragments_to_send.erase(std::remove(fragments_to_send.begin(), fragments_to_send.end(), packet), fragments_to_send.end());
-    // TODO: achar um jeito melhor de remover o fragmento da lista de fragmentos pra enviar
-    queue_mutex.lock();
-    for (std::size_t i = 0; i < fragments_to_send.size(); i++)
+    if (!entries.contains(num))
     {
-        Packet p = fragments_to_send[i];
-        if (p.data.header.fragment_num == packet.data.header.fragment_num)
-        {
-            fragments_to_send.erase(fragments_to_send.begin() + i);
-            break;
-        }
-    }
-    queue_mutex.unlock();
-}
+        mutex_timeout.unlock();
+        return;
+    };
 
-void TransmissionQueue::send_timedout_packets(PipelineHandler& handler)
-{
-    uint64_t now = DateUtils::now();
-    std::vector<std::size_t> indexes_to_remove = std::vector<std::size_t>();
 
-    queue_mutex.lock();
-    for (std::size_t i = 0; i < fragments_to_send.size(); i++)
+    QueueEntry& entry = entries.at(num);
+    Packet& packet = entry.packet;
+
+    if (entry.tries >= MAX_PACKET_TRIES)
     {
-        Packet packet = fragments_to_send[i];
+        log_debug("Packet [", packet.to_string(), "] expired. Transmission failed.");
 
-        if (now - packet.meta.time < ACK_TIMEOUT)
-            continue;
-        handler.forward_send(packet);
+        TransmissionFail event(entry.packet);
+        reset();
 
-        bool is_ack = packet.data.header.ack;
-        if (is_ack)
-        {
-            indexes_to_remove.push_back(i);
-            continue;
-        }
+        handler.notify(event);
 
-        bool is_control = packet.data.header.type == MessageType::CONTROL;
-        if (is_control)
-        {
-            indexes_to_remove.push_back(i);
-            continue;
-        }
-
-        fragments_to_send[i].meta.time = now;
-        fragments_awaiting_ack.push_back((uint32_t)packet.data.header.fragment_num); // melhor usar set pra isso
+        mutex_timeout.unlock();
+        return;
     }
 
-    int offset = 0;
-    for (int idx : indexes_to_remove)
-    {
-        fragments_to_send.erase(fragments_to_send.begin() + idx + offset);
-        offset--;
+    mutex_timeout.unlock();
+
+    log_debug("Packet [", packet.to_string(), "] timed out. Resending.");
+    send(num);
+}
+
+void TransmissionQueue::reset() {
+    for (const auto& pair : entries) {
+        const QueueEntry& entry = pair.second;
+        timer.cancel(entry.timeout_id);
     }
-    queue_mutex.unlock();
+
+    pending.clear();
+    entries.clear();
+    end_fragment_num = UINT32_MAX;
+}
+
+bool TransmissionQueue::completed()
+{
+    return !pending.size() && end_fragment_num != UINT32_MAX;
+}
+
+void TransmissionQueue::add_packet(const Packet& packet)
+{
+    uint32_t num = packet.data.header.get_fragment_number();
+    
+    entries.emplace(num, QueueEntry{packet : packet});
+    send(num);
+
+    if (packet.data.header.is_end())
+    {
+        end_fragment_num = num;
+    }
+}
+
+void TransmissionQueue::mark_acked(uint32_t num)
+{
+    QueueEntry& entry = entries.at(num);
+    const Packet& packet = entry.packet;
+
+    timer.cancel(entry.timeout_id);
+    pending.erase(num);
+
+    if (completed()) {
+        SocketAddress remote_address = packet.meta.destination;
+        uint32_t msg_num = packet.data.header.get_message_number();
+        TransmissionComplete event(remote_address, msg_num);
+
+        log_debug("Transmission ", remote_address.to_string(), " / ", msg_num, " is completed.");
+
+        reset();
+
+        handler.notify(event);
+        return;
+    }
+
+    log_debug("Received ack for packet [", packet.to_string(), "].");
 }

@@ -17,42 +17,42 @@ struct PacketHeader
     unsigned int type : 4;
     unsigned int reserved : 4;
 
-    uint32_t get_message_number()
+    uint32_t get_message_number() const
     {
         return (uint32_t)msg_num;
     }
 
-    uint32_t get_fragment_number()
+    uint32_t get_fragment_number() const
     {
         return (uint32_t)fragment_num;
     }
 
-    bool is_ack()
+    bool is_ack() const
     {
         return (bool)ack;
     }
 
-    bool is_end()
+    bool is_end() const
     {
         return (bool)end;
     }
 
-    bool is_syn()
+    bool is_syn() const
     {
         return (bool)syn;
     }
 
-    bool is_rst()
+    bool is_rst() const
     {
         return (bool)rst;
     }
 
-    bool is_fin()
+    bool is_fin() const
     {
         return (bool)fin;
     }
 
-    MessageType get_message_type()
+    MessageType get_message_type() const
     {
         return static_cast<MessageType>(type);
     }
@@ -73,6 +73,7 @@ struct PacketMetadata
     SocketAddress destination;
     uint64_t time;
     int message_length;
+    bool expects_ack;
 };
 
 struct Packet

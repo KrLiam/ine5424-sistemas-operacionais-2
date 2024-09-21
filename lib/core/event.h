@@ -5,8 +5,10 @@
 enum EventType {
     BASE = -1,
     PACKET_ACK_RECEIVED = 0,
-    MESSAGE_DEFRAGMENTATION_IS_COMPLETE = 2,
-    FORWARD_DEFRAGMENTED_MESSAGE = 3
+    TRANSMISSION_FAIL = 1,
+    TRANSMISSION_COMPLETE = 2,
+    MESSAGE_DEFRAGMENTATION_IS_COMPLETE = 3,
+    FORWARD_DEFRAGMENTED_MESSAGE = 4
 };
 
 struct Event {
@@ -22,6 +24,23 @@ struct PacketAckReceived : public Event {
     Packet& ack_packet;
 
     PacketAckReceived(Packet& ack_packet);
+};
+
+struct TransmissionFail : public Event {
+    static EventType type() { return EventType::TRANSMISSION_FAIL; }
+
+    Packet& faulty_packet;
+
+    TransmissionFail(Packet& faulty_packet);
+};
+
+struct TransmissionComplete : public Event {
+    static EventType type() { return EventType::TRANSMISSION_FAIL; }
+
+    SocketAddress remote_address;
+    uint32_t msg_num;
+
+    TransmissionComplete(const SocketAddress& remote_address, uint32_t msg_num);
 };
 
 struct MessageDefragmentationIsComplete : public Event {
