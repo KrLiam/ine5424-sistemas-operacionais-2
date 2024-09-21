@@ -67,6 +67,15 @@ void TransmissionQueue::reset() {
     end_fragment_num = UINT32_MAX;
 }
 
+uint32_t TransmissionQueue::get_total_bytes() {
+    uint32_t sum = 0;
+    for (const auto& pair : entries) {
+        const QueueEntry& entry = pair.second;
+        sum += entry.packet.meta.message_length;
+    }
+    return sum;
+}
+
 bool TransmissionQueue::completed()
 {
     return !pending.size() && end_fragment_num != UINT32_MAX;
@@ -123,17 +132,20 @@ void TransmissionQueue::receive_ack(const Packet& ack_packet)
 
     pending.erase(frag_num);
 
+    mutex_timeout.lock();
     if (completed()) {
         SocketAddress remote_address = packet.meta.destination;
         uint32_t msg_num = packet.data.header.get_message_number();
         TransmissionComplete event(remote_address, msg_num);
 
-        log_debug("Transmission ", remote_address.to_string(), " / ", msg_num, " is completed.");
+        log_info(
+            "Transmission ", remote_address.to_string(), " / ", msg_num, " is completed. Sent ",
+            end_fragment_num + 1, " fragments, ", get_total_bytes(), " bytes total."
+        );
 
         reset();
 
         handler.notify(event);
-        return;
     }
-
+    mutex_timeout.unlock();
 }

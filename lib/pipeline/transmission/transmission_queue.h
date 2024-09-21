@@ -40,6 +40,8 @@ private:
 public:
     TransmissionQueue(Timer& timer, PipelineHandler& handler);
 
+    uint32_t get_total_bytes();
+
     bool completed();
 
     void add_packet(const Packet& packet);
