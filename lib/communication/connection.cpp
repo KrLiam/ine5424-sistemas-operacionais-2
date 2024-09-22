@@ -392,12 +392,18 @@ void Connection::complete_transmission() {
     if (!active_transmission) return;
 
     const TransmissionResult& result = active_transmission->result;
-    log_debug("Transmission ", active_transmission->uuid, " is completed. Success: ", result.success);
+
+    for (int i=0; i < transmissions.size(); i++) {
+        if (transmissions[i] != active_transmission) continue;
+
+        transmissions.erase(transmissions.begin() + i);
+        break;
+    }
 
     active_transmission->release();
     active_transmission = nullptr;
 
-    request_update();
+    if (transmissions.size()) request_update();
 }
 
 void Connection::cancel_transmissions() {

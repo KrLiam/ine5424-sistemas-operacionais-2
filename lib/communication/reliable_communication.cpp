@@ -60,7 +60,7 @@ Message ReliableCommunication::receive(char *m)
     return receive(m); // problema: perde a ordem */
 }
 
-void ReliableCommunication::send(std::string id, MessageData data)
+bool ReliableCommunication::send(std::string id, MessageData data)
 {
     if (data.size == std::size_t(-1))
         data.size = user_buffer_size;
@@ -70,6 +70,8 @@ void ReliableCommunication::send(std::string id, MessageData data)
     
     TransmissionResult result = transmission.wait_result();
     log_debug("Transmission ", transmission.uuid, " returned result to application.");
+
+    return result.success;
 }
 
 Message ReliableCommunication::create_message(std::string id, const MessageData& data) {

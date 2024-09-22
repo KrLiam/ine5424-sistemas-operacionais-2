@@ -42,7 +42,15 @@ void client(ThreadArgs* args) {
         std::string id;
         std::cin >> id;
         if (id == "exit") break;
-        comm->send(id, {msg, 4000});
+
+        bool success = comm->send(id, {msg, 4000});
+
+        if (success) {
+            log_info("Successfuly sent message to ", id, "!");
+        }
+        else {
+            log_error("Could not send message to ", id, ".");
+        }
     }
     log_info("Exited client.");
 }

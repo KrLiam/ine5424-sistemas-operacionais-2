@@ -39,7 +39,7 @@ public:
     ReliableCommunication(std::string _local_id, std::size_t _user_buffer_size);
     ~ReliableCommunication();
 
-    void send(std::string id, MessageData data);
+    bool send(std::string id, MessageData data);
     Message receive(char *m);
 
     GroupRegistry *get_group_registry();

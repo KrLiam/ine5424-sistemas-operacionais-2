@@ -6,8 +6,8 @@
 #include "core/message.h"
 #include "utils/uuid.h"
 
-Transmission::Transmission(std::string receiver_id, Message message)
-    : receiver_id(receiver_id), message(message)
+Transmission::Transmission(std::string receiver_id, Message m)
+    : receiver_id(receiver_id), message(m)
 {
     uuid = uuid::generate_uuid();
     message.transmission_uuid = uuid;
