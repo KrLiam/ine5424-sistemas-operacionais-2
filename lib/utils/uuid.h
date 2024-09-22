@@ -2,24 +2,24 @@
 
 #include <random>
 #include <sstream>
+#include <string.h>
 
 struct UUID {
     UUID();
-    UUID(uint64_t most, uint64_t least);
 
-    uint64_t get_least() const;
-    uint64_t get_most() const;
+    UUID(std::string uuid);
 
     bool operator ==(const UUID& other) const;
 
+    std::string as_string() const;
+
 private:
-    uint64_t most;
-    uint64_t least;
+    std::string uuid;
 };
 
 template<> struct std::hash<UUID> {
     std::size_t operator()(const UUID& u) const {
-        return std::hash<uint64_t>()(u.get_most()) ^ std::hash<uint64_t>()(u.get_least());
+        return std::hash<std::string>()(u.as_string());
     }
 };
 
@@ -31,10 +31,6 @@ namespace uuid
     static std::mt19937_64 gen(rd());
     static std::uniform_int_distribution<> dis(0, 15);
     static std::uniform_int_distribution<> dis2(8, 11);
-
-    static std::uniform_int_distribution<uint64_t> dis64;
-
-    UUID generate_uuid();
 
     std::string generate_uuid_v4();
 }
