@@ -1,7 +1,18 @@
 #include "communication/connection.h"
 #include "pipeline/pipeline.h"
 
-Connection::Connection(Pipeline &pipeline, Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &application_buffer, Node local_node, Node remote_node) : pipeline(pipeline), application_buffer(application_buffer), local_node(local_node), remote_node(remote_node)
+Connection::Connection(
+    Node local_node,
+    Node remote_node,
+    Pipeline &pipeline,
+    Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &application_buffer,
+    Buffer<100, std::string>& connection_update_buffer
+) :
+    pipeline(pipeline),
+    application_buffer(application_buffer),
+    local_node(local_node),
+    remote_node(remote_node),
+    connection_update_buffer(connection_update_buffer)
 {
     observe_pipeline();
 }
@@ -9,7 +20,11 @@ Connection::Connection(Pipeline &pipeline, Buffer<INTERMEDIARY_BUFFER_ITEMS, Mes
 void Connection::observe_pipeline()
 {
     obs_message_defragmentation_is_complete.on(std::bind(&Connection::message_defragmentation_is_complete, this, _1));
+    obs_transmission_complete.on(std::bind(&Connection::transmission_complete, this, _1));
+    obs_transmission_fail.on(std::bind(&Connection::transmission_fail, this, _1));
     pipeline.attach(obs_message_defragmentation_is_complete);
+    pipeline.attach(obs_transmission_complete);
+    pipeline.attach(obs_transmission_fail);
 }
 
 void Connection::message_defragmentation_is_complete(const MessageDefragmentationIsComplete& event)
@@ -22,36 +37,49 @@ void Connection::message_defragmentation_is_complete(const MessageDefragmentatio
         pipeline.notify(ForwardDefragmentedMessage(packet));
 }
 
-bool Connection::connect()
+void Connection::transmission_complete(const TransmissionComplete& event)
+{
+    if (!active_transmission) return;
+
+    uint64_t uuid = event.uuid;
+
+    if (uuid != active_transmission->uuid) return;
+
+    active_transmission->set_result(true);    
+    complete_transmission();
+}
+
+void Connection::transmission_fail(const TransmissionFail& event)
+{
+    if (!active_transmission) return;
+
+    Packet& packet = event.faulty_packet;
+    uint64_t uuid = packet.meta.transmission_uuid;
+
+    if (uuid != active_transmission->uuid) return;
+
+    active_transmission->set_result(false);    
+    complete_transmission();
+}
+
+void Connection::connect()
 {
     if (state == ESTABLISHED)
-        return true;
+        return;
 
     log_trace("connect: sending SYN.");
     reset_message_numbers();
     change_state(SYN_SENT);
     send_flag(SYN);
-    int timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
-
-    std::unique_lock lock(mutex);
-    while (state != ESTABLISHED && state != CLOSED)
-        state_change.wait(lock);
-
-    if (state == CLOSED)
-    {
-        log_warn("connect: unable to establish connection.");
-        return false;
-    }
-    timer.cancel(timer_id);
-
-    log_trace("connect: connection established successfully.");
-    return true;
+    handshake_timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
 }
 
 void Connection::connection_timeout()
 {
-    log_warn(get_current_state_name(), ": timed out.");
+    log_warn("Unable to establish connection with node ", remote_node.get_id());
     change_state(CLOSED);
+    handshake_timer_id = -1;
+    cancel_transmissions();
 }
 
 bool Connection::disconnect()
@@ -106,6 +134,10 @@ void Connection::syn_sent(Packet p)
         {
             log_trace("syn_sent: received SYN+ACK; sending ACK.");
             log_info("syn_sent: connection established.");
+
+            timer.cancel(handshake_timer_id);
+            handshake_timer_id = -1;
+
             change_state(ESTABLISHED);
             send_flag(ACK);
             return;
@@ -139,6 +171,10 @@ void Connection::syn_received(Packet p)
         expected_number++;
         log_trace("syn_received: received ACK.");
         log_info("syn_received: connection established.");
+
+        timer.cancel(handshake_timer_id);
+        handshake_timer_id = -1;
+
         change_state(ESTABLISHED);
         return;
     }
@@ -239,7 +275,6 @@ void Connection::send_flag(unsigned char flags)
     data.header = header;
 
     Packet packet;
-    memset(&packet, 0, sizeof(Packet));
     packet.meta.origin = local_node.get_address();
     packet.meta.destination = remote_node.get_address();
     packet.data = data;
@@ -266,6 +301,7 @@ void Connection::send_ack(Packet packet)
                    reserved : 0
     };
     PacketMetadata meta = {
+        transmission_uuid : 0,
         origin : local_node.get_address(),
         destination : remote_node.get_address(),
         time : 0,
@@ -329,15 +365,76 @@ void Connection::change_state(ConnectionState new_state)
         return;
     state = new_state;
     state_change.notify_all();
+
+    if (state == ConnectionState::ESTABLISHED)
+    {
+        request_update();
+    }
 }
+
+
+void Connection::enqueue(Transmission& transmission) {
+    mutex_transmissions.lock();
+    transmissions.push_back(&transmission);
+    mutex_transmissions.unlock();
+
+    log_debug("Added transmission ", transmission.uuid, " on connection of node ", transmission.receiver_id);
+
+    request_update();
+}
+
+void Connection::request_update() {
+    // usar uma estrutura melhor q buffer
+    connection_update_buffer.produce(remote_node.get_id());
+}
+
+void Connection::complete_transmission() {
+    if (!active_transmission) return;
+
+    const TransmissionResult& result = active_transmission->result;
+    log_debug("Transmission ", active_transmission->uuid, " is completed. Success: ", result.success);
+
+    active_transmission->release();
+    active_transmission = nullptr;
+
+    request_update();
+}
+
+void Connection::cancel_transmissions() {
+    mutex_transmissions.lock();
+
+    for (Transmission* transmission : transmissions) {
+        transmission->set_result(false);
+        transmission->release();
+    }
+
+    transmissions.clear();
+    active_transmission = nullptr;
+
+    mutex_transmissions.unlock();
+}
+
+void Connection::update() {
+    if (!transmissions.size()) return;
+
+    log_trace("Updating connection with node ", remote_node.get_id());
+
+    if (state == ConnectionState::CLOSED)
+    {
+        connect();
+        return;
+    }
+
+    if (state == ConnectionState::ESTABLISHED && !active_transmission)
+    {
+        active_transmission = transmissions[0];
+        send(active_transmission->message);
+    }
+}
+
 
 void Connection::send(Message message)
 {
-    if (!connect())
-    {
-        log_warn("Unable to establish a connection to ", remote_node.get_address().to_string(), ".");
-        return;
-    }
     message.number = new_message_number();
     pipeline.send(message);
 }

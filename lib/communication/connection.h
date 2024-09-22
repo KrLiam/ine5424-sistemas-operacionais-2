@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <cstring>
+#include <vector>
 #include <functional>
 #include <exception>
 
@@ -20,6 +21,7 @@
 #include "core/constants.h"
 #include "core/event.h"
 #include "utils/observer.h"
+#include "communication/transmission.h"
 
 using namespace std::placeholders;
 
@@ -44,14 +46,22 @@ private:
     Node local_node;
     Node remote_node;
 
+    ConnectionState state = CLOSED;
+    std::condition_variable state_change;
+
+    std::vector<Transmission*> transmissions;
+    Transmission* active_transmission = nullptr;
+    Buffer<100, std::string>& connection_update_buffer;
+
     uint32_t next_number = 0;
     uint32_t expected_number = 0;
 
-    ConnectionState state = CLOSED;
-    std::condition_variable state_change;
-    std::mutex mutex;
-
     Timer timer{};
+    int handshake_timer_id = -1;
+
+    std::mutex mutex;
+    std::mutex mutex_transmissions;
+
 
     const std::map<ConnectionState, std::function<void(Packet)>> packet_receive_handlers = {
         {ESTABLISHED, std::bind(&Connection::established, this, _1)},
@@ -77,7 +87,7 @@ private:
         FIN = 0x08,
     };
 
-    bool connect();
+    void connect();
     bool disconnect();
 
     void closed(Packet p);
@@ -98,16 +108,36 @@ private:
     uint32_t new_message_number();
     void reset_message_numbers();
 
+    void cancel_transmissions();
+    void complete_transmission();
+
     std::string get_current_state_name();
     void change_state(ConnectionState new_state);
 
     void observe_pipeline();
 
     Observer<MessageDefragmentationIsComplete> obs_message_defragmentation_is_complete;
+    Observer<TransmissionComplete> obs_transmission_complete;
+    Observer<TransmissionFail> obs_transmission_fail;
+    
     void message_defragmentation_is_complete(const MessageDefragmentationIsComplete& event);
+    void transmission_complete(const TransmissionComplete& event);
+    void transmission_fail(const TransmissionFail& event);
 
 public:
-    Connection(Pipeline &pipeline, Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &application_buffer, Node local_node, Node remote_node);
+    Connection(
+        Node local_node,
+        Node remote_node,
+        Pipeline &pipeline,
+        Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &application_buffer,
+        Buffer<100, std::string>& connection_update_buffer
+    );
+
+    void enqueue(Transmission& transmission);
+
+    void request_update();
+
+    void update();
 
     void send(Message message);
     void send(Packet packet);

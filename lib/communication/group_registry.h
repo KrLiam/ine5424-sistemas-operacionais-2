@@ -22,15 +22,30 @@ public:
     const std::map<std::string, Node> &get_nodes();
     const Node &get_local_node();
 
+    bool has_connection(std::string id) {
+        return connections.contains(id);
+    }
+
     Connection& get_connection(SocketAddress address)
     {
-        Node dest = get_node(address);
-        return connections.at(dest.get_id());
+        return get_connection(get_node(address));
+    }
+    Connection& get_connection(const Node& node)
+    {
+        return get_connection(node.get_id());
+    }
+    Connection& get_connection(std::string id)
+    {
+        return connections.at(id);
     }
 
     bool packet_originates_from_group(Packet packet);
 
-    void establish_connections(Pipeline& pipeline, Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &application_buffer);
+    void establish_connections(
+        Pipeline& pipeline,
+        Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &application_buffer,
+        Buffer<100, std::string> &connection_update_buffer
+    );
 
 private:
     std::string local_id;

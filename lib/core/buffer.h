@@ -27,7 +27,7 @@ public:
         return item;
     };
 
-    void produce(T &item)
+    void produce(const T &item)
     {
         producer.acquire();
         mutex.lock();

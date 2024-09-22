@@ -17,6 +17,7 @@ Packet Fragmenter::create_packet() {
         PacketData::MAX_MESSAGE_SIZE;
 
     PacketMetadata meta = {
+        transmission_uuid : message.transmission_uuid,
         origin : message.origin,
         destination : message.destination,
         time : 0,

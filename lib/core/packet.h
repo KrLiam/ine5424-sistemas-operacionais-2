@@ -69,11 +69,12 @@ struct PacketData
 
 struct PacketMetadata
 {
-    SocketAddress origin;
-    SocketAddress destination;
-    uint64_t time;
-    int message_length;
-    bool expects_ack;
+    uint64_t transmission_uuid = 0;
+    SocketAddress origin = {{0, 0, 0, 0}, 0};
+    SocketAddress destination = {{0, 0, 0, 0}, 0};
+    uint64_t time = 0;
+    int message_length = 0;
+    bool expects_ack = 0;
 };
 
 struct Packet
