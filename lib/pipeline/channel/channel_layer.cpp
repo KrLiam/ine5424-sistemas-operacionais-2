@@ -11,6 +11,7 @@ ChannelLayer::ChannelLayer(PipelineHandler handler, Channel &channel) : Pipeline
 
 ChannelLayer::~ChannelLayer()
 {
+    channel.shutdown_socket();
     receiver_thread.join();
 }
 

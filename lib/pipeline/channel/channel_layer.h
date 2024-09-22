@@ -8,7 +8,6 @@
 class ChannelLayer : public PipelineStep {
     Channel& channel;
     std::thread receiver_thread;
-    bool stop_thread = false;
 
     void receiver();
 public:

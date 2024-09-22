@@ -6,7 +6,6 @@ TransmissionLayer::TransmissionLayer(PipelineHandler handler, GroupRegistry *gr,
 
 TransmissionLayer::~TransmissionLayer()
 {
-    channel->shutdown_socket();
 }
 
 TransmissionQueue& TransmissionLayer::get_queue(const std::string& id) {
