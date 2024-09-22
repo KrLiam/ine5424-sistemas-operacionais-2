@@ -433,6 +433,7 @@ void Connection::update() {
     if (state == ConnectionState::ESTABLISHED && !active_transmission)
     {
         active_transmission = transmissions[0];
+        active_transmission->active = true;
         send(active_transmission->message);
     }
 }
