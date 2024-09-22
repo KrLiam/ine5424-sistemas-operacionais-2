@@ -49,8 +49,13 @@ private:
     ConnectionState state = CLOSED;
     std::condition_variable state_change;
 
-    std::vector<Transmission*> transmissions;
     Transmission* active_transmission = nullptr;
+    std::vector<Transmission*> transmissions;
+    // Atualmente só tá sendo enviado packet sem esperar ACK, a ideia é fazer com que a mesma lógica de
+    // aguardar o envio seja possível para os pacotes da lib
+    // Para isso, vai ser necessário adaptar para ter um TransmissionQueue por ato de send
+    // ou um TransmissionQueue só suportar mensagem + pacotes não relacionados
+    std::vector<Packet> packets_to_send;
     BufferSet<std::string>& connection_update_buffer;
 
     uint32_t next_number = 0;
@@ -61,6 +66,7 @@ private:
 
     std::mutex mutex;
     std::mutex mutex_transmissions;
+    std::mutex mutex_packets;
 
 
     const std::map<ConnectionState, std::function<void(Packet)>> packet_receive_handlers = {
@@ -86,6 +92,8 @@ private:
         SYN = 0x04,
         FIN = 0x08,
     };
+
+    void transmit(Packet);
 
     void connect();
     bool disconnect();

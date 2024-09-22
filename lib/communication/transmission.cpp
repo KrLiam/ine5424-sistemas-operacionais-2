@@ -3,8 +3,6 @@
 #include <mutex>
 
 #include "communication/transmission.h"
-#include "core/message.h"
-#include "utils/uuid.h"
 
 Transmission::Transmission(std::string receiver_id, Message m)
     : uuid(UUID()),

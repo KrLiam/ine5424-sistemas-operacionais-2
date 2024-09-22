@@ -28,7 +28,7 @@ void TransmissionLayer::send(Packet packet)
 
     if (!packet.meta.expects_ack)
     {
-        log_debug("Packet [", packet.to_string(PacketFormat::SENT), "] does not require ack, sending forward.");
+        log_debug("Packet [", packet.to_string(PacketFormat::SENT), "] does not require ACK, sending forward.");
         handler.forward_send(packet);
         return;
     }

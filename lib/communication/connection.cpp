@@ -7,13 +7,11 @@ Connection::Connection(
     Node remote_node,
     Pipeline &pipeline,
     Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &application_buffer,
-    BufferSet<std::string>& connection_update_buffer
-) :
-    pipeline(pipeline),
-    application_buffer(application_buffer),
-    local_node(local_node),
-    remote_node(remote_node),
-    connection_update_buffer(connection_update_buffer)
+    BufferSet<std::string> &connection_update_buffer) : pipeline(pipeline),
+                                                        application_buffer(application_buffer),
+                                                        local_node(local_node),
+                                                        remote_node(remote_node),
+                                                        connection_update_buffer(connection_update_buffer)
 {
     observe_pipeline();
 }
@@ -28,9 +26,9 @@ void Connection::observe_pipeline()
     pipeline.attach(obs_transmission_fail);
 }
 
-void Connection::message_defragmentation_is_complete(const MessageDefragmentationIsComplete& event)
+void Connection::message_defragmentation_is_complete(const MessageDefragmentationIsComplete &event)
 {
-    Packet& packet = event.packet;
+    Packet &packet = event.packet;
     if (packet.meta.origin != remote_node.get_address())
         return;
 
@@ -38,7 +36,7 @@ void Connection::message_defragmentation_is_complete(const MessageDefragmentatio
         pipeline.notify(ForwardDefragmentedMessage(packet));
 }
 
-void Connection::transmission_complete(const TransmissionComplete& event)
+void Connection::transmission_complete(const TransmissionComplete &event)
 {
     if (!active_transmission) return;
 
@@ -46,11 +44,11 @@ void Connection::transmission_complete(const TransmissionComplete& event)
 
     if (uuid != active_transmission->uuid) return;
 
-    active_transmission->set_result(true);    
+    active_transmission->set_result(true);
     complete_transmission();
 }
 
-void Connection::transmission_fail(const TransmissionFail& event)
+void Connection::transmission_fail(const TransmissionFail &event)
 {
     if (!active_transmission) return;
 
@@ -281,7 +279,7 @@ void Connection::send_flag(unsigned char flags)
     packet.data = data;
 
     next_number++;
-    send(packet);
+    transmit(packet);
 }
 
 void Connection::send_ack(Packet packet)
@@ -313,7 +311,8 @@ void Connection::send_ack(Packet packet)
         data : data,
         meta : meta
     };
-    send(ack_packet);
+
+    transmit(ack_packet);
 }
 
 bool Connection::close_on_rst(Packet p)
@@ -373,18 +372,19 @@ void Connection::change_state(ConnectionState new_state)
     }
 }
 
-
-void Connection::enqueue(Transmission& transmission) {
+void Connection::enqueue(Transmission &transmission)
+{
     mutex_transmissions.lock();
     transmissions.push_back(&transmission);
     mutex_transmissions.unlock();
 
-    log_debug("Added transmission ", transmission.uuid, " on connection of node ", transmission.receiver_id);
+    log_debug("Enqueued transmission ", transmission.uuid, " on connection of node ", transmission.receiver_id);
 
     request_update();
 }
 
-void Connection::request_update() {
+void Connection::request_update()
+{
     connection_update_buffer.produce(remote_node.get_id());
 }
 
@@ -405,23 +405,27 @@ void Connection::complete_transmission() {
     if (transmissions.size()) request_update();
 }
 
-void Connection::cancel_transmissions() {
+void Connection::cancel_transmissions()
+{
     mutex_transmissions.lock();
 
-    for (Transmission* transmission : transmissions) {
+    for (Transmission *transmission : transmissions)
+    {
         transmission->set_result(false);
         transmission->release();
     }
 
     transmissions.clear();
     active_transmission = nullptr;
-
     mutex_transmissions.unlock();
+
+    mutex_packets.lock();
+    packets_to_send.clear();
+    mutex_packets.unlock();
 }
 
-void Connection::update() {
-    if (!transmissions.size()) return;
-
+void Connection::update()
+{
     log_trace("Updating connection with node ", remote_node.get_id());
 
     if (state == ConnectionState::CLOSED)
@@ -430,14 +434,22 @@ void Connection::update() {
         return;
     }
 
-    if (state == ConnectionState::ESTABLISHED && !active_transmission)
+    mutex_packets.lock();
+    for (Packet p : packets_to_send)
+        send(p);
+    packets_to_send.clear();
+    mutex_packets.unlock();
+
+    if (state != ConnectionState::ESTABLISHED)
+        return;
+
+    if (transmissions.size() && !active_transmission)
     {
         active_transmission = transmissions[0];
         active_transmission->active = true;
         send(active_transmission->message);
     }
 }
-
 
 void Connection::send(Message message)
 {
@@ -476,4 +488,12 @@ void Connection::receive(Message message)
 
     expected_number++;
     application_buffer.produce(message);
+}
+
+void Connection::transmit(Packet p)
+{
+    mutex_packets.lock();
+    packets_to_send.push_back(p);
+    mutex_packets.unlock();
+    request_update();
 }
