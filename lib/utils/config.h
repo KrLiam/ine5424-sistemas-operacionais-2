@@ -7,21 +7,33 @@
 #include <vector>
 #include <netinet/in.h>
 
-class parse_error : public std::runtime_error // todo: pensar numa forma menos horrivel de fzr isso. No caso talvez ter uma classe que tem cada tipo desses possiveis erros...
-{
-private:
-    std::string message; // mensagem de erro
-
+class config_error : public std::runtime_error {
 public:
-    // personalizada
-    parse_error(const std::string &msg);
+    explicit config_error(const std::string &msg)
+        : std::runtime_error(msg), message(msg) {}
 
-    // padrao
-    parse_error();
+    virtual const char *what() const noexcept override {
+        return message.c_str();
+    }
 
-    virtual const char *what() const noexcept;
+    virtual std::string get_message() const {
+        return message;
+    }
 
-    std::string get_message() const;
+protected:
+    std::string message;
+};
+
+class parse_error final : public config_error {
+public:
+    explicit parse_error(const std::string &msg = "Parse error occurred.")
+        : config_error(msg) {}
+};
+
+class port_in_use_error final : public config_error {
+public:
+    explicit port_in_use_error(const std::string &msg = "Port is already in use.")
+        : config_error(msg) {}
 };
 
 std::string read_file(const std::string &filename);

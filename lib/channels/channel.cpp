@@ -1,6 +1,6 @@
 #include "channels/channel.h"
 
-Channel::Channel(SocketAddress local_address) : address(local_address)
+Channel::Channel(const SocketAddress local_address) : address(local_address)
 {
     open_socket();
 }
@@ -11,13 +11,10 @@ Channel::~Channel()
         close_socket();
 }
 
-void Channel::open_socket()
-{
+void Channel::open_socket() {
     socket_descriptor = socket(AF_INET, SOCK_DGRAM, 0);
-    if (socket_descriptor < 0)
-    {
-        log_error("Unable to create a socket.");
-        return;
+    if (socket_descriptor < 0) {
+        throw parse_error("Unable to create a socket.");
     }
 
     memset(&in_address, 0, sizeof(sockaddr_in));
@@ -28,31 +25,32 @@ void Channel::open_socket()
     memset(&out_address, 0, sizeof(sockaddr_in));
     out_address.sin_family = AF_INET;
 
-    int bind_result = bind(socket_descriptor, (const struct sockaddr *)&in_address, sizeof(in_address));
-    if (bind_result < 0)
-    {
-        log_error("Unable to bind socket on port ", address.port, ".");
-        return;
+    if (const int bind_result = bind(socket_descriptor, reinterpret_cast<const struct sockaddr*>(&in_address), sizeof(in_address)); bind_result < 0) {
+        throw port_in_use_error(
+            format("Port %d is already in use. This is likely not an issue with the library.", address.port)
+        );
     }
+
     log_debug("Successfully binded socket to port ", address.port, ".");
 }
 
-void Channel::close_socket()
+
+void Channel::close_socket() const
 {
     close(socket_descriptor);
     log_trace("Closed channel");
 }
 
-void Channel::shutdown_socket()
+void Channel::shutdown_socket() const
 {
     shutdown(socket_descriptor, SHUT_RDWR);
 }
 
 void Channel::send(Packet packet)
 {
-    const PacketHeader& header = packet.data.header;
+    [[maybe_unused]] const PacketHeader& header = packet.data.header;
 
-    SocketAddress destination = packet.meta.destination;
+    const SocketAddress destination = packet.meta.destination;
     out_address.sin_port = htons(destination.port);
     out_address.sin_addr.s_addr = inet_addr(destination.address.to_string().c_str());
 
@@ -61,7 +59,7 @@ void Channel::send(Packet packet)
         (char *)&packet.data,
         packet.meta.message_length + sizeof(header),
         0,
-        (struct sockaddr *)&out_address,
+        reinterpret_cast<struct sockaddr*>(&out_address),
         sizeof(out_address));
     if (bytes_sent < 0)
     {
@@ -82,7 +80,7 @@ Packet Channel::receive()
         (char *)&packet.data,
         sizeof(PacketData),
         0,
-        (struct sockaddr *)&in_address,
+        reinterpret_cast<struct sockaddr*>(&in_address),
         &in_address_len);
 
     if (bytes_received <= 0 || errno != 0)

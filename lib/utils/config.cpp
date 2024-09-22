@@ -8,16 +8,6 @@
 #include "utils/log.h"
 #include "utils/format.h"
 
-parse_error::parse_error()
-    : std::runtime_error("Parse error occurred."), message("Parse error occurred.") {}
-
-parse_error::parse_error(const std::string &msg)
-    : std::runtime_error(msg), message(msg) {}
-
-const char *parse_error::what() const noexcept { return message.c_str(); }
-
-std::string parse_error::get_message() const { return message; }
-
 std::string read_file(const std::string &filename)
 {
     std::ifstream f(filename);

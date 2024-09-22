@@ -15,21 +15,22 @@
 class Channel
 {
 public:
-    Channel(SocketAddress local_address);
+    explicit Channel(SocketAddress local_address);
     ~Channel();
 
     void send(Packet packet);
     Packet receive();
 
-    void shutdown_socket();
+    void shutdown_socket() const;
 private:
     SocketAddress address;
     Packet buffer;
 
     int socket_descriptor = -1;
-    sockaddr_in in_address;
-    sockaddr_in out_address;
+    sockaddr_in in_address{};
+    sockaddr_in out_address{};
 
     void open_socket();
+    void close_socket() const;
     void close_socket();
 };
