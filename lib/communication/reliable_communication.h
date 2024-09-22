@@ -45,7 +45,6 @@ private:
     Pipeline *pipeline;
     GroupRegistry *gr;
 
-    bool alive = true;
     std::thread sender_thread;
     BufferSet<std::string> connection_update_buffer;
 

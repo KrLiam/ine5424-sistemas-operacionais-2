@@ -71,6 +71,8 @@ class BufferSet {
 
     std::string name;
     uint32_t max_size = UINT32_MAX;
+
+    bool terminating = false;
 public:
     BufferSet() {};
     BufferSet(uint32_t max_size) : max_size(max_size) {};
@@ -81,11 +83,13 @@ public:
     bool full() { return values.size() >= max_size; }
 
     void produce(const T& value) {
-        while (full()) {
+        while (full() && !terminating) {
             log_trace("Waiting to produce on [", name, "] buffer.");
             std::unique_lock<std::mutex> lock(full_mutex);
             full_cv.wait(lock);
         }
+
+        if (terminating) throw std::runtime_error("Exiting buffer.");
 
         values_mutex.lock();
 
@@ -98,11 +102,13 @@ public:
     }
 
     T consume() {
-        while (empty()) {
+        while (empty() && !terminating) {
             log_trace("Waiting to consume on [", name, "] buffer.");
             std::unique_lock<std::mutex> lock(empty_mutex);
             empty_cv.wait(lock);
         }
+
+        if (terminating) throw std::runtime_error("Exiting buffer.");
 
         values_mutex.lock();
 
@@ -115,5 +121,11 @@ public:
         values_mutex.unlock();
 
         return v;
+    }
+
+    void terminate() {
+        terminating = true;
+        empty_cv.notify_all();
+        full_cv.notify_all();        
     }
 };

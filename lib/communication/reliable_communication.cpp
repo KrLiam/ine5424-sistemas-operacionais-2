@@ -16,8 +16,7 @@ ReliableCommunication::ReliableCommunication(std::string _local_id, std::size_t 
 
 ReliableCommunication::~ReliableCommunication()
 {
-    alive = false;
-
+    connection_update_buffer.terminate();
     if (sender_thread.joinable()) sender_thread.join();
 
     delete gr;
@@ -101,10 +100,18 @@ void ReliableCommunication::enqueue(Transmission& transmission) {
 }
 
 void ReliableCommunication::send_routine() {
-    while (alive) {
-        std::string id = connection_update_buffer.consume();
-        Connection& connection = gr->get_connection(id);
+    std::string id;
+    while (true) {
+        try
+        {
+            id = connection_update_buffer.consume();  
+        }
+        catch (const std::runtime_error &e)
+        {
+            return;
+        }
 
+        Connection& connection = gr->get_connection(id);
         connection.update();
     }
 }
