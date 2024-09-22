@@ -7,9 +7,10 @@
 #include "utils/uuid.h"
 
 Transmission::Transmission(std::string receiver_id, Message m)
-    : receiver_id(receiver_id), message(m)
+    : uuid(uuid::generate_uuid()),
+      receiver_id(receiver_id),
+      message(m)
 {
-    uuid = uuid::generate_uuid();
     message.transmission_uuid = uuid;
 }
 

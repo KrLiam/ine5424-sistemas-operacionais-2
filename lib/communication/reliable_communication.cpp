@@ -77,7 +77,7 @@ bool ReliableCommunication::send(std::string id, MessageData data)
 
 Message ReliableCommunication::create_message(std::string id, const MessageData& data) {
     Message m = {
-        transmission_uuid : 0,
+        transmission_uuid : UUID(0, 0),
         number : 0,
         origin : gr->get_local_node().get_address(),
         destination : gr->get_node(id).get_address(),

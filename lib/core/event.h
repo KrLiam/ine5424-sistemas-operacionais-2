@@ -37,11 +37,11 @@ struct TransmissionFail : public Event {
 struct TransmissionComplete : public Event {
     static EventType type() { return EventType::TRANSMISSION_COMPLETE; }
 
-    uint64_t uuid;
+    UUID uuid;
     SocketAddress remote_address;
     uint32_t msg_num;
 
-    TransmissionComplete(uint64_t transmission_uuid, const SocketAddress& remote_address, uint32_t msg_num);
+    TransmissionComplete(UUID transmission_uuid, const SocketAddress& remote_address, uint32_t msg_num);
 };
 
 struct MessageDefragmentationIsComplete : public Event {

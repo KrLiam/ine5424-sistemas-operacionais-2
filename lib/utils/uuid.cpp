@@ -1,10 +1,24 @@
 
 #include "utils/uuid.h"
 
+UUID::UUID() : most(0), least(0) {}
+UUID::UUID(uint64_t most, uint64_t least) : most(most), least(least) {}
+
+uint64_t UUID::get_most() const { return most; }
+uint64_t UUID::get_least() const { return least; }
+
+bool UUID::operator==(const UUID& other) const {
+    return most == other.most && least == other.least;
+}
+
+std::ostream& operator<<(std::ostream& os, const UUID& uuid) {
+    return os << uuid.get_most() << ':' << uuid.get_least();
+}
+
 namespace uuid {
 
-uint64_t generate_uuid() {
-    return dis3(gen);
+UUID generate_uuid() {
+    return UUID(dis64(gen), dis64(gen));
 }
 
 std::string generate_uuid_v4()

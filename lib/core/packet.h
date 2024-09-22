@@ -69,7 +69,7 @@ struct PacketData
 
 struct PacketMetadata
 {
-    uint64_t transmission_uuid = 0;
+    UUID transmission_uuid = {0, 0};
     SocketAddress origin = {{0, 0, 0, 0}, 0};
     SocketAddress destination = {{0, 0, 0, 0}, 0};
     uint64_t time = 0;

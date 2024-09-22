@@ -2,6 +2,7 @@
 
 #include "utils/config.h"
 #include "utils/format.h"
+#include "utils/uuid.h"
 #include "constants.h"
 #include <cstring>
 #include <cstdint>
@@ -16,7 +17,7 @@ struct Message
 {
     const static int MAX_MESSAGE_SIZE = 65536;
 
-    uint64_t transmission_uuid;
+    UUID transmission_uuid;
     uint32_t number;
     SocketAddress origin;
     SocketAddress destination;

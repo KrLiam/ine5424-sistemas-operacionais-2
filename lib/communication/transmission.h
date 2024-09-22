@@ -16,7 +16,7 @@ public:
      * Identificar global da transmissão. Cada envio de mensagem é associado
      * a um identificador de transmissão único.
     */
-    uint64_t uuid;
+    const UUID uuid;
     std::string receiver_id;
     Message message;
     /**

@@ -1,5 +1,6 @@
 #include "communication/connection.h"
 #include "pipeline/pipeline.h"
+#include "utils/uuid.h"
 
 Connection::Connection(
     Node local_node,
@@ -41,7 +42,7 @@ void Connection::transmission_complete(const TransmissionComplete& event)
 {
     if (!active_transmission) return;
 
-    uint64_t uuid = event.uuid;
+    const UUID& uuid = event.uuid;
 
     if (uuid != active_transmission->uuid) return;
 
@@ -54,7 +55,7 @@ void Connection::transmission_fail(const TransmissionFail& event)
     if (!active_transmission) return;
 
     Packet& packet = event.faulty_packet;
-    uint64_t uuid = packet.meta.transmission_uuid;
+    const UUID& uuid = packet.meta.transmission_uuid;
 
     if (uuid != active_transmission->uuid) return;
 
@@ -301,7 +302,7 @@ void Connection::send_ack(Packet packet)
                    reserved : 0
     };
     PacketMetadata meta = {
-        transmission_uuid : 0,
+        transmission_uuid : UUID(0, 0),
         origin : local_node.get_address(),
         destination : remote_node.get_address(),
         time : 0,
