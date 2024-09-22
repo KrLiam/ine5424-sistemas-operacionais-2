@@ -32,5 +32,4 @@ private:
 
     void open_socket();
     void close_socket() const;
-    void close_socket();
 };

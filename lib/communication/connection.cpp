@@ -391,8 +391,6 @@ void Connection::request_update() {
 void Connection::complete_transmission() {
     if (!active_transmission) return;
 
-    const TransmissionResult& result = active_transmission->result;
-
     int size = transmissions.size();
     for (int i=0; i < size; i++) {
         if (transmissions[i] != active_transmission) continue;
