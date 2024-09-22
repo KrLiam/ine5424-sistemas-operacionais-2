@@ -302,7 +302,7 @@ void Connection::send_ack(Packet packet)
                    reserved : 0
     };
     PacketMetadata meta = {
-        transmission_uuid : UUID(0, 0),
+        transmission_uuid : UUID(""),
         origin : local_node.get_address(),
         destination : remote_node.get_address(),
         time : 0,

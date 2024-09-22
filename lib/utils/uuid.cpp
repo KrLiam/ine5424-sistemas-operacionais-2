@@ -1,25 +1,22 @@
-
 #include "utils/uuid.h"
 
-UUID::UUID() : most(0), least(0) {}
-UUID::UUID(uint64_t most, uint64_t least) : most(most), least(least) {}
+UUID::UUID() : uuid(uuid::generate_uuid_v4()) {}
 
-uint64_t UUID::get_most() const { return most; }
-uint64_t UUID::get_least() const { return least; }
+UUID::UUID(std::string uuid) : uuid(uuid) {}
 
 bool UUID::operator==(const UUID& other) const {
-    return most == other.most && least == other.least;
+    return uuid.compare(other.as_string()) == 0;
+}
+
+std::string UUID::as_string() const {
+    return uuid;
 }
 
 std::ostream& operator<<(std::ostream& os, const UUID& uuid) {
-    return os << uuid.get_most() << ':' << uuid.get_least();
+    return os << uuid.as_string();
 }
 
 namespace uuid {
-
-UUID generate_uuid() {
-    return UUID(dis64(gen), dis64(gen));
-}
 
 std::string generate_uuid_v4()
 {
