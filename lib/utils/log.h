@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <iostream>
 #include <mutex>
+#include <thread>
 
 #include "utils/format.h"
 #include "utils/ansi.h"
@@ -57,6 +58,9 @@
 #define IGNORE_UNUSED(x) (void)x
 
 
+int get_thread_id();
+
+
 static std::mutex log_mutex;
 
 class Logger
@@ -68,6 +72,7 @@ public:
         log_mutex.lock();
         auto t = std::time(nullptr);
         auto tm = *std::localtime(&t);
+        int thread_id = get_thread_id();
 
         std::ostringstream oss;
 
@@ -77,6 +82,7 @@ public:
         #if LOG_FILES
         << format(H_BLACK " [%s:%i]" COLOR_RESET, file, line)
         #endif
+        << format(H_BLACK " (%u)" COLOR_RESET, thread_id)
         << ": "
         << ...
         << args)
