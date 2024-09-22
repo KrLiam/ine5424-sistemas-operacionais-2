@@ -77,29 +77,61 @@ struct PacketMetadata
     bool expects_ack = 0;
 };
 
+
+enum PacketFormat {
+    ALL = 0,
+    SENT = 1,
+    RECEIVED = 2
+};
+
 struct Packet
 {
     PacketData data;
     PacketMetadata meta;
 
-    std::string to_string() const
+
+    std::string to_string(PacketFormat type = PacketFormat::ALL) const
     {
         const PacketHeader& header = data.header;
 
         std::string flags;
         if (header.type == MessageType::APPLICATION) flags += "DATA";
         if (header.is_syn()) flags += flags.length() ? "+SYN" : "SYN";
+        if (header.is_rst()) flags += flags.length() ? "+RST" : "RST";
         if (header.is_fin()) flags += flags.length() ? "+FIN" : "FIN";
         if (header.is_ack()) flags += flags.length() ? "+ACK" : "ACK";
         if (header.is_end()) flags += flags.length() ? "+END" : "SYN";
 
+        std::string origin = meta.origin.to_string();
+        std::string destination = meta.origin.to_string();
+
+        if (type == PacketFormat::RECEIVED) {
+            return format(
+                "%s %u/%u from %s",
+                flags.c_str(),
+                data.header.msg_num,
+                data.header.fragment_num,
+                origin.c_str()
+            );
+        }
+        
+        if (type == PacketFormat::SENT) {
+            return format(
+                "%s %u/%u to %s",
+                flags.c_str(),
+                data.header.msg_num,
+                data.header.fragment_num,
+                destination.c_str()
+            );
+        }
+
         return format(
-            "%s --> %s | %s %s/%s",
-            meta.origin.to_string().c_str(),
-            meta.destination.to_string().c_str(),
+            "%s %u/%u from %s to %s",
             flags.c_str(),
-            std::to_string((uint32_t)data.header.msg_num).c_str(),
-            std::to_string((uint32_t)data.header.fragment_num).c_str()
+            data.header.msg_num,
+            data.header.fragment_num,
+            origin.c_str(),
+            destination.c_str()
         );
     }
 
@@ -108,3 +140,5 @@ struct Packet
         return meta.origin == other.meta.origin && meta.destination == other.meta.destination && meta.message_length == other.meta.message_length && data.header.msg_num == other.data.header.msg_num && data.header.fragment_num == other.data.header.fragment_num;
     }
 };
+
+

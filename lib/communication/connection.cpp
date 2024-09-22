@@ -200,7 +200,7 @@ void Connection::established(Packet p)
 
     if (p.data.header.is_ack())
     {
-        log_debug("Received ACK for packet ", p.to_string(), "; removing from list of packets with pending ACKs.");
+        log_debug("Received ", p.to_string(PacketFormat::RECEIVED), "; removing from list of packets with pending ACKs.");
         pipeline.notify(PacketAckReceived(p));
         return;
     }
@@ -208,7 +208,7 @@ void Connection::established(Packet p)
     uint32_t message_number = p.data.header.get_message_number();
     if (message_number > expected_number)
     {
-        log_debug("Received a packet ", p.to_string(), " that expects confirmation, but message number ", message_number, " is higher than the expected ", expected_number, "; ignoring it.");
+        log_debug("Received ", p.to_string(PacketFormat::RECEIVED), " that expects confirmation, but message number ", message_number, " is higher than the expected ", expected_number, "; ignoring it.");
         return;
     }
 
@@ -218,7 +218,7 @@ void Connection::established(Packet p)
         return;
     }
 
-    log_debug("Received a packet ", p.to_string(), " that expects confirmation; sending ACK.");
+    log_debug("Received ", p.to_string(PacketFormat::RECEIVED), " that expects confirmation; sending ACK.");
     send_ack(p);
 }
 

@@ -68,7 +68,7 @@ void Channel::send(Packet packet)
         log_warn("Unable to send message to ", destination.to_string(), ".");
         return;
     }
-    log_info("Sent packet ", packet.to_string(), " (", bytes_sent, " bytes).");
+    log_info("Sent packet ", packet.to_string(PacketFormat::SENT), " (", bytes_sent, " bytes).");
 }
 
 Packet Channel::receive()

@@ -24,11 +24,11 @@ void TransmissionLayer::attach(EventBus& bus) {
 
 void TransmissionLayer::send(Packet packet)
 {
-    log_trace("Packet [", packet.to_string(), "] sent to transmission layer.");
+    log_trace("Packet [", packet.to_string(PacketFormat::SENT), "] sent to transmission layer.");
 
     if (!packet.meta.expects_ack)
     {
-        log_debug("Packet [", packet.to_string(), "] does not require ack, sending forward.");
+        log_debug("Packet [", packet.to_string(PacketFormat::SENT), "] does not require ack, sending forward.");
         handler.forward_send(packet);
         return;
     }
@@ -52,7 +52,7 @@ void TransmissionLayer::ack_received(const PacketAckReceived& event) {
 
 void TransmissionLayer::receive(Packet packet)
 {
-    log_trace("Packet [", packet.to_string(), "] received on transmission layer.");
+    log_trace("Packet [", packet.to_string(PacketFormat::RECEIVED), "] received on transmission layer.");
 
     handler.forward_receive(packet);
 }

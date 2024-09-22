@@ -22,7 +22,7 @@ void FragmentAssembler::add_packet(Packet &packet)
 {
     if (has_received(packet))
     {
-        log_trace("Ignoring duplicated packet ", packet.to_string(), ".");
+        log_trace("Ignoring duplicated ", packet.to_string(PacketFormat::RECEIVED), ".");
         return;
     };
 
@@ -44,7 +44,7 @@ void FragmentAssembler::add_packet(Packet &packet)
 
     if (header.is_end())
     {
-        log_trace("Packet ", packet.to_string(), " is the last one of its message.");
+        log_trace("Packet ", packet.to_string(PacketFormat::RECEIVED), " is the last one of its message.");
         last_fragment_number = fragment_number;
     }
 }

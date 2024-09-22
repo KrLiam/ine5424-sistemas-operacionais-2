@@ -18,20 +18,20 @@ void FragmentationLayer::send(Message message)
     while (fragmenter.has_next())
     {
         fragmenter.next(&packet);
-        log_trace("Forwarding packet ", packet.to_string(), " to next step.");
+        log_trace("Forwarding ", packet.to_string(PacketFormat::SENT), " to next step.");
         handler.forward_send(packet);
     }
 }
 
 void FragmentationLayer::send(Packet packet)
 {
-    log_trace("Packet [", packet.to_string(), "] sent to fragmentation layer.");
+    log_trace("Packet [", packet.to_string(PacketFormat::SENT), "] sent to fragmentation layer.");
     handler.forward_send(packet);
 }
 
 void FragmentationLayer::receive(Packet packet)
 {
-    log_trace("Packet [", packet.to_string(), "] received on fragmentation layer.");
+    log_trace("Packet [", packet.to_string(PacketFormat::RECEIVED), "] received on fragmentation layer.");
     handler.forward_receive(packet);
 
     if (packet.data.header.get_message_type() != MessageType::APPLICATION)

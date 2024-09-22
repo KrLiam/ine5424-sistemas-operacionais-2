@@ -44,6 +44,6 @@ void FaultInjectionLayer::receive(Packet packet) {
 }
 
 void FaultInjectionLayer::proceed_receive(Packet packet) {
-    log_info("Received packet ", packet.to_string(), " (", packet.meta.message_length, " bytes).");
+    log_info("Received ", packet.to_string(PacketFormat::RECEIVED), " (", packet.meta.message_length, " bytes).");
     handler.forward_receive(packet);
 }

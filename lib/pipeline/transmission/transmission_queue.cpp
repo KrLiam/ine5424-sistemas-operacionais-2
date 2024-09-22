@@ -32,7 +32,7 @@ void TransmissionQueue::timeout(uint32_t num)
 
     if (entry.tries > MAX_PACKET_TRIES)
     {
-        log_error("Packet [", packet.to_string(), "] expired. Transmission failed.");
+        log_error("Packet [", packet.to_string(PacketFormat::SENT), "] expired. Transmission failed.");
 
         TransmissionFail event(entry.packet);
         reset();
@@ -45,7 +45,7 @@ void TransmissionQueue::timeout(uint32_t num)
 
     mutex_timeout.unlock();
 
-    log_warn("Packet [", packet.to_string(), "] timed out. Sending again, already tried ", entry.tries, " time(s).");
+    log_warn("Packet [", packet.to_string(PacketFormat::SENT), "] timed out. Sending again, already tried ", entry.tries, " time(s).");
     send(num);
 }
 
