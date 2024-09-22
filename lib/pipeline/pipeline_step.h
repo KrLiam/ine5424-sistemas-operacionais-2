@@ -22,8 +22,6 @@ public:
 
     virtual ~PipelineStep();
 
-    virtual void service();
-
     virtual void attach(EventBus&);
 
     virtual void send(Packet packet);

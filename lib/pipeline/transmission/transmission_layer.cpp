@@ -2,7 +2,6 @@
 
 TransmissionLayer::TransmissionLayer(PipelineHandler handler, GroupRegistry *gr, Channel* channel) : PipelineStep(handler, gr), channel(channel)
 {
-    service();
 }
 
 TransmissionLayer::~TransmissionLayer()

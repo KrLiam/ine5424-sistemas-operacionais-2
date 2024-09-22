@@ -8,10 +8,6 @@ PipelineStep::~PipelineStep()
 {
 }
 
-void PipelineStep::service()
-{
-}
-
 void PipelineStep::attach(EventBus&) {}
 
 void PipelineStep::send(Message message)

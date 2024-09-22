@@ -23,8 +23,6 @@ public:
     FragmentationLayer(PipelineHandler handler, GroupRegistry *gr);
     ~FragmentationLayer() override;
 
-    void service() override;
-
     void attach(EventBus&);
 
     void send(Message) override;
