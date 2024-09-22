@@ -84,7 +84,7 @@ public:
         if (full()) {
             log_trace("Waiting to produce on [", name, "] buffer.");
             std::unique_lock<std::mutex> lock(full_mutex);
-            full_cv.wait(lock);
+            full_cv.wait(lock, [this] { return !full(); });
         }
 
         values_mutex.lock();
@@ -101,7 +101,7 @@ public:
         if (empty()) {
             log_trace("Waiting to consume on [", name, "] buffer.");
             std::unique_lock<std::mutex> lock(empty_mutex);
-            empty_cv.wait(lock);
+            empty_cv.wait(lock, [this] { return !empty(); });
         }
 
         values_mutex.lock();
