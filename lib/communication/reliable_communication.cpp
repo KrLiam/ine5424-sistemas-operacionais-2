@@ -1,7 +1,8 @@
 #include "communication/reliable_communication.h"
 
 ReliableCommunication::ReliableCommunication(std::string _local_id, std::size_t _user_buffer_size)
-    : user_buffer_size(_user_buffer_size)
+    : connection_update_buffer("connection_update"),
+      user_buffer_size(_user_buffer_size)
 {
     gr = new GroupRegistry(_local_id);
     const Node &local_node = gr->get_local_node();

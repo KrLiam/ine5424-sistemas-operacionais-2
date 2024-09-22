@@ -6,7 +6,7 @@ Connection::Connection(
     Node remote_node,
     Pipeline &pipeline,
     Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &application_buffer,
-    Buffer<100, std::string>& connection_update_buffer
+    BufferSet<std::string>& connection_update_buffer
 ) :
     pipeline(pipeline),
     application_buffer(application_buffer),
@@ -384,7 +384,6 @@ void Connection::enqueue(Transmission& transmission) {
 }
 
 void Connection::request_update() {
-    // usar uma estrutura melhor q buffer
     connection_update_buffer.produce(remote_node.get_id());
 }
 
@@ -393,7 +392,8 @@ void Connection::complete_transmission() {
 
     const TransmissionResult& result = active_transmission->result;
 
-    for (int i=0; i < transmissions.size(); i++) {
+    int size = transmissions.size();
+    for (int i=0; i < size; i++) {
         if (transmissions[i] != active_transmission) continue;
 
         transmissions.erase(transmissions.begin() + i);

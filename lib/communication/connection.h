@@ -51,7 +51,7 @@ private:
 
     std::vector<Transmission*> transmissions;
     Transmission* active_transmission = nullptr;
-    Buffer<100, std::string>& connection_update_buffer;
+    BufferSet<std::string>& connection_update_buffer;
 
     uint32_t next_number = 0;
     uint32_t expected_number = 0;
@@ -130,7 +130,7 @@ public:
         Node remote_node,
         Pipeline &pipeline,
         Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &application_buffer,
-        Buffer<100, std::string>& connection_update_buffer
+        BufferSet<std::string>& connection_update_buffer
     );
 
     void enqueue(Transmission& transmission);

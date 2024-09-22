@@ -44,7 +44,7 @@ public:
     void establish_connections(
         Pipeline& pipeline,
         Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &application_buffer,
-        Buffer<100, std::string> &connection_update_buffer
+        BufferSet<std::string> &connection_update_buffer
     );
 
 private:

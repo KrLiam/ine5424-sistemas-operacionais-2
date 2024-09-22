@@ -28,11 +28,6 @@ struct MessageData
     MessageData(char *ptr, std::size_t size) : ptr(ptr), size(size) {}
 };
 
-struct SendRequest {
-    std::string id;
-    MessageData data;
-};
-
 class ReliableCommunication
 {
 public:
@@ -52,7 +47,7 @@ private:
 
     bool alive = true;
     std::thread sender_thread;
-    Buffer<INTERMEDIARY_BUFFER_ITEMS, std::string> connection_update_buffer{"connection_updates"};
+    BufferSet<std::string> connection_update_buffer;
 
     std::size_t user_buffer_size;
     Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> application_buffer{"application receive"};

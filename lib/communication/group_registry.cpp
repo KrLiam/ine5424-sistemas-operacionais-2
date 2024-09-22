@@ -69,7 +69,7 @@ bool GroupRegistry::packet_originates_from_group(Packet packet)
 void GroupRegistry::establish_connections(
     Pipeline &pipeline,
     Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &application_buffer,
-    Buffer<100, std::string> &connection_update_buffer
+    BufferSet<std::string> &connection_update_buffer
 ) {
     Node local_node = get_local_node();
     for (auto &[id, node] : nodes)
