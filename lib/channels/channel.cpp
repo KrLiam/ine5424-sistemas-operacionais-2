@@ -14,7 +14,7 @@ Channel::~Channel()
 void Channel::open_socket() {
     socket_descriptor = socket(AF_INET, SOCK_DGRAM, 0);
     if (socket_descriptor < 0) {
-        throw parse_error("Unable to create a socket.");
+        throw std::runtime_error("Unable to create a socket.");
     }
 
     memset(&in_address, 0, sizeof(sockaddr_in));
@@ -25,7 +25,12 @@ void Channel::open_socket() {
     memset(&out_address, 0, sizeof(sockaddr_in));
     out_address.sin_family = AF_INET;
 
-    if (const int bind_result = bind(socket_descriptor, reinterpret_cast<const struct sockaddr*>(&in_address), sizeof(in_address)); bind_result < 0) {
+    const int bind_result = bind(
+        socket_descriptor,
+        reinterpret_cast<const struct sockaddr*>(&in_address),
+        sizeof(in_address)
+        );
+    if (bind_result < 0) {
         throw port_in_use_error(
             format("Port %d is already in use. This is likely not an issue with the library.", address.port)
         );
