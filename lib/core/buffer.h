@@ -81,10 +81,10 @@ public:
     bool full() { return values.size() >= max_size; }
 
     void produce(const T& value) {
-        if (full()) {
+        while (full()) {
             log_trace("Waiting to produce on [", name, "] buffer.");
             std::unique_lock<std::mutex> lock(full_mutex);
-            full_cv.wait(lock, [this] { return !full(); });
+            full_cv.wait(lock);
         }
 
         values_mutex.lock();
@@ -98,10 +98,10 @@ public:
     }
 
     T consume() {
-        if (empty()) {
+        while (empty()) {
             log_trace("Waiting to consume on [", name, "] buffer.");
             std::unique_lock<std::mutex> lock(empty_mutex);
-            empty_cv.wait(lock, [this] { return !empty(); });
+            empty_cv.wait(lock);
         }
 
         values_mutex.lock();
