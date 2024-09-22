@@ -103,7 +103,7 @@ struct Packet
         if (header.is_end()) flags += flags.length() ? "+END" : "SYN";
 
         std::string origin = meta.origin.to_string();
-        std::string destination = meta.origin.to_string();
+        std::string destination = meta.destination.to_string();
 
         if (type == PacketFormat::RECEIVED) {
             return format(
