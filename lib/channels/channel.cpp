@@ -54,8 +54,10 @@ void Channel::shutdown_socket() const
 void Channel::send(Packet packet)
 {
     [[maybe_unused]] const PacketHeader& header = packet.data.header;
-
     const SocketAddress destination = packet.meta.destination;
+
+    send_mutex.lock();
+
     out_address.sin_port = htons(destination.port);
     out_address.sin_addr.s_addr = inet_addr(destination.address.to_string().c_str());
 
@@ -66,6 +68,9 @@ void Channel::send(Packet packet)
         0,
         reinterpret_cast<struct sockaddr*>(&out_address),
         sizeof(out_address));
+    
+    send_mutex.unlock();
+
     if (bytes_sent < 0)
     {
         log_warn("Unable to send message to ", destination.to_string(), ".");

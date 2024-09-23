@@ -25,6 +25,7 @@ public:
 private:
     SocketAddress address;
     Packet buffer;
+    std::mutex send_mutex;
 
     int socket_descriptor = -1;
     sockaddr_in in_address{};
