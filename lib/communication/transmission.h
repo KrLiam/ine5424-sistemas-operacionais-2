@@ -3,12 +3,12 @@
 #include <semaphore>
 
 #include "core/message.h"
+#include "utils/uuid.h"
 
 struct TransmissionResult {
     bool success;
     // ...
 };
-
 
 class Transmission {
 public:

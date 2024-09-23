@@ -74,12 +74,12 @@ bool ReliableCommunication::send(std::string id, MessageData data)
     return result.success;
 }
 
-Message ReliableCommunication::create_message(std::string id, const MessageData& data) {
+Message ReliableCommunication::create_message(std::string receiver_id, const MessageData& data) {
     Message m = {
         transmission_uuid : UUID(""),
         number : 0,
         origin : gr->get_local_node().get_address(),
-        destination : gr->get_node(id).get_address(),
+        destination : gr->get_node(receiver_id).get_address(),
         type : MessageType::APPLICATION, // TODO: Definir corretamente
         data : {0},
         length : data.size,
@@ -88,10 +88,10 @@ Message ReliableCommunication::create_message(std::string id, const MessageData&
     return m;
 }
 
-Transmission ReliableCommunication::create_transmission(std::string sender_id, const MessageData& data) {
-    Message message = create_message(sender_id, data);
+Transmission ReliableCommunication::create_transmission(std::string receiver_id, const MessageData& data) {
+    Message message = create_message(receiver_id, data);
 
-    return Transmission(sender_id, message);
+    return Transmission(receiver_id, message);
 }
 
 void ReliableCommunication::enqueue(Transmission& transmission) {   
