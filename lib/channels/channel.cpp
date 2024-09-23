@@ -100,7 +100,6 @@ Packet Channel::receive()
 
     packet.meta.origin = origin;
     packet.meta.destination = address;
-    // packet.meta.time = now();
     packet.meta.message_length = bytes_received - sizeof(PacketHeader);
 
     return packet;

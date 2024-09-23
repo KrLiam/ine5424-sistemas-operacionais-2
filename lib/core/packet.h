@@ -72,7 +72,6 @@ struct PacketMetadata
     UUID transmission_uuid{""};
     SocketAddress origin = {{0, 0, 0, 0}, 0};
     SocketAddress destination = {{0, 0, 0, 0}, 0};
-    uint64_t time = 0;
     int message_length = 0;
     bool expects_ack = 0;
 };
