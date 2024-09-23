@@ -23,6 +23,8 @@ private:
 
     Observer<PacketAckReceived> obs_ack_received;
     void ack_received(const PacketAckReceived& event);
+    Observer<PipelineCleanup> obs_pipeline_cleanup;
+    void pipeline_cleanup(const PipelineCleanup& event);
 
     TransmissionQueue& get_queue(const std::string& id);
 

@@ -34,10 +34,9 @@ void TransmissionQueue::timeout(uint32_t num)
     {
         log_error("Packet [", packet.to_string(PacketFormat::SENT), "] expired. Transmission failed.");
 
-        TransmissionFail event(entry.packet);
-        reset();
+        handler.notify(TransmissionFail(entry.packet));
 
-        handler.notify(event);
+        reset();
 
         mutex_timeout.unlock();
         return;

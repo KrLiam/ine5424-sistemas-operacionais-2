@@ -12,3 +12,5 @@ TransmissionComplete::TransmissionComplete(UUID uuid, const SocketAddress& remot
 MessageDefragmentationIsComplete::MessageDefragmentationIsComplete(Packet& packet) : packet(packet) {}
 
 ForwardDefragmentedMessage::ForwardDefragmentedMessage(Packet& packet) : packet(packet) {}
+
+PipelineCleanup::PipelineCleanup(Message& message) : message(message) {}

@@ -8,7 +8,8 @@ enum EventType {
     TRANSMISSION_FAIL = 1,
     TRANSMISSION_COMPLETE = 2,
     MESSAGE_DEFRAGMENTATION_IS_COMPLETE = 3,
-    FORWARD_DEFRAGMENTED_MESSAGE = 4
+    FORWARD_DEFRAGMENTED_MESSAGE = 4,
+    PIPELINE_CLEANUP = 5
 };
 
 struct Event {
@@ -58,4 +59,12 @@ struct ForwardDefragmentedMessage : public Event {
     Packet& packet; // TODO: Dá pra trocar pelo UUID da mensagem depois de implementarmos
 
     ForwardDefragmentedMessage(Packet& packet);
+};
+
+struct PipelineCleanup : public Event {
+    static EventType type() { return EventType::PIPELINE_CLEANUP; }
+
+    Message& message;
+
+    PipelineCleanup(Message& message);
 };

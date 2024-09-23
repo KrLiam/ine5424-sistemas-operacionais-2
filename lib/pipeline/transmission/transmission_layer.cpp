@@ -10,16 +10,15 @@ TransmissionLayer::~TransmissionLayer()
 
 TransmissionQueue& TransmissionLayer::get_queue(const std::string& id) {
     if (!queue_map.contains(id))
-    {
         queue_map.insert({id, std::make_unique<TransmissionQueue>(timer, handler)});
-    }
-
     return *queue_map.at(id);
 }
 
 void TransmissionLayer::attach(EventBus& bus) {
     obs_ack_received.on(std::bind(&TransmissionLayer::ack_received, this, _1));
     bus.attach(obs_ack_received);
+    obs_pipeline_cleanup.on(std::bind(&TransmissionLayer::pipeline_cleanup, this, _1));
+    bus.attach(obs_pipeline_cleanup);
 }
 
 void TransmissionLayer::send(Packet packet)
@@ -49,6 +48,15 @@ void TransmissionLayer::ack_received(const PacketAckReceived& event) {
     queue.receive_ack(packet);
 }
 
+void TransmissionLayer::pipeline_cleanup(const PipelineCleanup& event) {    
+    Message& message = event.message;
+
+    const Node& origin = gr->get_node(message.destination);
+    const std::string& id = origin.get_id();
+    TransmissionQueue& queue = get_queue(id);
+
+    queue.reset();
+}
 
 void TransmissionLayer::receive(Packet packet)
 {

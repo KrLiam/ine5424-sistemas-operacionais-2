@@ -32,8 +32,6 @@ private:
     std::mutex mutex_packets;
     std::mutex mutex_timeout;
 
-    void reset();
-
     void send(uint32_t num);
 
     void timeout(uint32_t num);
@@ -47,4 +45,6 @@ public:
     void add_packet(const Packet& packet);
 
     void receive_ack(const Packet& packet);
+
+    void reset();
 };

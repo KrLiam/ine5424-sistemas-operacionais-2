@@ -38,11 +38,13 @@ void Connection::message_defragmentation_is_complete(const MessageDefragmentatio
 
 void Connection::transmission_complete(const TransmissionComplete &event)
 {
-    if (!active_transmission) return;
+    if (!active_transmission)
+        return;
 
-    const UUID& uuid = event.uuid;
+    const UUID &uuid = event.uuid;
 
-    if (uuid != active_transmission->uuid) return;
+    if (uuid != active_transmission->uuid)
+        return;
 
     active_transmission->set_result(true);
     complete_transmission();
@@ -50,14 +52,16 @@ void Connection::transmission_complete(const TransmissionComplete &event)
 
 void Connection::transmission_fail(const TransmissionFail &event)
 {
-    if (!active_transmission) return;
+    if (!active_transmission)
+        return;
 
-    Packet& packet = event.faulty_packet;
-    const UUID& uuid = packet.meta.transmission_uuid;
+    Packet &packet = event.faulty_packet;
+    const UUID &uuid = packet.meta.transmission_uuid;
 
-    if (uuid != active_transmission->uuid) return;
+    if (uuid != active_transmission->uuid)
+        return;
 
-    active_transmission->set_result(false);    
+    active_transmission->set_result(false);
     complete_transmission();
 }
 
@@ -104,31 +108,28 @@ void Connection::closed(Packet p)
 {
     if (p.data.header.is_syn() && !p.data.header.is_ack())
     {
-        expected_number++;
+        next_number = 0;
+        expected_number = p.data.header.get_message_number() + 1;
         log_trace("closed: received SYN; sending SYN+ACK.");
         change_state(SYN_RECEIVED);
         send_flag(SYN | ACK);
+        handshake_timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
+        return;
     }
 
-    /* pro reschedule: também tem q fazer alterar o número dos pacotes no transmissionlayer
-    // atualmente, dá problema caso B tenha enviado 1 mensagem pra A, A cai, B tenta enviar a 2a
-    // da pra resolver isso tanto por reschedule quanto por timeout
-    {
-    if (p.data.header.msg_num != 0)
-        log_warn("closed: received message packet.");
-        Packet p = empty_packet();
-        p.data.header.syn = 1; // Dá pra simplificar essa parte
-        change_state(SYN_SENT);
-        send(p);
-        return;
-    }*/
+    log_trace("closed: unexpected packet; sending RST.");
+    reset_message_numbers();
+    send_flag(RST);
 }
 
 void Connection::syn_sent(Packet p)
 {
+    if (close_on_rst(p))
+        return;
+
     if (p.data.header.is_syn() && p.data.header.get_message_number() <= expected_number)
     {
-        expected_number++;
+        expected_number = p.data.header.get_message_number() + 1;
         if (p.data.header.is_ack())
         {
             log_trace("syn_sent: received SYN+ACK; sending ACK.");
@@ -144,20 +145,9 @@ void Connection::syn_sent(Packet p)
         log_trace("syn_sent: received SYN from simultaneous connection; transitioning to syn_received and sending SYN+ACK.");
         change_state(SYN_RECEIVED);
         send_flag(SYN | ACK);
+        handshake_timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
         return;
     }
-
-    if (p.data.header.is_rst())
-    {
-        expected_number++;
-        log_trace("syn_sent: received RST; sending SYN.");
-        send_flag(SYN);
-        return;
-    }
-
-    log_trace("syn_sent: received unexpected packet; closing connection.");
-    reset_message_numbers();
-    change_state(CLOSED);
 }
 
 void Connection::syn_received(Packet p)
@@ -178,16 +168,41 @@ void Connection::syn_received(Packet p)
         return;
     }
 
-    if (rst_on_syn(p))
-        return;
+    if (p.data.header.is_syn())
+    {
+        next_number = 0;
+        expected_number++;
+        send_flag(SYN | ACK);
+    }
 }
 
 void Connection::established(Packet p)
 {
-    if (close_on_rst(p))
+    if (p.data.header.is_rst())
+    {
+        if (active_transmission)
+        {
+            active_transmission->active = false;
+            pipeline.notify(PipelineCleanup(active_transmission->message));
+            active_transmission = nullptr;
+        }
+
+        reset_message_numbers();
+        expected_number++;
+        change_state(SYN_SENT);
+        send_flag(SYN);
+        handshake_timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
         return;
-    if (rst_on_syn(p))
-        return;
+    }
+
+    if (p.data.header.is_syn())
+    {
+        reset_message_numbers();
+        expected_number++;
+        change_state(SYN_SENT);
+        send_flag(SYN);
+        handshake_timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
+    }
 
     if (p.data.header.is_fin())
     {
@@ -317,7 +332,7 @@ void Connection::send_ack(Packet packet)
 
 bool Connection::close_on_rst(Packet p)
 {
-    if (p.data.header.is_rst())
+    if (p.data.header.is_rst() && p.data.header.get_message_number() == expected_number)
     {
         log_debug(get_current_state_name(), ": received RST.");
         log_info(get_current_state_name(), ": connection closed.");
@@ -388,12 +403,16 @@ void Connection::request_update()
     connection_update_buffer.produce(remote_node.get_id());
 }
 
-void Connection::complete_transmission() {
-    if (!active_transmission) return;
+void Connection::complete_transmission()
+{
+    if (!active_transmission)
+        return;
 
     int size = transmissions.size();
-    for (int i=0; i < size; i++) {
-        if (transmissions[i] != active_transmission) continue;
+    for (int i = 0; i < size; i++)
+    {
+        if (transmissions[i] != active_transmission)
+            continue;
 
         transmissions.erase(transmissions.begin() + i);
         break;
@@ -402,7 +421,8 @@ void Connection::complete_transmission() {
     active_transmission->release();
     active_transmission = nullptr;
 
-    if (transmissions.size()) request_update();
+    if (transmissions.size())
+        request_update();
 }
 
 void Connection::cancel_transmissions()
@@ -428,22 +448,24 @@ void Connection::update()
 {
     log_trace("Updating connection with node ", remote_node.get_id());
 
-    if (state == ConnectionState::CLOSED)
-    {
-        connect();
-        return;
-    }
-
     mutex_packets.lock();
     for (Packet p : packets_to_send)
         send(p);
     packets_to_send.clear();
     mutex_packets.unlock();
 
+    if (!transmissions.size()) return;
+
+    if (state == ConnectionState::CLOSED)
+    {
+        connect();
+        return;
+    }
+
     if (state != ConnectionState::ESTABLISHED)
         return;
 
-    if (transmissions.size() && !active_transmission)
+    if (!active_transmission)
     {
         active_transmission = transmissions[0];
         active_transmission->active = true;
