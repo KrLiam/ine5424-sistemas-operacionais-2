@@ -174,13 +174,14 @@ void Connection::syn_received(Packet p)
         {
             next_number = 0;
             send_flag(ACK);
-            log_debug("a");
+            log_debug("syn_received: received SYN+ACK.");
+            log_info("syn_received: connection established.");
             change_state(ESTABLISHED);
             return;
         }
         next_number = 0;
-        expected_number++;
-        log_debug("b");
+        expected_number = 1;
+        log_debug("syn_received: received SYN; sending SYN+ACK.");
         send_flag(SYN | ACK);
     }
 }
