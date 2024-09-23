@@ -106,10 +106,10 @@ bool Connection::disconnect()
 
 void Connection::closed(Packet p)
 {
-    if (p.data.header.is_syn() && !p.data.header.is_ack())
+    if (p.data.header.is_syn() && !p.data.header.is_ack() && p.data.header.get_message_number() == 0)
     {
         next_number = 0;
-        expected_number = p.data.header.get_message_number() + 1;
+        expected_number = 1;
         log_trace("closed: received SYN; sending SYN+ACK.");
         change_state(SYN_RECEIVED);
         send_flag(SYN | ACK);
@@ -127,17 +127,16 @@ void Connection::syn_sent(Packet p)
     if (close_on_rst(p))
         return;
 
-    if (p.data.header.is_syn() && p.data.header.get_message_number() <= expected_number)
+    if (p.data.header.get_message_number() != 0)
+        return;
+
+    if (p.data.header.is_syn())
     {
-        expected_number = p.data.header.get_message_number() + 1;
+        expected_number = 1;
         if (p.data.header.is_ack())
         {
             log_trace("syn_sent: received SYN+ACK; sending ACK.");
             log_info("syn_sent: connection established.");
-
-            timer.cancel(handshake_timer_id);
-            handshake_timer_id = -1;
-
             change_state(ESTABLISHED);
             send_flag(ACK);
             return;
@@ -160,18 +159,23 @@ void Connection::syn_received(Packet p)
         expected_number++;
         log_trace("syn_received: received ACK.");
         log_info("syn_received: connection established.");
-
-        timer.cancel(handshake_timer_id);
-        handshake_timer_id = -1;
-
         change_state(ESTABLISHED);
         return;
     }
 
-    if (p.data.header.is_syn())
+    if (p.data.header.is_syn() && p.data.header.get_message_number() == 0)
     {
+        if (p.data.header.is_ack())
+        {
+            next_number = 0;
+            send_flag(ACK);
+            log_debug("a");
+            change_state(ESTABLISHED);
+            return;
+        }
         next_number = 0;
         expected_number++;
+        log_debug("b");
         send_flag(SYN | ACK);
     }
 }
@@ -180,27 +184,26 @@ void Connection::established(Packet p)
 {
     if (p.data.header.is_rst())
     {
-        if (active_transmission)
-        {
-            active_transmission->active = false;
-            pipeline.notify(PipelineCleanup(active_transmission->message));
-            active_transmission = nullptr;
-        }
+        cancel_transmissions();
 
-        reset_message_numbers();
-        expected_number++;
+        next_number = 0;
+        expected_number = 1;
+
         change_state(SYN_SENT);
         send_flag(SYN);
         handshake_timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
         return;
     }
 
-    if (p.data.header.is_syn())
+    if (p.data.header.is_syn() && p.data.header.get_message_number() == 0)
     {
-        reset_message_numbers();
-        expected_number++;
-        change_state(SYN_SENT);
-        send_flag(SYN);
+        cancel_transmissions();
+
+        next_number = 0;
+        expected_number = 1;
+
+        change_state(SYN_RECEIVED);
+        send_flag(SYN | ACK);
         handshake_timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
     }
 
@@ -218,8 +221,8 @@ void Connection::established(Packet p)
         pipeline.notify(PacketAckReceived(p));
         return;
     }
-
     uint32_t message_number = p.data.header.get_message_number();
+
     if (message_number > expected_number)
     {
         log_debug("Received ", p.to_string(PacketFormat::RECEIVED), " that expects confirmation, but message number ", message_number, " is higher than the expected ", expected_number, "; ignoring it.");
@@ -381,6 +384,12 @@ void Connection::change_state(ConnectionState new_state)
     state = new_state;
     state_change.notify_all();
 
+    if (handshake_timer_id != -1)
+    {
+        timer.cancel(handshake_timer_id);
+        handshake_timer_id = -1;
+    }
+
     if (state == ConnectionState::ESTABLISHED)
     {
         request_update();
@@ -427,16 +436,20 @@ void Connection::complete_transmission()
 
 void Connection::cancel_transmissions()
 {
-    mutex_transmissions.lock();
+    if (active_transmission)
+    {
+        active_transmission->active = false;
+        pipeline.notify(PipelineCleanup(active_transmission->message));
+        active_transmission = nullptr;
+    }
 
+    mutex_transmissions.lock();
     for (Transmission *transmission : transmissions)
     {
         transmission->set_result(false);
         transmission->release();
     }
-
     transmissions.clear();
-    active_transmission = nullptr;
     mutex_transmissions.unlock();
 
     mutex_packets.lock();
@@ -454,7 +467,8 @@ void Connection::update()
     packets_to_send.clear();
     mutex_packets.unlock();
 
-    if (!transmissions.size()) return;
+    if (!transmissions.size())
+        return;
 
     if (state == ConnectionState::CLOSED)
     {
