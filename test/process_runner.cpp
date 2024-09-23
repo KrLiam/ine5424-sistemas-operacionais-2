@@ -116,12 +116,10 @@ void send_thread(SenderThreadArgs* args) {
         std::string& text = cmd->text;
         std::string& send_id = cmd->send_id;
 
-        std::string name = (cmd->type == CommandType::text) ? "text" : "file";
-
+        std::string name = cmd->name();
         log_info("Executing command '", name, "', sending '", text, "' to node ", send_id, ".");
 
-        MessageData data(text.c_str(), text.length());
-        success = comm->send(send_id, data);
+        success = comm->send(send_id, {text.c_str(), text.length()});
     }
 
     if (success) {

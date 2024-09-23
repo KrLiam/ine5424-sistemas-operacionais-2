@@ -11,6 +11,8 @@ struct Command {
     CommandType type;
 protected:
     Command(CommandType type);
+
+    virtual std::string name() = 0;
 };
 
 struct TextCommand : public Command {
@@ -18,6 +20,8 @@ struct TextCommand : public Command {
     std::string send_id;
 
     TextCommand(std::string text, std::string send_id);
+
+    virtual std::string name();
 };
 
 struct FileCommand : public Command {
@@ -25,6 +29,8 @@ struct FileCommand : public Command {
     std::string send_id;
 
     FileCommand(std::string path, std::string send_id);
+
+    virtual std::string name();
 };
 
 

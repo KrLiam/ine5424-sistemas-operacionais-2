@@ -10,8 +10,12 @@ Command::Command(CommandType type) : type(type) {}
 TextCommand::TextCommand(std::string text, std::string send_id)
     : Command(CommandType::text), text(text), send_id(send_id) {}
 
+std::string TextCommand::name() { return "text"; }
+
 FileCommand::FileCommand(std::string path, std::string send_id)
     : Command(CommandType::file), path(path), send_id(send_id)  {}
+
+std::string FileCommand::name() { return "file"; }
 
 
 std::string parse_string(Reader& reader) {
