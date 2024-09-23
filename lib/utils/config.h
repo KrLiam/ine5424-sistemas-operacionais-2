@@ -7,33 +7,24 @@
 #include <vector>
 #include <netinet/in.h>
 
+#include "utils/reader.h"
+
 class config_error : public std::runtime_error {
 public:
-    explicit config_error(const std::string &msg)
-        : std::runtime_error(msg), message(msg) {}
+    explicit config_error(const std::string &msg);
 
-    virtual const char *what() const noexcept override {
-        return message.c_str();
-    }
+    virtual const char *what() const noexcept override;
 
-    virtual std::string get_message() const {
-        return message;
-    }
+    virtual std::string get_message() const;
 
 protected:
     std::string message;
 };
 
-class parse_error final : public config_error {
-public:
-    explicit parse_error(const std::string &msg = "Parse error occurred.")
-        : config_error(msg) {}
-};
-
 class port_in_use_error final : public config_error {
 public:
-    explicit port_in_use_error(const std::string &msg = "Port is already in use.")
-        : config_error(msg) {}
+    explicit port_in_use_error();
+    explicit port_in_use_error(const std::string msg);
 };
 
 std::string read_file(const std::string &filename);
@@ -90,44 +81,13 @@ struct Config
     std::string to_string() const;
 };
 
-template <typename T>
-class Override
+class ConfigReader : public Reader
 {
-    T *ref;
-    T value;
-    T previous_value;
-
-public:
-    Override(T *ref, T value);
-    ~Override();
-};
-
-class ConfigReader
-{
-    std::string str;
-    int pos = 0;
-
-    bool ignores_whitespace = true;
-
 public:
     ConfigReader(std::string string);
 
     static ConfigReader from_file(const std::string &path);
     static Config parse_file(const std::string &path);
-
-    int size();
-    bool eof();
-
-    void advance(int amount);
-    char peek();
-    char read(char ch);
-    int read_int();
-    std::string read_word();
-
-    void consume_space();
-
-    char expect(char ch);
-    void expect(const std::string &chars);
 
     IPv4 parse_ipv4();
     SocketAddress parse_socket_address();

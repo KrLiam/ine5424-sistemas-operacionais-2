@@ -8,24 +8,23 @@
 #include "utils/log.h"
 #include "utils/format.h"
 
-std::string read_file(const std::string &filename)
-{
-    std::ifstream f(filename);
 
-    if (!f.good())
-        throw std::invalid_argument(
-            format("File '%s' does not exist.", filename.c_str()));
+config_error::config_error(const std::string &msg)
+    : std::runtime_error(msg), message(msg) {}
 
-    f.seekg(0, std::ios::end);
-    size_t size = f.tellg();
-
-    std::string buffer(size, ' ');
-
-    f.seekg(0);
-    f.read(&buffer[0], size);
-
-    return buffer;
+const char* config_error::what() const noexcept {
+    return message.c_str();
 }
+
+std::string config_error::get_message() const {
+    return message;
+}
+
+
+port_in_use_error::port_in_use_error()
+        : config_error("Port is already in use.") {}
+port_in_use_error::port_in_use_error(const std::string msg)
+        : config_error(msg) {}
 
 
 IPv4 IPv4::parse(std::string string) {
@@ -91,20 +90,7 @@ std::string Config::to_string() const
     return acc;
 }
 
-template <typename T>
-Override<T>::Override(T *ref, T value) : ref(ref), value(value)
-{
-    previous_value = *ref;
-    *ref = value;
-}
-
-template <typename T>
-Override<T>::~Override()
-{
-    *ref = previous_value;
-}
-
-ConfigReader::ConfigReader(std::string string) : str(string) {}
+ConfigReader::ConfigReader(std::string string) : Reader(string) {}
 
 ConfigReader ConfigReader::from_file(const std::string &path)
 {
@@ -115,119 +101,6 @@ Config ConfigReader::parse_file(const std::string &path)
 {
     ConfigReader reader = ConfigReader::from_file(path);
     return reader.parse();
-}
-
-int ConfigReader::size()
-{
-    return str.size();
-}
-
-bool ConfigReader::eof()
-{
-    return pos >= size();
-}
-
-void ConfigReader::advance(int amount = 1)
-{
-    pos = std::min(size(), pos + amount);
-}
-
-char ConfigReader::peek()
-{
-    if (eof())
-        return 0;
-
-    char ch = str.at(pos);
-
-    if (ignores_whitespace && isspace(ch))
-    {
-        advance();
-        return peek();
-    }
-
-    return ch;
-}
-
-char ConfigReader::read(char ch = 0)
-{
-    char p = peek();
-
-    if (!p)
-        return 0;
-
-    if (ch == 0 || ch == p)
-    {
-        advance();
-        return p;
-    }
-
-    return 0;
-}
-
-int ConfigReader::read_int()
-{
-    char ch = peek();
-    int start = pos;
-
-    Override ovr(&ignores_whitespace, false);
-
-    while (ch && isdigit(ch))
-    {
-        advance();
-        ch = peek();
-    }
-
-    std::string string = str.substr(start, pos - start);
-
-    if (!string.size())
-        return 0;
-    return std::stoi(string);
-}
-
-std::string ConfigReader::read_word()
-{
-    char ch = peek();
-    int start = pos;
-
-    Override ovr(&ignores_whitespace, false);
-
-    while (ch && (isdigit(ch) || isalpha(ch)))
-    {
-        advance();
-        ch = peek();
-    }
-
-    return str.substr(start, pos - start);
-}
-
-void ConfigReader::consume_space()
-{
-    while (peek() && isspace(peek()))
-    {
-        advance();
-    }
-}
-
-char ConfigReader::expect(char ch)
-{
-    char result = read(ch);
-    if (result != ch)
-    {
-        throw parse_error("Expected character '" + std::string(1, ch) +
-                          "' at position " + std::to_string(pos) +
-                          ". Got '"+ std::string(1, result) + "'.");
-    }
-    return result;
-}
-
-void ConfigReader::expect(const std::string &chars)
-{
-    Override ovr(&ignores_whitespace, false);
-
-    for (char ch : chars)
-    {
-        expect(ch);
-    }
 }
 
 SocketAddress ConfigReader::parse_socket_address()
@@ -241,7 +114,7 @@ SocketAddress ConfigReader::parse_socket_address()
 
 Config ConfigReader::parse()
 {
-    pos = 0;
+    reset();
 
     std::vector<NodeConfig> nodes;
 
