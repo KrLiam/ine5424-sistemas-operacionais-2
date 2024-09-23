@@ -16,6 +16,7 @@
 #include "pipeline/pipeline.h"
 #include "utils/format.h"
 #include "communication/transmission.h"
+#include "pipeline/fault_injection/fault_injection_layer.h"
 
 class Pipeline;
 
@@ -32,6 +33,11 @@ class ReliableCommunication
 {
 public:
     ReliableCommunication(std::string _local_id, std::size_t _user_buffer_size);
+    ReliableCommunication(
+        std::string _local_id,
+        std::size_t _user_buffer_size,
+        FaultConfig fault_config
+    );
     ~ReliableCommunication();
 
     bool send(std::string id, MessageData data);

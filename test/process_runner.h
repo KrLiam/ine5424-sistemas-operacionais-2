@@ -5,6 +5,8 @@
 
 struct Arguments {
     std::string node_id;
+    std::vector<int> faults;
+    std::vector<std::string> send_ids;
 };
 
 Arguments parse_arguments(int argc, char* argv[]);
@@ -15,4 +17,4 @@ struct ThreadArgs {
 
 void server(ThreadArgs* args);
 void client(ThreadArgs* args);
-void run_process(const std::string& node_id);
+void run_process(const Arguments& args);

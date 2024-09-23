@@ -1,13 +1,25 @@
 #include "communication/reliable_communication.h"
 
-ReliableCommunication::ReliableCommunication(std::string _local_id, std::size_t _user_buffer_size)
+#include "pipeline/fault_injection/fault_injection_layer.h"
+
+
+ReliableCommunication::ReliableCommunication(
+    std::string _local_id,
+    std::size_t _user_buffer_size
+) : ReliableCommunication(_local_id, _user_buffer_size, FaultConfig()) {}
+
+ReliableCommunication::ReliableCommunication(
+    std::string _local_id,
+    std::size_t _user_buffer_size,
+    FaultConfig fault_config
+)
     : connection_update_buffer("connection_update"),
       user_buffer_size(_user_buffer_size)
 {
     gr = new GroupRegistry(_local_id);
     const Node &local_node = gr->get_local_node();
     channel = new Channel(local_node.get_address());
-    pipeline = new Pipeline(gr, channel);
+    pipeline = new Pipeline(gr, channel, fault_config);
 
     sender_thread = std::thread([this]() { send_routine(); });
 

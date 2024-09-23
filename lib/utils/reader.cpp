@@ -54,6 +54,11 @@ Reader Reader::from_file(const std::string &path)
     return Reader(read_file(path));
 }
 
+int Reader::get_pos()
+{
+    return pos;
+}
+
 int Reader::size()
 {
     return str.size();
@@ -74,7 +79,11 @@ Override<bool> Reader::override_whitespace(bool value)
     return Override(&ignores_whitespace, value);
 }
 
-void Reader::advance(int amount = 1)
+void Reader::advance()
+{
+    advance(1);
+}
+void Reader::advance(int amount)
 {
     pos = std::min(size(), pos + amount);
 }
@@ -135,7 +144,7 @@ std::string Reader::read_word()
 {
     char ch = peek();
     int start = pos;
-
+    
     Override ovr = override_whitespace(false);
 
     while (ch && (isdigit(ch) || isalpha(ch)))

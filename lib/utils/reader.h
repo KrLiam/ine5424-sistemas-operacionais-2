@@ -42,12 +42,15 @@ public:
 
     static Reader from_file(const std::string &path);
 
+    int get_pos();
+
     int size();
     bool eof();
 
     Override<bool> override_whitespace(bool value);
 
     void reset();
+    void advance();
     void advance(int amount);
     char peek();
     char read(char ch);

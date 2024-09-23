@@ -8,6 +8,7 @@
 #include "communication/group_registry.h"
 #include "pipeline/transmission/transmission_layer.h"
 #include "pipeline/fragmentation/fragmentation_layer.h"
+#include "pipeline/fault_injection/fault_injection_layer.h"
 #include "core/event_bus.h"
 
 class PipelineStep;
@@ -49,7 +50,7 @@ public:
     static const unsigned int CHECKSUM_LAYER = 3;
     static const unsigned int FRAGMENTATION_LAYER = 4;
 
-    Pipeline(GroupRegistry *gr, Channel *channel);
+    Pipeline(GroupRegistry *gr, Channel *channel, const FaultConfig& fault_config);
 
     ~Pipeline();
 

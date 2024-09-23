@@ -5,7 +5,7 @@
 int main(int argc, char* argv[]) {
     try {
         Arguments args = parse_arguments(argc, argv);
-        run_process(args.node_id);
+        run_process(args);
     }
     catch (const std::exception& error) {
         log_error(error.what());
