@@ -80,6 +80,7 @@ public:
         std::ostringstream oss;
 
         (oss
+        << '\r'
         << std::put_time(&tm, BOLD_H_WHITE "%H:%M:%S" COLOR_RESET)
         << format(" %s", level)
         #if LOG_FILES

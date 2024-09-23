@@ -29,6 +29,13 @@ struct MessageData
     MessageData(const char *ptr, std::size_t size) : ptr(ptr), size(size) {}
 };
 
+struct ReceiveResult {
+    size_t bytes;
+    size_t truncated_bytes;
+    SocketAddress sender_address;
+    std::string sender_id;
+};
+
 class ReliableCommunication
 {
 public:
@@ -41,7 +48,7 @@ public:
     ~ReliableCommunication();
 
     bool send(std::string id, MessageData data);
-    Message receive(char *m);
+    ReceiveResult receive(char *m);
 
     GroupRegistry *get_group_registry();
 

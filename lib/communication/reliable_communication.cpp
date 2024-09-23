@@ -40,19 +40,43 @@ GroupRegistry *ReliableCommunication::get_group_registry()
     return gr;
 }
 
-Message ReliableCommunication::receive(char *m)
+ReceiveResult ReliableCommunication::receive(char *m)
 {
     Message message = application_buffer.consume();
 
     std::size_t len = std::min(message.length, user_buffer_size);
+    strncpy(m, message.data, len);
+
     if (len < message.length)
     {
-        log_warn("User's buffer is smaller than the message; truncating it. ",
-                 "The full message will be available in the returned Message object.");
+        log_warn("User's buffer is smaller than the message; truncating it.");
     }
-    memcpy(m, message.data, len);
 
-    return message;
+    Node node = gr->get_node(message.origin);
+    return ReceiveResult{
+        bytes : len,
+        truncated_bytes : message.length - len,
+        sender_address : message.origin,
+        sender_id : node.get_id()
+    };
+    /*log_warn("Buffer size defined by the user [", user_buffer_size , "] is smaller ",
+    "than the received message's size [", message.length, "]; we will split this message into multiple ones.");
+    int required_parts = ceil((double) message.length / user_buffer_size);
+    for (int i = 0; i < required_parts; i++)
+    {
+        Message part = {
+            origin: message.origin,
+            destination: message.destination,
+            type: message.type,
+            part: i,
+            has_more_parts: i != required_parts - 1
+        };
+        part.length = i * user_buffer_size;
+        strncpy(part.data, &message.data[i * user_buffer_size], part.length);
+        receive_buffer.produce(part);
+    }
+
+    return receive(m); // problema: perde a ordem */
 }
 
 bool ReliableCommunication::send(std::string id, MessageData data)

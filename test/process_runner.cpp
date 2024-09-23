@@ -150,10 +150,9 @@ void server(ThreadArgs* args) {
     ReliableCommunication* comm = args->communication;
     char buffer[BUFFER_SIZE];
     while (true) {
-        Message msg = comm->receive(buffer);
-        if (msg.length == 0) break;
-        log_info("Received '", std::string(buffer).c_str(), "' from ", msg.origin.to_string(), ".");
-        log_debug("Message has ", msg.length, " bytes.");
+        ReceiveResult result = comm->receive(buffer);
+        if (result.bytes == 0) break;
+        log_print("Received '", std::string(buffer, result.bytes).c_str(), "' from ", result.sender_id);
     }
 }
 
@@ -162,6 +161,8 @@ void client(ThreadArgs* args) {
 
     while (true) {
         std::string input;
+
+        std::cout << "> ";
         getline(std::cin, input);
 
         if (input == "exit") break;
