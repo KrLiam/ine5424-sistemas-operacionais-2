@@ -29,15 +29,12 @@ Packet Fragmenter::create_packet() {
             msg_num : message.number,
             fragment_num : i,
             checksum : 0,
-            window : 0,
             ack : 0,
             rst : 0,
             syn : 0,
             fin : 0,
-            extra : 0,
             end : last_fragment,
             type : message.type,
-            reserved : 0
         },
         message_data : 0
     };

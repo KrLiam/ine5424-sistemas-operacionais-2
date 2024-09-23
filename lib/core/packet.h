@@ -7,15 +7,12 @@ struct PacketHeader
     unsigned int msg_num : 32;
     unsigned int fragment_num : 32;
     unsigned int checksum : 16;
-    unsigned int window : 16;
     unsigned int ack : 1;
     unsigned int rst : 1;
     unsigned int syn : 1;
     unsigned int fin : 1;
-    unsigned int extra : 4;
     unsigned int end : 1;
     unsigned int type : 4;
-    unsigned int reserved : 4;
 
     uint32_t get_message_number() const
     {

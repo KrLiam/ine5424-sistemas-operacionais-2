@@ -15,7 +15,7 @@ enum MessageType
 
 struct Message
 {
-    const static int MAX_MESSAGE_SIZE = 65536;
+    inline const static int MAX_MESSAGE_SIZE = 65536;
 
     UUID transmission_uuid;
     uint32_t number;
@@ -30,4 +30,5 @@ struct Message
     {
         return format("%s -> %s", origin.to_string().c_str(), destination.to_string().c_str());
     }
+
 };

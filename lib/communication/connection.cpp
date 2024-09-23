@@ -290,7 +290,7 @@ void Connection::send_flag(unsigned char flags)
     memset(&header, 0, sizeof(PacketHeader));
     header.msg_num = next_number;
     header.type = MessageType::CONTROL;
-    memcpy(reinterpret_cast<unsigned char *>(&header) + 12, &flags, 1);
+    memcpy(reinterpret_cast<unsigned char *>(&header) + 10, &flags, 1);
 
     PacketData data;
     memset(&data, 0, sizeof(PacketData));
@@ -312,16 +312,13 @@ void Connection::send_ack(Packet packet)
                    msg_num : packet.data.header.msg_num,
                    fragment_num : packet.data.header.fragment_num,
                    checksum : 0,
-                   window : 0,
                    ack : 1,
                    rst : 0,
                    syn : 0,
                    fin : 0,
-                   extra : 0,
                    end : 0,
-                   type : MessageType::CONTROL,
-                   reserved : 0
-    };
+                   type : MessageType::CONTROL
+                   };
     PacketMetadata meta = {
         transmission_uuid : UUID(""),
         origin : local_node.get_address(),

@@ -50,8 +50,9 @@ Message ReliableCommunication::receive(char *m)
         log_warn("User's buffer is smaller than the message; truncating it. ",
                  "The full message will be available in the returned Message object.");
     }
-
     memcpy(m, message.data, len);
+
+    return message;
 }
 
 bool ReliableCommunication::send(std::string id, MessageData data)
