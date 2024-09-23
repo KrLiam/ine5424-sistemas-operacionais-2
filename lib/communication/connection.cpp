@@ -74,6 +74,11 @@ void Connection::connect()
     reset_message_numbers();
     change_state(SYN_SENT);
     send_flag(SYN);
+    set_timeout();
+}
+
+void Connection::set_timeout()
+{
     handshake_timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
 }
 
@@ -113,7 +118,7 @@ void Connection::closed(Packet p)
         log_trace("closed: received SYN; sending SYN+ACK.");
         change_state(SYN_RECEIVED);
         send_flag(SYN | ACK);
-        handshake_timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
+        set_timeout();
         return;
     }
 
@@ -144,7 +149,7 @@ void Connection::syn_sent(Packet p)
         log_trace("syn_sent: received SYN from simultaneous connection; transitioning to syn_received and sending SYN+ACK.");
         change_state(SYN_RECEIVED);
         send_flag(SYN | ACK);
-        handshake_timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
+        set_timeout();
         return;
     }
 }
@@ -191,7 +196,7 @@ void Connection::established(Packet p)
 
         change_state(SYN_SENT);
         send_flag(SYN);
-        handshake_timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
+        set_timeout();
         return;
     }
 
@@ -204,7 +209,7 @@ void Connection::established(Packet p)
 
         change_state(SYN_RECEIVED);
         send_flag(SYN | ACK);
-        handshake_timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
+        set_timeout();
     }
 
     if (p.data.header.is_fin())

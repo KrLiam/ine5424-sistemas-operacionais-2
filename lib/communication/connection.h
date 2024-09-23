@@ -111,6 +111,7 @@ private:
     bool close_on_rst(Packet p);
     bool rst_on_syn(Packet p);
 
+    void set_timeout();
     void connection_timeout();
 
     uint32_t new_message_number();
