@@ -22,11 +22,11 @@ class Pipeline;
 
 struct MessageData
 {
-    char *ptr;
+    const char *ptr;
     std::size_t size = -1;
 
-    MessageData(char *ptr) : ptr(ptr) {}
-    MessageData(char *ptr, std::size_t size) : ptr(ptr), size(size) {}
+    MessageData(const char *ptr) : ptr(ptr) {}
+    MessageData(const char *ptr, std::size_t size) : ptr(ptr), size(size) {}
 };
 
 class ReliableCommunication

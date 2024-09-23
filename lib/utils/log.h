@@ -55,6 +55,9 @@
 #endif
 
 
+#define log_print(...) Logger::print( "", ##__VA_ARGS__ )
+
+
 #define IGNORE_UNUSED(x) (void)x
 
 
@@ -94,5 +97,20 @@ public:
 
         IGNORE_UNUSED(file);
         IGNORE_UNUSED(line);
+    }
+
+    template <typename... Args>
+    static void print(std::string prefix, Args &&...args)
+    {
+        log_mutex.lock();
+
+        std::ostringstream oss;
+
+        (oss << ... << args) << std::endl;
+        std::cout << oss.str();
+
+        log_mutex.unlock();
+
+        IGNORE_UNUSED(prefix);
     }
 };

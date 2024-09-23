@@ -7,6 +7,8 @@
 #include "communication/reliable_communication.h"
 #include "utils/reader.h"
 
+#include "command.h"
+
 const std::size_t BUFFER_SIZE = 50000;
 
 std::vector<int> parse_fault_list(Reader& reader) {
@@ -95,6 +97,57 @@ Arguments parse_arguments(int argc, char* argv[]) {
     return Arguments{node_id, faults, send_ids};
 }
 
+
+
+struct SenderThreadArgs {
+    ReliableCommunication* comm;
+    std::shared_ptr<Command> command;
+};
+
+void send_thread(SenderThreadArgs* args) {
+    std::shared_ptr<Command> command = args->command;
+    ReliableCommunication* comm = args->comm;
+
+    bool success = false;
+
+    if (command->type == CommandType::text) {
+        TextCommand* cmd = static_cast<TextCommand*>(command.get());
+
+        std::string& text = cmd->text;
+        std::string& send_id = cmd->send_id;
+
+        std::string name = (cmd->type == CommandType::text) ? "text" : "file";
+
+        log_info("Executing command '", name, "', sending '", text, "' to node ", send_id, ".");
+
+        MessageData data(text.c_str(), text.length());
+        success = comm->send(send_id, data);
+    }
+
+    if (success) {
+        log_info("Sent message.");
+    }
+    else {
+        log_error("Failed to send message.");
+    }
+}
+
+void parallelize(ReliableCommunication& comm, std::vector<std::shared_ptr<Command>>& commands) {
+    int thread_num = commands.size();
+    std::vector<std::unique_ptr<std::thread>> threads;
+    auto thread_args = std::make_unique<SenderThreadArgs[]>(thread_num);
+
+    for (int i=0; i < thread_num; i++) {
+        thread_args[i] = {&comm, commands[i]};
+        threads.push_back(std::make_unique<std::thread>(send_thread, &thread_args[i]));
+    }
+    
+    for (std::unique_ptr<std::thread>& thread : threads) {
+        thread->join();
+    }
+}
+
+
 void server(ThreadArgs* args) {
     ReliableCommunication* comm = args->communication;
     char buffer[BUFFER_SIZE];
@@ -108,44 +161,30 @@ void server(ThreadArgs* args) {
 
 void client(ThreadArgs* args) {
     ReliableCommunication* comm = args->communication;
-    char msg[BUFFER_SIZE] = "Hello";
+
     while (true) {
-        std::string id;
-        std::cin >> id;
-        if (id == "exit") break;
+        std::string input;
+        getline(std::cin, input);
 
-        bool success = comm->send(id, {msg, 4000});
+        if (input == "exit") break;
 
-        if (success) {
-            log_info("Successfuly sent message to ", id, "!");
+        std::vector<std::shared_ptr<Command>> commands;
+
+        try {
+            Reader reader(input);
+            commands = parse_commands(reader);
         }
-        else {
-            log_error("Could not send message to ", id, ".");
+        catch (std::invalid_argument& err) {
+            log_print(err.what());
         }
+        catch (parse_error& err) {
+            log_print(err.what());
+        }
+
+        parallelize(*comm, commands);
     }
+
     log_info("Exited client.");
-}
-
-
-struct SenderThreadArgs {
-    ReliableCommunication* comm;
-    std::string send_id;
-};
-
-void send_thread(SenderThreadArgs* args) {
-    size_t bytes = 4000;
-
-    log_info("Sending ", bytes, " bytes to node ", args->send_id.c_str());
-
-    char buffer[bytes];
-    bool success = args->comm->send(args->send_id, {buffer, bytes});
-
-    if (success) {
-        log_info("Sent message to ", args->send_id);
-    }
-    else {
-        log_error("Failed to send message to ", args->send_id);
-    }
 }
 
 void run_process(const Arguments& args) {
@@ -164,18 +203,7 @@ void run_process(const Arguments& args) {
     std::thread server_thread(server, &targs);
     std::thread client_thread(client, &targs);
 
-    int thread_num = args.send_ids.size();
-    std::vector<std::unique_ptr<std::thread>> threads;
-    auto thread_args = std::make_unique<SenderThreadArgs[]>(thread_num);
-
-    for (int i=0; i < thread_num; i++) {
-        thread_args[i] = {&comm, args.send_ids[i]};
-        threads.push_back(std::make_unique<std::thread>(send_thread, &thread_args[i]));
-    }
-    
-    for (std::unique_ptr<std::thread>& thread : threads) {
-        thread->join();
-    }
+    // parallelize(comm, args.send_ids);
 
     client_thread.join();
     server_thread.detach();

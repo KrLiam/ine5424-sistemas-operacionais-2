@@ -169,15 +169,18 @@ char Reader::expect(char ch)
     char result = read(ch);
     if (result != ch)
     {
+        char p = peek();
+        std::string got = p ? std::string(1, p) : "eof";
         throw parse_error("Expected character '" + std::string(1, ch) +
                           "' at position " + std::to_string(pos) +
-                          ". Got '"+ std::string(1, result) + "'.");
+                          ". Got '" + got + "'.");
     }
     return result;
 }
 
 void Reader::expect(const std::string &chars)
 {
+    peek();
     Override ovr = override_whitespace(false);
 
     for (char ch : chars)
