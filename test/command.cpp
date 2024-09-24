@@ -4,6 +4,7 @@
 #include "command.h"
 #include "utils/reader.h"
 #include "utils/format.h"
+#include "utils/log.h"
 
 Command::Command(CommandType type) : type(type) {}
 
@@ -77,6 +78,11 @@ std::string parse_destination(Reader& reader) {
 std::shared_ptr<Command> parse_command(Reader& reader) {
     std::string keyword = reader.read_word();
 
+    if (keyword == "file") {
+        std::string path = parse_path(reader);
+        std::string send_id = parse_destination(reader);
+        return std::make_shared<FileCommand>(path, send_id);
+    }
     if (keyword == "text" || reader.peek() == '"') {
         std::string text = parse_string(reader);
         std::string send_id = parse_destination(reader);
@@ -87,11 +93,6 @@ std::shared_ptr<Command> parse_command(Reader& reader) {
 
         std::string send_id = parse_destination(reader);
         return std::make_shared<DummyCommand>(size, send_id);
-    }
-    if (keyword == "file") {
-        std::string path = parse_path(reader);
-        std::string send_id = parse_destination(reader);
-        return std::make_shared<FileCommand>(path, send_id);
     }
 
     if (keyword.length()) {

@@ -6,6 +6,7 @@
 #include "utils/format.h"
 #include "communication/reliable_communication.h"
 #include "utils/reader.h"
+#include "utils/uuid.h"
 
 #include "command.h"
 
@@ -157,6 +158,25 @@ void send_thread(SenderThreadArgs* args) {
 
         success = comm->send(send_id, {data.get(), size});
     }
+    else if (command->type == CommandType::file) {
+        FileCommand* cmd = static_cast<FileCommand*>(command.get());
+
+        std::string& path = cmd->path;
+        std::string& send_id = cmd->send_id;
+        std::string name = cmd->name();
+
+        std::ifstream file(path, std::ios::binary | std::ios::ate);
+        size_t size = file.tellg();
+        file.seekg(0, std::ios::beg);
+
+        char buffer[size];
+        if (file.read(buffer, size))
+        {
+            log_info("Executing command '", name, "', sending ", size, " bytes of dummy data to node ", send_id, ".");
+
+            success = comm->send(send_id, {buffer, size});
+        }
+    }
 
     if (success) {
         log_info("Sent message.");
@@ -189,6 +209,12 @@ void server(ThreadArgs* args) {
         ReceiveResult result = comm->receive(buffer);
         if (result.bytes == 0) break;
         log_print("Received '", std::string(buffer, result.bytes).c_str(), "' (", result.bytes, " bytes) from ", result.sender_id);
+
+        std::string output_filename = UUID().as_string();
+        std::ofstream file(output_filename);
+        file.write(buffer, result.bytes);
+        log_print("Saved message to file [", output_filename, "].");
+
     }
 }
 
