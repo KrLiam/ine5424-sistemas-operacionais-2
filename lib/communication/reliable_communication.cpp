@@ -45,7 +45,7 @@ ReceiveResult ReliableCommunication::receive(char *m)
     Message message = application_buffer.consume();
 
     std::size_t len = std::min(message.length, user_buffer_size);
-    strncpy(m, message.data, len);
+    memcpy(m, message.data, len);
 
     if (len < message.length)
     {
@@ -72,7 +72,7 @@ ReceiveResult ReliableCommunication::receive(char *m)
             has_more_parts: i != required_parts - 1
         };
         part.length = i * user_buffer_size;
-        strncpy(part.data, &message.data[i * user_buffer_size], part.length);
+        memcpy(part.data, &message.data[i * user_buffer_size], part.length);
         receive_buffer.produce(part);
     }
 
@@ -111,7 +111,7 @@ Message ReliableCommunication::create_message(std::string receiver_id, const Mes
         data : {0},
         length : data.size,
     };
-    strncpy(m.data, data.ptr, data.size);
+    memcpy(m.data, data.ptr, data.size);
     return m;
 }
 

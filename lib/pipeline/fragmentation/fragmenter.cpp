@@ -39,7 +39,7 @@ Packet Fragmenter::create_packet() {
         },
         message_data : 0
     };
-    strncpy(data.message_data, &message.data[i * PacketData::MAX_MESSAGE_SIZE], meta.message_length);
+    memcpy(data.message_data, &message.data[i * PacketData::MAX_MESSAGE_SIZE], meta.message_length);
 
     return Packet{
         data: data,

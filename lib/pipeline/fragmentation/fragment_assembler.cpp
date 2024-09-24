@@ -34,7 +34,7 @@ void FragmentAssembler::add_packet(Packet &packet)
 
     unsigned int pos_in_msg = fragment_number * PacketData::MAX_MESSAGE_SIZE;
     unsigned int len = meta.message_length;
-    strncpy(&message.data[pos_in_msg], packet.data.message_data, len);
+    memcpy(&message.data[pos_in_msg], packet.data.message_data, len);
     bytes_received += len;
 
     message.number = header.get_message_number();
