@@ -43,7 +43,7 @@ std::vector<int> parse_fault_list(Reader& reader) {
 
 Arguments parse_arguments(int argc, char* argv[]) {
     std::vector<int> faults;
-    std::vector<std::string> send_ids;
+    std::vector<std::shared_ptr<Command>> send_commands;
 
     std::string value;
     for (int i=1; i < argc; i++) {
@@ -84,8 +84,7 @@ Arguments parse_arguments(int argc, char* argv[]) {
             faults = parse_fault_list(reader);
         }
         else if (flag == "s") {
-            std::string id = reader.read_word();
-            send_ids.push_back(id);
+            send_commands = parse_commands(reader);
         }
         else {
             throw std::invalid_argument(
@@ -94,7 +93,7 @@ Arguments parse_arguments(int argc, char* argv[]) {
         }
     }
 
-    return Arguments{node_id, faults, send_ids};
+    return Arguments{node_id, faults, send_commands};
 }
 
 
@@ -167,7 +166,7 @@ void send_thread(SenderThreadArgs* args) {
     }
 }
 
-void parallelize(ReliableCommunication& comm, std::vector<std::shared_ptr<Command>>& commands) {
+void parallelize(ReliableCommunication& comm, const std::vector<std::shared_ptr<Command>>& commands) {
     int thread_num = commands.size();
     std::vector<std::unique_ptr<std::thread>> threads;
     auto thread_args = std::make_unique<SenderThreadArgs[]>(thread_num);
@@ -239,7 +238,7 @@ void run_process(const Arguments& args) {
     std::thread server_thread(server, &targs);
     std::thread client_thread(client, &targs);
 
-    // parallelize(comm, args.send_ids);
+    parallelize(comm, args.send_commands);
 
     client_thread.join();
     server_thread.detach();
