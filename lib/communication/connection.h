@@ -85,7 +85,7 @@ private:
         {FIN_WAIT, "fin_wait"},
         {LAST_ACK, "last_ack"}};
 
-    enum
+    enum // TODO: mover isso para o Packet e fazer ele mesmo definir as flags
     {
         ACK = 0x01,
         RST = 0x02,
