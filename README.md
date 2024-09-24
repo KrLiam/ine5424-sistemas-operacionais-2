@@ -46,7 +46,8 @@ Também é possível definir o comando a ser executado assim que o processo inic
 Isso seria equivalente a executar `"hi" -> 0` manualmente na linha de comando assim que o processo iniciasse.
 
 ### Comandos disponíveis
-- `text <message> -> <id>`: Envia a string `message` o nó `id`. A palavra-chave `text` pode ser omitida. Exemplos: `text "Hello world" -> 1`, `"Bye" -> 0`.
+- `text <message> -> <id>`: Envia a string `message` para o nó `id`. A palavra-chave `text` pode ser omitida. Exemplos: `text "Hello world" -> 1`, `"Bye" -> 0`.
+- `file <path> -> <id>`: Envia o arquivo em `path` para o nó `id`. Exemplo: `file "teste.png" -> 0` (envia o arquivo `teste.png` para 0).
 - `dummy <size> -> <id>`: Envia um texto de teste de tamanho `size` para o nó `id`. Exemplo: `dummy 1 -> 0` (envia 1 byte pra 0), `dummy 50000 -> 1` (envia 50000 bytes a 1).
 - `exit`. Encerra o processo.
 
