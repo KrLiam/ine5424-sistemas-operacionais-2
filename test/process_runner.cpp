@@ -10,7 +10,7 @@
 
 #include "command.h"
 
-const std::size_t BUFFER_SIZE = Message::MAX_MESSAGE_SIZE;
+const std::size_t BUFFER_SIZE = Message::MAX_SIZE;
 
 std::vector<int> parse_fault_list(Reader& reader) {
     std::vector<int> values;

@@ -15,7 +15,7 @@ enum MessageType
 
 struct Message
 {
-    inline const static int MAX_MESSAGE_SIZE = 65536;
+    inline const static int MAX_SIZE = 65536;
 
     UUID transmission_uuid;
     uint32_t number;
@@ -23,7 +23,7 @@ struct Message
     SocketAddress destination;
     MessageType type;
 
-    char data[MAX_MESSAGE_SIZE];
+    char data[MAX_SIZE];
     std::size_t length;
 
     std::string to_string() const

@@ -84,10 +84,10 @@ bool ReliableCommunication::send(std::string id, MessageData data)
     if (data.size == std::size_t(-1))
         data.size = user_buffer_size;
 
-    if (data.size > Message::MAX_MESSAGE_SIZE)
+    if (data.size > Message::MAX_SIZE)
     {
         log_error("Unable to send a message of ", data.size, " bytes. ",
-                  "Maximum supported length is ", Message::MAX_MESSAGE_SIZE, " bytes.");
+                  "Maximum supported length is ", Message::MAX_SIZE, " bytes.");
         return false;
     }
 
