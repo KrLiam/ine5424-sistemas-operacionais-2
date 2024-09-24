@@ -14,9 +14,7 @@ ReliableCommunication::ReliableCommunication(
       user_buffer_size(_user_buffer_size)
 {
     gr = new GroupRegistry(_local_id);
-    const Node &local_node = gr->get_local_node();
-    channel = new Channel(local_node.get_address()); // TODO: mover a instanciação do channel para o ChannelLayer
-    pipeline = new Pipeline(gr, channel, fault_config);
+    pipeline = new Pipeline(gr, fault_config);
 
     sender_thread = std::thread([this]()
                                 { send_routine(); });
@@ -32,7 +30,6 @@ ReliableCommunication::~ReliableCommunication()
 
     delete gr;
     delete pipeline;
-    delete channel;
 }
 
 GroupRegistry *ReliableCommunication::get_group_registry()

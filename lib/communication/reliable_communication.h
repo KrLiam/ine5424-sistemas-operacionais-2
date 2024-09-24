@@ -5,7 +5,6 @@
 #include <memory>
 #include <semaphore>
 
-#include "channels/channel.h"
 #include "communication/connection.h"
 #include "core/buffer.h"
 #include "core/constants.h"
@@ -53,8 +52,6 @@ public:
     GroupRegistry *get_group_registry();
 
 private:
-    Channel *channel;
-
     Pipeline *pipeline;
     GroupRegistry *gr;
 

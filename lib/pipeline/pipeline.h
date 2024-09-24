@@ -2,7 +2,6 @@
 
 #include <vector>
 
-#include "channels/channel.h"
 #include "pipeline/pipeline_handler.h"
 #include "pipeline/pipeline_step.h"
 #include "communication/group_registry.h"
@@ -50,7 +49,7 @@ public:
     static const unsigned int TRANSMISSION_LAYER = 3;
     static const unsigned int FRAGMENTATION_LAYER = 4;
 
-    Pipeline(GroupRegistry *gr, Channel *channel, const FaultConfig& fault_config);
+    Pipeline(GroupRegistry *gr, const FaultConfig& fault_config);
 
     ~Pipeline();
 

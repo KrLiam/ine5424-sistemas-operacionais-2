@@ -1,6 +1,6 @@
 #include "pipeline/transmission/transmission_layer.h"
 
-TransmissionLayer::TransmissionLayer(PipelineHandler handler, GroupRegistry *gr, Channel* channel) : PipelineStep(handler, gr), channel(channel)
+TransmissionLayer::TransmissionLayer(PipelineHandler handler, GroupRegistry *gr) : PipelineStep(handler, gr)
 {
 }
 

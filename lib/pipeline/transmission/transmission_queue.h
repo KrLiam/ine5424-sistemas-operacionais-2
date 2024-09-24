@@ -5,7 +5,6 @@
 #include <unordered_set>
 #include <map>
 
-#include "channels/channel.h"
 #include "core/packet.h"
 #include "utils/date.h"
 #include "pipeline/pipeline_handler.h"

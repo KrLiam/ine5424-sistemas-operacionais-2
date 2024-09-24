@@ -5,7 +5,6 @@
 #include <atomic>
 #include <memory>
 
-#include "channels/channel.h"
 #include "pipeline/pipeline_step.h"
 #include "pipeline/transmission/transmission_queue.h"
 #include "core/node.h"
@@ -16,7 +15,6 @@
 class TransmissionLayer : public PipelineStep
 {
 private:
-    Channel* channel;
     Timer timer;
 
     std::unordered_map<std::string, std::unique_ptr<TransmissionQueue>> queue_map;
@@ -29,7 +27,7 @@ private:
     TransmissionQueue& get_queue(const std::string& id);
 
 public:
-    TransmissionLayer(PipelineHandler handler, GroupRegistry *gr, Channel *channel);
+    TransmissionLayer(PipelineHandler handler, GroupRegistry *gr);
     ~TransmissionLayer() override;
 
     void attach(EventBus&);

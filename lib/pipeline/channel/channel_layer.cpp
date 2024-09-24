@@ -3,16 +3,18 @@
 #include "pipeline/channel/channel_layer.h"
 #include "utils/log.h"
 
-ChannelLayer::ChannelLayer(PipelineHandler handler, Channel &channel) : PipelineStep(handler, nullptr), channel(channel)
+ChannelLayer::ChannelLayer(PipelineHandler handler, SocketAddress local_address) : PipelineStep(handler, nullptr)
 {
+    channel = new Channel(local_address);
     receiver_thread = std::thread([this]()
                                   { receiver(); });
 }
 
 ChannelLayer::~ChannelLayer()
 {
-    channel.shutdown_socket();
+    channel->shutdown_socket();
     receiver_thread.join();
+    delete channel;
 }
 
 void ChannelLayer::receiver()
@@ -22,7 +24,7 @@ void ChannelLayer::receiver()
     {
         try
         {
-            Packet packet = channel.receive();
+            Packet packet = channel->receive();
             receive(packet);
         }
         catch (const std::runtime_error &e)
@@ -35,7 +37,7 @@ void ChannelLayer::receiver()
 
 void ChannelLayer::send(Packet packet)
 {
-    channel.send(packet);
+    channel->send(packet);
 }
 
 void ChannelLayer::receive(Packet packet)
