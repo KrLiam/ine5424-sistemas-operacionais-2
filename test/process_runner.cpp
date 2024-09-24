@@ -131,58 +131,63 @@ void send_thread(SenderThreadArgs* args) {
     std::shared_ptr<Command> command = args->command;
     ReliableCommunication* comm = args->comm;
 
-    bool success = false;
+    try {
+        bool success = false;
 
-    if (command->type == CommandType::text) {
-        TextCommand* cmd = static_cast<TextCommand*>(command.get());
+        if (command->type == CommandType::text) {
+            TextCommand* cmd = static_cast<TextCommand*>(command.get());
 
-        std::string& text = cmd->text;
-        std::string& send_id = cmd->send_id;
-        std::string name = cmd->name();
+            std::string& text = cmd->text;
+            std::string& send_id = cmd->send_id;
+            std::string name = cmd->name();
 
-        log_info("Executing command '", name, "', sending '", text, "' to node ", send_id, ".");
+            log_info("Executing command '", name, "', sending '", text, "' to node ", send_id, ".");
 
-        success = comm->send(send_id, {text.c_str(), text.length()});
-    }
-    else if (command->type == CommandType::dummy) {
-        DummyCommand* cmd = static_cast<DummyCommand*>(command.get());
+            success = comm->send(send_id, {text.c_str(), text.length()});
+        }
+        else if (command->type == CommandType::dummy) {
+            DummyCommand* cmd = static_cast<DummyCommand*>(command.get());
 
-        size_t size = cmd->size;
-        std::string& send_id = cmd->send_id;
-        std::string name = cmd->name();
+            size_t size = cmd->size;
+            std::string& send_id = cmd->send_id;
+            std::string name = cmd->name();
 
-        std::unique_ptr<char[]> data = std::make_unique<char[]>(size);
-        create_dummy_data(data.get(), size);
+            std::unique_ptr<char[]> data = std::make_unique<char[]>(size);
+            create_dummy_data(data.get(), size);
 
-        log_info("Executing command '", name, "', sending ", size, " bytes of dummy data to node ", send_id, ".");
-
-        success = comm->send(send_id, {data.get(), size});
-    }
-    else if (command->type == CommandType::file) {
-        FileCommand* cmd = static_cast<FileCommand*>(command.get());
-
-        std::string& path = cmd->path;
-        std::string& send_id = cmd->send_id;
-        std::string name = cmd->name();
-
-        std::ifstream file(path, std::ios::binary | std::ios::ate);
-        size_t size = file.tellg();
-        file.seekg(0, std::ios::beg);
-
-        char buffer[size];
-        if (file.read(buffer, size))
-        {
             log_info("Executing command '", name, "', sending ", size, " bytes of dummy data to node ", send_id, ".");
 
-            success = comm->send(send_id, {buffer, size});
+            success = comm->send(send_id, {data.get(), size});
+        }
+        else if (command->type == CommandType::file) {
+            FileCommand* cmd = static_cast<FileCommand*>(command.get());
+
+            std::string& path = cmd->path;
+            std::string& send_id = cmd->send_id;
+            std::string name = cmd->name();
+
+            std::ifstream file(path, std::ios::binary | std::ios::ate);
+            size_t size = file.tellg();
+            file.seekg(0, std::ios::beg);
+
+            char buffer[size];
+            if (file.read(buffer, size))
+            {
+                log_info("Executing command '", name, "', sending ", size, " bytes of dummy data to node ", send_id, ".");
+
+                success = comm->send(send_id, {buffer, size});
+            }
+        }
+
+        if (success) {
+            log_info("Sent message.");
+        }
+        else {
+            log_error("Failed to send message.");
         }
     }
-
-    if (success) {
-        log_info("Sent message.");
-    }
-    else {
-        log_error("Failed to send message.");
+    catch (std::invalid_argument& err) {
+        log_error(err.what());
     }
 }
 
