@@ -11,6 +11,7 @@ struct PacketHeader
     unsigned int rst : 1;
     unsigned int syn : 1;
     unsigned int fin : 1;
+    unsigned int reserved: 4;
     unsigned int end : 1;
     unsigned int type : 4;
 

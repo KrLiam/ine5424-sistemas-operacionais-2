@@ -33,6 +33,7 @@ Packet Fragmenter::create_packet() {
             rst : 0,
             syn : 0,
             fin : 0,
+            reserved: 0,
             end : last_fragment,
             type : message.type,
         },
