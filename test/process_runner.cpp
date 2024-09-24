@@ -223,9 +223,7 @@ void server(ThreadArgs* args) {
     }
 }
 
-void client(ThreadArgs* args) {
-    ReliableCommunication* comm = args->communication;
-
+void client(ReliableCommunication& comm) {
     while (true) {
         std::string input;
 
@@ -247,7 +245,7 @@ void client(ThreadArgs* args) {
             log_print(err.what());
         }
 
-        parallelize(*comm, commands);
+        parallelize(comm, commands);
     }
 
     log_info("Exited client.");
@@ -267,10 +265,9 @@ void run_process(const Arguments& args) {
     ThreadArgs targs = { &comm };
 
     std::thread server_thread(server, &targs);
-    std::thread client_thread(client, &targs);
 
     parallelize(comm, args.send_commands);
 
-    client_thread.join();
+    client(comm);
     server_thread.detach();
 }
