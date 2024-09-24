@@ -9,7 +9,7 @@
 
 #include "command.h"
 
-const std::size_t BUFFER_SIZE = 50000;
+const std::size_t BUFFER_SIZE = Message::MAX_MESSAGE_SIZE;
 
 std::vector<int> parse_fault_list(Reader& reader) {
     std::vector<int> values;
@@ -98,6 +98,29 @@ Arguments parse_arguments(int argc, char* argv[]) {
 }
 
 
+void create_dummy_data(char* data, size_t size) {
+    int num = 0;
+    size_t pos = 0;
+    
+    while (pos < size) {
+        if (pos > 0) {
+            data[pos] = ' ';
+            pos++;
+        }
+
+        if (pos >= size) break;
+
+        std::string value = std::to_string(num);
+        num++;
+
+        for (char ch : value) {
+            data[pos] = ch;
+            pos++;
+
+            if (pos >= size) break;
+        }
+    }
+} 
 
 struct SenderThreadArgs {
     ReliableCommunication* comm;
@@ -115,11 +138,25 @@ void send_thread(SenderThreadArgs* args) {
 
         std::string& text = cmd->text;
         std::string& send_id = cmd->send_id;
-
         std::string name = cmd->name();
+
         log_info("Executing command '", name, "', sending '", text, "' to node ", send_id, ".");
 
         success = comm->send(send_id, {text.c_str(), text.length()});
+    }
+    else if (command->type == CommandType::dummy) {
+        DummyCommand* cmd = static_cast<DummyCommand*>(command.get());
+
+        size_t size = cmd->size;
+        std::string& send_id = cmd->send_id;
+        std::string name = cmd->name();
+
+        std::unique_ptr<char[]> data = std::make_unique<char[]>(size);
+        create_dummy_data(data.get(), size);
+
+        log_info("Executing command '", name, "', sending ", size, " bytes of dummy data to node ", send_id, ".");
+
+        success = comm->send(send_id, {data.get(), size});
     }
 
     if (success) {
@@ -152,7 +189,7 @@ void server(ThreadArgs* args) {
     while (true) {
         ReceiveResult result = comm->receive(buffer);
         if (result.bytes == 0) break;
-        log_print("Received '", std::string(buffer, result.bytes).c_str(), "' from ", result.sender_id);
+        log_print("Received '", std::string(buffer, result.bytes).c_str(), "' (", result.bytes, " bytes) from ", result.sender_id);
     }
 }
 
