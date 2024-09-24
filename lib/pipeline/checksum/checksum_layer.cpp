@@ -27,11 +27,11 @@ void ChecksumLayer::receive(Packet packet)
 
     uint16_t received_checksum = packet.data.header.checksum;
     PacketData &data = packet.data;
+    packet.data.header.checksum = 0;
 
     uint8_t buffer[PacketData::MAX_PACKET_SIZE];
     prepare_packet_buffer(data, packet.meta.message_length, buffer);
 
-    packet.data.header.checksum = 0;
     uint16_t calculated_checksum = CRC16::calculate(buffer, PacketData::MAX_PACKET_SIZE);
 
     if (calculated_checksum == received_checksum)
