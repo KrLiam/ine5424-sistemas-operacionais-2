@@ -2,6 +2,10 @@
 
 > Projeto da disciplina de Sistemas Operacionais II (INE5424) do grupo A.
 
+## Requisitos
+
+- C++ 20
+
 ## Como Testar
 
 Primeiro, compile o programa de testes
