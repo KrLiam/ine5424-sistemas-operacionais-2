@@ -82,6 +82,8 @@ void Timer::routine() {
         while (!timers.size()) {
             // log_debug("Waiting for active timer");
             has_timers_sem.acquire();
+
+            if (stop) return;
             continue;
         }
 
