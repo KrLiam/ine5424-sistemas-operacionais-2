@@ -11,10 +11,10 @@ void ChecksumLayer::send(Packet packet)
 
     PacketData &data = packet.data;
 
-    uint8_t buffer[PacketData::MAX_PACKET_SIZE];
+    char buffer[PacketData::MAX_PACKET_SIZE];
     prepare_packet_buffer(data, packet.meta.message_length, buffer);
 
-    uint16_t checksum = CRC16::calculate(buffer, PacketData::MAX_PACKET_SIZE);
+    unsigned short checksum = CRC16::calculate(buffer, PacketData::MAX_PACKET_SIZE);
     log_debug("Calculated checksum: ", checksum);
 
     packet.data.header.checksum = checksum;
@@ -25,26 +25,22 @@ void ChecksumLayer::receive(Packet packet)
 {
     log_trace("Packet ", packet.to_string(PacketFormat::RECEIVED), " received on checksum layer.");
 
-    uint16_t received_checksum = packet.data.header.checksum;
+    unsigned short received_checksum = packet.data.header.checksum;
     PacketData &data = packet.data;
     packet.data.header.checksum = 0;
 
-    uint8_t buffer[PacketData::MAX_PACKET_SIZE];
+    char buffer[PacketData::MAX_PACKET_SIZE];
     prepare_packet_buffer(data, packet.meta.message_length, buffer);
 
-    uint16_t calculated_checksum = CRC16::calculate(buffer, PacketData::MAX_PACKET_SIZE);
+    unsigned short calculated_checksum = CRC16::calculate(buffer, PacketData::MAX_PACKET_SIZE);
 
     if (calculated_checksum == received_checksum)
-    {
         handler.forward_receive(packet);
-    }
     else
-    {
         log_warn("Checksum is different: Expected ", received_checksum, ", got ", calculated_checksum);
-    }
 }
 
-void ChecksumLayer::prepare_packet_buffer(const PacketData &packet_data, std::size_t message_length, uint8_t *buffer)
+void ChecksumLayer::prepare_packet_buffer(const PacketData &packet_data, std::size_t message_length, char *buffer)
 {
     memset(buffer, 0, PacketData::MAX_PACKET_SIZE);
     memcpy(buffer, &packet_data.header, sizeof(PacketHeader));

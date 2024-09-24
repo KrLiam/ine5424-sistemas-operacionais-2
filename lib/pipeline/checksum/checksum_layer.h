@@ -17,5 +17,5 @@ public:
     void receive(Packet packet);
 
 private:
-    void prepare_packet_buffer(const PacketData &packet_data, std::size_t message_length, uint8_t *buffer);
+    void prepare_packet_buffer(const PacketData &packet_data, std::size_t message_length, char *buffer);
 };
