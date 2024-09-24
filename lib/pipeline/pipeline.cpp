@@ -7,13 +7,13 @@ Pipeline::Pipeline(GroupRegistry *gr, Channel *channel, const FaultConfig& fault
 {
     PipelineHandler handler = PipelineHandler(*this, event_bus, -1);
 
-    FaultInjectionLayer* fault_layer = new FaultInjectionLayer(handler.at_index(FAUL_INJECTION_LAYER), 200, 500, 0);
+    FaultInjectionLayer* fault_layer = new FaultInjectionLayer(handler.at_index(FAULT_INJECTION_LAYER), 200, 500, 0);
     fault_layer->enqueue_fault(fault_config.faults);
 
     layers.push_back(new ChannelLayer(handler.at_index(CHANNEL_LAYER), *channel));
     layers.push_back(fault_layer);
-    layers.push_back(new TransmissionLayer(handler.at_index(TRANSMISSION_LAYER), gr, channel));
     layers.push_back(new ChecksumLayer(handler.at_index(CHECKSUM_LAYER)));
+    layers.push_back(new TransmissionLayer(handler.at_index(TRANSMISSION_LAYER), gr, channel));
     layers.push_back(new FragmentationLayer(handler.at_index(FRAGMENTATION_LAYER), gr));
 
     attach_layers();
