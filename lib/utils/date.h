@@ -15,35 +15,17 @@ public:
 };
 
 
-class TimerEntry {
+struct TimerEntry {
     int id;
-    int interval_ms;
-    std::binary_semaphore* expire_sem;
+    uint64_t date;
     std::function<void()> callback;
-
     bool cancelled = false;
-    bool expired = false;
-    std::mutex mutex;
-    std::condition_variable var;
-    std::thread thread;
 
-    void wait();
-
-public:
     TimerEntry(
-        std::binary_semaphore* expire_sem,
         int id,
-        uint64_t interval_ms,
+        uint64_t date,
         std::function<void()> callback
     );
-    
-    ~TimerEntry();
-
-    void cancel();
-
-    int get_id();
-
-    bool is_expired();
 };
 
 
@@ -51,12 +33,15 @@ class Timer {
     std::vector<std::shared_ptr<TimerEntry>> timers;
     std::mutex timers_mutex;
 
-    std::binary_semaphore expire_sem{0};
+    std::binary_semaphore has_timers_sem{0};
+    std::mutex mutex;
+    std::condition_variable var;
+
     std::thread thread;
     bool stop = false;
     int current_id = 0;
 
-    void clear_expired_timers();
+    void routine();
 public:
     Timer();
 

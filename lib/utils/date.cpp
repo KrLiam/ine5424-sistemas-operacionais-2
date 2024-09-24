@@ -6,88 +6,48 @@ uint64_t DateUtils::now() {
 }
 
 
-void TimerEntry::wait() {
-    std::unique_lock<std::mutex> lock(mutex);
-    var.wait_for(lock, std::chrono::milliseconds(interval_ms));
-    // log_debug("Timer ", id, " timed out. cancelled: ", cancelled);
-
-    if (!cancelled) callback();
-
-    expired = true;
-    expire_sem->release();
-}
-
 TimerEntry::TimerEntry(
-    std::binary_semaphore* expire_sem,
     int id,
-    uint64_t interval_ms,
+    uint64_t date,
     std::function<void()> callback
-) : id(id), interval_ms(interval_ms), expire_sem(expire_sem), callback(callback) {
-    // log_debug("Created timer ", id);
-    thread = std::thread([this]() { wait(); });
-}
+) : id(id), date(date), callback(callback) {}
 
-TimerEntry::~TimerEntry() {
-    // log_debug("Destructing timer ", id);
-    if (!cancelled) cancel();
-    thread.join();
-}
-
-void TimerEntry::cancel() {
-    if (cancelled || expired) return;
-    
-    // log_debug("Cancelled timer ", id);
-    cancelled = true;
-    var.notify_all();
-}
-
-int TimerEntry::get_id() {
-    return id;
-}
-
-bool TimerEntry::is_expired() {
-    return expired;
-}
-
-
-void Timer::clear_expired_timers() {
-    while (!stop) {
-        expire_sem.acquire();
-
-        timers_mutex.lock();
-
-        int size = timers.size();
-
-        for (int i = size - 1; i >= 0; i--) {
-            auto timer = timers.at(i);
-
-            if (timer->is_expired()) {
-                // log_debug("Dropping timer ", timer->get_id());
-                timers.erase(timers.begin() + i);
-            }
-        }
-
-        timers_mutex.unlock();
-    }
-}
 
 Timer::Timer() {
-    thread = std::thread([this]() { clear_expired_timers(); });
+    thread = std::thread([this]() { routine(); });
 }
 
 Timer::~Timer() {
     stop = true;
-    expire_sem.release();
+    var.notify_all();
+    has_timers_sem.release();
+
     thread.join();
 }
 
 int Timer::add(int interval_ms, std::function<void()> callback) {
+    uint64_t now = DateUtils::now();
+    uint64_t date = now + interval_ms;
+
     current_id++;
-    auto timer = std::make_shared<TimerEntry>(&expire_sem, current_id, interval_ms, callback);
+    auto timer = std::make_shared<TimerEntry>(current_id, date, callback);
 
     timers_mutex.lock();
-    timers.push_back(timer);
+
+    size_t insert_i = timers.size();
+    for (int i=timers.size() - 1; i >= 0; i--) {
+        auto& t = timers.at(i);
+        if (t->date < date) break;
+
+        insert_i = i;
+    }
+    // log_debug("Insert timer ", current_id, " scheduled for ", date % 60000, " at pos ", insert_i);
+    timers.insert(timers.begin() + insert_i, timer);
+
     timers_mutex.unlock();
+
+    var.notify_all();
+    has_timers_sem.release();
 
     return current_id;
 }
@@ -102,8 +62,11 @@ bool Timer::cancel(int id) {
     for (int i = 0; i < size; i++) {
         auto timer = timers.at(i);
 
-        if (timer->get_id() == id) {
-            timer->cancel();
+        if (timer->id == id) {
+            // log_debug("Cancelled timer ", id);
+            timer->cancelled = true;
+            var.notify_all();
+
             success = true;
             break;
         }
@@ -114,3 +77,39 @@ bool Timer::cancel(int id) {
     return success;
 }
 
+void Timer::routine() {
+    while (!stop) {
+        while (!timers.size()) {
+            // log_debug("Waiting for active timer");
+            has_timers_sem.acquire();
+            continue;
+        }
+
+        timers_mutex.lock();
+
+        std::shared_ptr<TimerEntry> next_timer = timers.at(0);
+
+        uint64_t timer_date = next_timer->date;
+        uint64_t now = DateUtils::now();
+        int interval = timer_date - now;
+
+        // log_debug("Next timer is ", next_timer->id, " in ", interval, "ms");
+
+        if (interval <= 0 || next_timer->cancelled) {
+            timers.erase(timers.begin());
+            
+            timers_mutex.unlock();
+            
+            // log_debug("Trigerring timer ", next_timer->id, ", time is ", now % 60000);
+            if (!next_timer->cancelled) next_timer->callback();
+
+            continue;
+        }
+
+        timers_mutex.unlock();
+
+        // log_debug("Sleeping for ", interval, "ms");
+        std::unique_lock<std::mutex> lock(mutex);
+        var.wait_for(lock, std::chrono::milliseconds(interval));
+    }
+}
