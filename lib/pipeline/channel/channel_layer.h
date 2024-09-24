@@ -7,7 +7,7 @@
 #include "utils/log.h"
 
 class ChannelLayer : public PipelineStep {
-    Channel* channel;
+    std::unique_ptr<Channel> channel;
     std::thread receiver_thread;
 
     void receiver();

@@ -5,7 +5,7 @@
 
 ChannelLayer::ChannelLayer(PipelineHandler handler, SocketAddress local_address) : PipelineStep(handler, nullptr)
 {
-    channel = new Channel(local_address);
+    channel = std::make_unique<Channel>(local_address);
     receiver_thread = std::thread([this]()
                                   { receiver(); });
 }
@@ -14,7 +14,6 @@ ChannelLayer::~ChannelLayer()
 {
     channel->shutdown_socket();
     receiver_thread.join();
-    delete channel;
 }
 
 void ChannelLayer::receiver()
