@@ -211,7 +211,14 @@ void server(ThreadArgs* args) {
     ReliableCommunication* comm = args->communication;
     char buffer[BUFFER_SIZE];
     while (true) {
-        ReceiveResult result = comm->receive(buffer);
+        ReceiveResult result;
+        try {
+            result = comm->receive(buffer);
+        }
+        catch (buffer_termination& err) {
+            return;
+        }
+        
         if (result.bytes == 0) break;
         log_print("Received '", std::string(buffer, result.bytes).c_str(), "' (", result.bytes, " bytes) from ", result.sender_id);
 
@@ -269,5 +276,7 @@ void run_process(const Arguments& args) {
     parallelize(comm, args.send_commands);
 
     client(comm);
-    server_thread.detach();
+
+    comm.shutdown();
+    server_thread.join();
 }

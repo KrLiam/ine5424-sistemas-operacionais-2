@@ -46,6 +46,8 @@ public:
     );
     ~ReliableCommunication();
 
+    void shutdown();
+
     bool send(std::string id, MessageData data);
     ReceiveResult receive(char *m);
 

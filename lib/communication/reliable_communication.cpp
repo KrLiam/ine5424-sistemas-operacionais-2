@@ -32,6 +32,10 @@ ReliableCommunication::~ReliableCommunication()
     delete pipeline;
 }
 
+void ReliableCommunication::shutdown() {
+    application_buffer.terminate();
+}
+
 GroupRegistry *ReliableCommunication::get_group_registry()
 {
     return gr;
