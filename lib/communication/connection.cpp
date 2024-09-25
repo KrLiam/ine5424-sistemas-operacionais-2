@@ -304,7 +304,9 @@ void Connection::send_flag(unsigned char flags)
 void Connection::send_ack(Packet packet)
 {
     PacketData data;
-    data.header = {// TODO: Definir corretamente checksum, window, e reserved.
+    memset(&data, 0, sizeof(PacketData));
+
+    data.header = {
                    msg_num : packet.data.header.msg_num,
                    fragment_num : packet.data.header.fragment_num,
                    checksum : 0,

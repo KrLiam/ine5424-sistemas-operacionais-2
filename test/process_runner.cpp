@@ -136,12 +136,13 @@ void send_thread(SenderThreadArgs* args) {
 
     try {
         bool success = false;
+        std::string send_id;
 
         if (command->type == CommandType::text) {
             TextCommand* cmd = static_cast<TextCommand*>(command.get());
 
             std::string& text = cmd->text;
-            std::string& send_id = cmd->send_id;
+            send_id = cmd->send_id;
             std::string name = cmd->name();
 
             log_info("Executing command '", name, "', sending '", text, "' to node ", send_id, ".");
@@ -152,7 +153,7 @@ void send_thread(SenderThreadArgs* args) {
             DummyCommand* cmd = static_cast<DummyCommand*>(command.get());
 
             size_t size = cmd->size;
-            std::string& send_id = cmd->send_id;
+            send_id = cmd->send_id;
             std::string name = cmd->name();
 
             std::unique_ptr<char[]> data = std::make_unique<char[]>(size);
@@ -166,7 +167,7 @@ void send_thread(SenderThreadArgs* args) {
             FileCommand* cmd = static_cast<FileCommand*>(command.get());
 
             std::string& path = cmd->path;
-            std::string& send_id = cmd->send_id;
+            send_id = cmd->send_id;
             std::string name = cmd->name();
 
             std::ifstream file(path, std::ios::binary | std::ios::ate);
@@ -183,10 +184,10 @@ void send_thread(SenderThreadArgs* args) {
         }
 
         if (success) {
-            log_info("Sent message.");
+            log_print("Successfuly sent message to node ", send_id);
         }
         else {
-            log_error("Failed to send message.");
+            log_error("Could not send message to node ", send_id);
         }
     }
     catch (std::invalid_argument& err) {

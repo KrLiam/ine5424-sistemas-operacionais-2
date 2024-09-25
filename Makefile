@@ -30,18 +30,25 @@ TEST_SOURCES = $(shell find $(TEST_PATH) -name '*.$(SRC_EXT)' | sort -k 1nr | cu
 TEST_OBJECTS = $(TEST_SOURCES:$(TEST_PATH)/%.$(SRC_EXT)=$(BUILD_PATH)/test/%.o)
 TEST_DEPS = $(TEST_OBJECTS:.o=.d)
 
-
+# argumentos do programa de testes
+id = 0
 
 .PHONY: default_target
 default_target: release
 
+
 .PHONY: release
-release: export CXXFLAGS := $(CXXFLAGS) $(COMPILE_FLAGS)
-release: dirs
-	@$(MAKE) all
+release:
+	@$(MAKE) run $(id)
+
+.PHONY: all
+all:
+	@$(MAKE) lib
 
 
-
+# make dirs
+#
+# Cria os diretórios de build
 .PHONY: dirs
 dirs:
 	@mkdir -p $(dir $(LIB_OBJECTS)) $(dir $(TEST_OBJECTS))
@@ -49,7 +56,9 @@ dirs:
 	@mkdir -p $(BIN_PATH)
 
 
-
+# make clean
+#
+# limpa todos os diretórios e arquivos gerados na build
 .PHONY: clean
 clean:
 	@$(RM) $(LIB_FILENAME)
@@ -58,11 +67,11 @@ clean:
 	@$(RM) -r $(LIB_PATH)
 
 
-# make all
+# make lib
 #
 # Compila a biblioteca e gera um arquivo .a
-.PHONY: all
-all: $(LIB_PATH)/$(LIB_FILENAME)
+.PHONY: lib
+lib: $(LIB_PATH)/$(LIB_FILENAME)
 	@$(RM) $(LIB_FILENAME)
 	@ln -s $(LIB_PATH)/$(LIB_FILENAME) $(LIB_FILENAME)
 
