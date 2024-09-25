@@ -6,7 +6,14 @@
 
 - C++ 20
 
-## Como Testar
+## Como compilar
+
+Nosso projeto usa Makefile. Os seguintes disponíveis são:
+- `make`: Compila a biblioteca estática e gera um arquivo `.a`;
+- `make test`: Compila o programa de testes e gera um executável `program`;
+- `make run id=<id>`: Automaticamente executa o programa de testes compilado passando `id` como argumento de id do nó. Exemplo: `make run id=1` é equivalente a `make test && ./program 1`.
+
+## Como testar
 
 Primeiro, compile o programa de testes
 
@@ -56,5 +63,5 @@ Isso seria equivalente a executar `"hi" -> 0` manualmente na linha de comando as
 - `exit`. Encerra o processo.
 
 ### Flags disponíveis
-- `-s '<comandos>'`: Executa `comando` assim que o processo for iniciado.
+- `-s '<comandos>'`: Executa `comandos` assim que o processo for iniciado.
 - `-f <fault-list>`: Define as falhas que devem ocorrer na recepção de cada pacote com base em uma lista de falhas fornecida. Exemplo: `./program 2 -f [0, L, 1000, 500]` fará com que o nó 2 receba o primeiro pacote sem atraso, perca o segundo, receba o terceiro com 1000ms de atraso e o quarto com 500ms de atraso, respectivamente. Obs: Todos os atrasos são relativos ao momento que o pacote é recebido pela porta UDP, logo, não sendo o atraso real do pacote na rede.
