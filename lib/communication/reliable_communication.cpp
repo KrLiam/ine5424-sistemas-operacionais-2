@@ -63,24 +63,6 @@ ReceiveResult ReliableCommunication::receive(char *m)
         sender_address : message.origin,
         sender_id : node.get_id()
     };
-    /*log_warn("Buffer size defined by the user [", user_buffer_size , "] is smaller ",
-    "than the received message's size [", message.length, "]; we will split this message into multiple ones.");
-    int required_parts = ceil((double) message.length / user_buffer_size);
-    for (int i = 0; i < required_parts; i++)
-    {
-        Message part = {
-            origin: message.origin,
-            destination: message.destination,
-            type: message.type,
-            part: i,
-            has_more_parts: i != required_parts - 1
-        };
-        part.length = i * user_buffer_size;
-        memcpy(part.data, &message.data[i * user_buffer_size], part.length);
-        receive_buffer.produce(part);
-    }
-
-    return receive(m); // problema: perde a ordem */
 }
 
 bool ReliableCommunication::send(std::string id, MessageData data)
@@ -121,7 +103,7 @@ Message ReliableCommunication::create_message(std::string receiver_id, const Mes
         number : 0,
         origin : gr->get_local_node().get_address(),
         destination : gr->get_node(receiver_id).get_address(),
-        type : MessageType::APPLICATION, // TODO: Definir corretamente
+        type : MessageType::APPLICATION,
         data : {0},
         length : data.size,
     };
