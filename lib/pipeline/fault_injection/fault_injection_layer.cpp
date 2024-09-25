@@ -33,9 +33,6 @@ void FaultInjectionLayer::enqueue_fault(const std::vector<int>& faults) {
 }
 
 void FaultInjectionLayer::receive(Packet packet) {
-    unsigned int msg_num = packet.data.header.msg_num;
-    unsigned int fragment_num = packet.data.header.fragment_num;
-
     int delay = -1;
 
     if (fault_queue.size()) {
@@ -48,7 +45,7 @@ void FaultInjectionLayer::receive(Packet packet) {
     }
 
     // lose packet entirely
-    if (delay == INT_MAX || delay == -1 && roll_chance(lose_chance)) {
+    if (delay == INT_MAX || (delay == -1 && roll_chance(lose_chance))) {
         log_warn("Lost ", packet.to_string(PacketFormat::RECEIVED));
         return;
     };
@@ -56,7 +53,15 @@ void FaultInjectionLayer::receive(Packet packet) {
     int range_length = max_delay - min_delay;
     if (delay == -1 && range_length) {
         delay = min_delay + std::rand() % range_length;
-        log_debug("Reception of packet ", msg_num, "/", fragment_num, " is delayed by ", delay, " ms.");
+        log_debug(
+            "Reception of packet ",
+            packet.data.header.msg_num,
+            "/",
+            packet.data.header.fragment_num,
+            " is delayed by ",
+            delay,
+            " ms."
+        );
     }
 
     if (delay > 0) {

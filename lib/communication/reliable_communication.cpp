@@ -4,15 +4,17 @@
 
 ReliableCommunication::ReliableCommunication(
     std::string _local_id,
-    std::size_t _user_buffer_size) : ReliableCommunication(_local_id, _user_buffer_size, FaultConfig()) {}
+    std::size_t _user_buffer_size
+) : ReliableCommunication(_local_id, _user_buffer_size, FaultConfig()) {}
 
 ReliableCommunication::ReliableCommunication(
     std::string _local_id,
     std::size_t _user_buffer_size,
-    FaultConfig fault_config)
-    : connection_update_buffer("connection_update"),
-      application_buffer(INTERMEDIARY_BUFFER_ITEMS),
-      user_buffer_size(_user_buffer_size)
+    FaultConfig fault_config
+) :
+    connection_update_buffer("connection_update"),
+    user_buffer_size(_user_buffer_size),
+    application_buffer(INTERMEDIARY_BUFFER_ITEMS)
 {
     gr = new GroupRegistry(_local_id);
     pipeline = new Pipeline(gr, fault_config);

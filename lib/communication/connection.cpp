@@ -316,6 +316,7 @@ void Connection::send_ack(Packet packet)
                    rst : 0,
                    syn : 0,
                    fin : 0,
+                   reserved : 0,
                    end : 0,
                    type : MessageType::CONTROL
                    };
