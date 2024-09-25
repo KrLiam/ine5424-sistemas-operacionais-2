@@ -41,7 +41,7 @@ class Connection
 {
 private:
     Pipeline &pipeline;
-    Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &application_buffer;
+    Buffer<Message> &application_buffer;
 
     Node local_node;
     Node remote_node;
@@ -138,7 +138,7 @@ public:
         Node local_node,
         Node remote_node,
         Pipeline &pipeline,
-        Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> &application_buffer,
+        Buffer<Message> &application_buffer,
         BufferSet<std::string>& connection_update_buffer
     );
 

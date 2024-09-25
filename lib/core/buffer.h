@@ -15,7 +15,7 @@ public:
 };
 
 
-template <int NUM_OF_ITEMS, typename T>
+template <typename T>
 class Buffer
 {
 public:

@@ -11,6 +11,7 @@ ReliableCommunication::ReliableCommunication(
     std::size_t _user_buffer_size,
     FaultConfig fault_config)
     : connection_update_buffer("connection_update"),
+      application_buffer(INTERMEDIARY_BUFFER_ITEMS),
       user_buffer_size(_user_buffer_size)
 {
     gr = new GroupRegistry(_local_id);

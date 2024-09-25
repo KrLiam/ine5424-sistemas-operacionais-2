@@ -61,7 +61,7 @@ private:
     BufferSet<std::string> connection_update_buffer;
 
     std::size_t user_buffer_size;
-    Buffer<INTERMEDIARY_BUFFER_ITEMS, Message> application_buffer{"application receive"};
+    Buffer<Message> application_buffer{"application receive"};
 
     Message create_message(std::string id, const MessageData& data);
     Transmission create_transmission(std::string id, const MessageData& data);
