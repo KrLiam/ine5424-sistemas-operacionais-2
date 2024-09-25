@@ -8,7 +8,7 @@
 
 ## Como compilar
 
-Nosso projeto usa Makefile. Os seguintes disponíveis são:
+Nosso projeto usa Makefile. Os comandos disponíveis são:
 - `make`: Compila a biblioteca estática e gera um arquivo `.a`;
 - `make test`: Compila o programa de testes e gera um executável `program`;
 - `make run id=<id>`: Automaticamente executa o programa de testes compilado passando `id` como argumento de id do nó. Exemplo: `make run id=1` é equivalente a `make test && ./program 1`.
