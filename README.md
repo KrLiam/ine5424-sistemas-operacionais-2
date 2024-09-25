@@ -83,7 +83,7 @@ Isso seria equivalente a executar `"hi" -> 0` manualmente na linha de comando as
 - `file <path> -> <id>`: Envia o arquivo em `path` para o nó `id`. Exemplo: `file "teste.png" -> 0` (envia o arquivo `teste.png` para 0).
 - `dummy <size> -> <id>`: Envia um texto de teste de tamanho `size` para o nó `id`. Exemplo: `dummy 1 -> 0` (envia 1 byte pra 0), `dummy 50000 -> 1` (envia 50000 bytes a 1).
 - `exit`. Encerra o processo.
-- `--help`. Exibe lista de comandos e flags disponíveis.
+- `help`. Exibe lista de comandos e flags disponíveis.
 
 ### Flags disponíveis
 - `-s '<comandos>'`: Executa `comandos` assim que o processo for iniciado.
