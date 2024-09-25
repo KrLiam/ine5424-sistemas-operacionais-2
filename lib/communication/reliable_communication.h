@@ -29,7 +29,7 @@ struct MessageData
 };
 
 struct ReceiveResult {
-    size_t bytes;
+    size_t length;
     size_t truncated_bytes;
     SocketAddress sender_address;
     std::string sender_id;

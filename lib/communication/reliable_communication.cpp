@@ -56,7 +56,7 @@ ReceiveResult ReliableCommunication::receive(char *m)
 
     Node node = gr->get_node(message.origin);
     return ReceiveResult{
-        bytes : len,
+        length : len,
         truncated_bytes : message.length - len,
         sender_address : message.origin,
         sender_id : node.get_id()

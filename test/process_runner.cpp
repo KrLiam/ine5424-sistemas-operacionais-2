@@ -1,4 +1,7 @@
 // process_runner.cpp
+
+#include <sys/stat.h>
+
 #include "process_runner.h"
 #include "utils/log.h"
 #include "core/node.h"
@@ -219,12 +222,13 @@ void server(ThreadArgs* args) {
             return;
         }
         
-        if (result.bytes == 0) break;
-        log_print("Received '", std::string(buffer, result.bytes).c_str(), "' (", result.bytes, " bytes) from ", result.sender_id);
+        if (result.length == 0) break;
+        log_print("Received '", std::string(buffer, result.length).c_str(), "' (", result.length, " bytes) from ", result.sender_id);
 
-        std::string output_filename = UUID().as_string();
+        mkdir("messages", S_IRWXU);
+        std::string output_filename = "messages/" + UUID().as_string();
         std::ofstream file(output_filename);
-        file.write(buffer, result.bytes);
+        file.write(buffer, result.length);
         log_print("Saved message to file [", output_filename, "].");
 
     }
