@@ -66,7 +66,7 @@ private:
     Message create_message(std::string id, const MessageData& data);
     Transmission create_transmission(std::string id, const MessageData& data);
 
-    void enqueue(Transmission& transmission);
+    bool enqueue(Transmission& transmission);
 
     void send_routine();
 };

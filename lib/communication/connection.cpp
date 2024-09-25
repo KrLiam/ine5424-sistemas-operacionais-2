@@ -397,15 +397,23 @@ void Connection::change_state(ConnectionState new_state)
     }
 }
 
-void Connection::enqueue(Transmission &transmission)
+bool Connection::enqueue(Transmission &transmission)
 {
     mutex_transmissions.lock();
+
+    if (transmissions.size() >= MAX_ENQUEUED_TRANSMISSIONS) {
+        mutex_transmissions.unlock();
+        return false;
+    }
+    
     transmissions.push_back(&transmission);
+
     mutex_transmissions.unlock();
 
     log_debug("Enqueued transmission ", transmission.uuid, " on connection of node ", transmission.receiver_id);
 
     request_update();
+    return true;
 }
 
 void Connection::request_update()

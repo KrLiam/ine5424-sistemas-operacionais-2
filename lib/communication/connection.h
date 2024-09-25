@@ -142,7 +142,7 @@ public:
         BufferSet<std::string>& connection_update_buffer
     );
 
-    void enqueue(Transmission& transmission);
+    bool enqueue(Transmission& transmission);
 
     void request_update();
 

@@ -88,13 +88,23 @@ bool ReliableCommunication::send(std::string id, MessageData data)
 
     if (data.size > Message::MAX_SIZE)
     {
-        log_error("Unable to send a message of ", data.size, " bytes. ",
-                  "Maximum supported length is ", Message::MAX_SIZE, " bytes.");
+        log_error(
+            "Unable to send a message of ", data.size, " bytes. ",
+            "Maximum supported length is ", Message::MAX_SIZE, " bytes."
+        );
         return false;
     }
 
     Transmission transmission = create_transmission(id, data);
-    enqueue(transmission);
+    bool enqueued = enqueue(transmission);
+
+    if (!enqueued) {
+        log_warn(
+            "Could not enqueue transmission ", transmission.uuid,
+            ", node connection must be overloaded."
+        );
+        return false;
+    }
 
     TransmissionResult result = transmission.wait_result();
     log_debug("Transmission ", transmission.uuid, " returned result to application.");
@@ -124,10 +134,10 @@ Transmission ReliableCommunication::create_transmission(std::string receiver_id,
     return Transmission(receiver_id, message);
 }
 
-void ReliableCommunication::enqueue(Transmission &transmission)
+bool ReliableCommunication::enqueue(Transmission &transmission)
 {
     Connection &connection = gr->get_connection(transmission.receiver_id);
-    connection.enqueue(transmission);
+    return connection.enqueue(transmission);
 }
 
 void ReliableCommunication::send_routine()
