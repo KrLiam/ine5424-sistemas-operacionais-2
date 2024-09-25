@@ -113,8 +113,7 @@ void Connection::closed(Packet p)
 {
     if (p.data.header.is_syn() && !p.data.header.is_ack() && p.data.header.get_message_number() == 0)
     {
-        next_number = 0;
-        expected_number = 1;
+        reset_message_numbers();
         log_trace("closed: received SYN; sending SYN+ACK.");
         change_state(SYN_RECEIVED);
         send_flag(SYN | ACK);
@@ -137,13 +136,14 @@ void Connection::syn_sent(Packet p)
 
     if (p.data.header.is_syn())
     {
-        expected_number = 1;
         if (p.data.header.is_ack())
         {
             log_trace("syn_sent: received SYN+ACK; sending ACK.");
             log_info("syn_sent: connection established.");
-            change_state(ESTABLISHED);
             send_flag(ACK);
+            next_number = 1;
+            expected_number = 1;
+            change_state(ESTABLISHED);
             return;
         }
         log_trace("syn_sent: received SYN from simultaneous connection; transitioning to syn_received and sending SYN+ACK.");
@@ -159,22 +159,25 @@ void Connection::syn_received(Packet p)
     if (close_on_rst(p))
         return;
 
-    if (p.data.header.is_ack() && p.data.header.get_message_number() == expected_number)
+    if (p.data.header.get_message_number() != 0)
+        return;
+
+    if (p.data.header.is_ack())
     {
-        expected_number++;
+        next_number = 1;
+        expected_number = 1;
         log_trace("syn_received: received ACK.");
         log_info("syn_received: connection established.");
         change_state(ESTABLISHED);
         return;
     }
 
-    if (p.data.header.is_syn() && p.data.header.get_message_number() == 0)
+    if (p.data.header.is_syn())
     {
-        next_number = 0;
-        expected_number = 1;
         if (p.data.header.is_ack())
         {
             send_flag(ACK);
+            next_number++;
             log_debug("syn_received: received SYN+ACK.");
             log_info("syn_received: connection established.");
             change_state(ESTABLISHED);
@@ -190,10 +193,7 @@ void Connection::established(Packet p)
     if (p.data.header.is_rst())
     {
         cancel_transmissions();
-
-        next_number = 0;
-        expected_number = 1;
-
+        reset_message_numbers();
         change_state(SYN_SENT);
         send_flag(SYN);
         set_timeout();
@@ -203,10 +203,7 @@ void Connection::established(Packet p)
     if (p.data.header.is_syn() && p.data.header.get_message_number() == 0)
     {
         cancel_transmissions();
-
-        next_number = 0;
-        expected_number = 1;
-
+        reset_message_numbers();
         change_state(SYN_RECEIVED);
         send_flag(SYN | ACK);
         set_timeout();
@@ -253,7 +250,7 @@ void Connection::fin_wait(Packet p)
 
     if (p.data.header.is_fin())
     {
-        expected_number++;
+        // expected_number++;
         if (p.data.header.is_ack())
         {
             log_trace("fin_wait: received FIN+ACK; closing and sending ACK.");
@@ -301,7 +298,6 @@ void Connection::send_flag(unsigned char flags)
     packet.meta.destination = remote_node.get_address();
     packet.data = data;
 
-    next_number++;
     transmit(packet);
 }
 
@@ -354,8 +350,7 @@ bool Connection::rst_on_syn(Packet p)
     {
         log_debug(get_current_state_name(), ": received SYN; sending RST.");
         log_info(get_current_state_name(), ": connection closed.");
-        next_number = 0;
-        expected_number = p.data.header.get_message_number() + 1;
+        reset_message_numbers();
         change_state(CLOSED);
         send_flag(RST);
         return true;
