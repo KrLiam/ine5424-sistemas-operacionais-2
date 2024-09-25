@@ -34,10 +34,12 @@ void ChecksumLayer::receive(Packet packet)
 
     unsigned short calculated_checksum = CRC16::calculate(buffer, PacketData::MAX_PACKET_SIZE);
 
-    if (calculated_checksum == received_checksum)
+    if (calculated_checksum == received_checksum) {
         handler.forward_receive(packet);
-    else
+    }
+    else {
         log_warn("Checksum is different: Expected ", received_checksum, ", got ", calculated_checksum);
+    }
 }
 
 void ChecksumLayer::prepare_packet_buffer(const PacketData &packet_data, std::size_t message_length, char *buffer)

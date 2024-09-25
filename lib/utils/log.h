@@ -58,9 +58,6 @@
 #define log_print(...) Logger::print( "", ##__VA_ARGS__ )
 
 
-#define IGNORE_UNUSED(x) (void)x
-
-
 int get_thread_id();
 
 
@@ -70,7 +67,7 @@ class Logger
 {
 public:
     template <typename... Args>
-    static void log(const char *level, const char *file, int line, Args &&...args)
+    static void log(const char *level, [[maybe_unused]] const char *file, [[maybe_unused]] int line, Args &&...args)
     {
         log_mutex.lock();
         auto t = std::time(nullptr);
@@ -95,13 +92,10 @@ public:
         std::cout << oss.str();
 
         log_mutex.unlock();
-
-        IGNORE_UNUSED(file);
-        IGNORE_UNUSED(line);
     }
 
     template <typename... Args>
-    static void print(std::string prefix, Args &&...args)
+    static void print([[maybe_unused]] std::string prefix, Args &&...args)
     {
         log_mutex.lock();
 
@@ -111,7 +105,5 @@ public:
         std::cout << oss.str();
 
         log_mutex.unlock();
-
-        IGNORE_UNUSED(prefix);
     }
 };
