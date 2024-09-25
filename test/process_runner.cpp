@@ -15,6 +15,27 @@
 
 const std::size_t BUFFER_SIZE = Message::MAX_SIZE;
 
+std::string get_available_flags(const char* program_name) {
+    std::string result;
+    result += BOLD_GREEN "Usage: " COLOR_RESET;
+    result += program_name;
+    result += " <node_id> [flags]\n";
+
+    result += BOLD_CYAN "Available commands:\n" COLOR_RESET;
+    result += YELLOW "  text " H_BLACK "<" WHITE "message" H_BLACK ">" COLOR_RESET " -> " H_BLACK "<" WHITE "id" H_BLACK ">" COLOR_RESET ": Send a message to the node with id <id>.\n";
+    result += YELLOW "  file " H_BLACK "<" WHITE "path" H_BLACK ">" COLOR_RESET " -> " H_BLACK "<" WHITE "id" H_BLACK ">" COLOR_RESET ": Send a file to the node with id <id>.\n";
+    result += YELLOW "  dummy " H_BLACK "<" WHITE "size" H_BLACK ">" COLOR_RESET " -> " H_BLACK "<" WHITE "id" H_BLACK ">" COLOR_RESET ": Send a dummy message of size <size> to the node with id <id>.\n";
+    result += YELLOW "  exit: " COLOR_RESET "Terminates the process.\n";
+
+    result += BOLD_CYAN "\nAvailable flags:\n" COLOR_RESET;
+    result += YELLOW "  -s " H_BLACK "'" WHITE "<commands>" H_BLACK "'" COLOR_RESET ": Executes commands at process start.\n";
+    result += YELLOW "  -f " H_BLACK "<" WHITE "fault-list" H_BLACK ">" COLOR_RESET ": Defines faults for packet reception based on a fault list.\n";
+
+    result += YELLOW "  --help: " COLOR_RESET "Show the help message.\n";
+
+    return result;
+}
+
 std::vector<int> parse_fault_list(Reader& reader) {
     std::vector<int> values;
 
@@ -243,6 +264,10 @@ void client(ReliableCommunication& comm) {
         getline(std::cin, input);
 
         if (input == "exit") break;
+        if (input == "--help") {
+            std::cout << get_available_flags("program") << std::endl;
+            continue;
+        }
 
         std::vector<std::shared_ptr<Command>> commands;
 
@@ -251,7 +276,8 @@ void client(ReliableCommunication& comm) {
             commands = parse_commands(reader);
         }
         catch (std::invalid_argument& err) {
-            log_print(err.what());
+            std::cout << "Unknown command '" << input << "'.\n--help to see the list of commands." << std::endl;
+            continue;
         }
         catch (parse_error& err) {
             log_print(err.what());
