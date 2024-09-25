@@ -6,7 +6,14 @@
 
 - C++ 20
 
-## Como Testar
+## Como compilar
+
+Nosso projeto usa Makefile. Os comandos disponíveis são:
+- `make`: Compila a biblioteca estática e gera um arquivo `.a`;
+- `make test`: Compila o programa de testes e gera um executável `program`;
+- `make run id=<id>`: Automaticamente executa o programa de testes compilado passando `id` como argumento de id do nó. Exemplo: `make run id=1` é equivalente a `make test && ./program 1`.
+
+## Como testar
 
 Primeiro, compile o programa de testes
 
@@ -33,6 +40,25 @@ Isso significa que 0 está pronto para se comunicar. Por exemplo, digite o segui
 ```
 text "Hello!" -> 0
 ```
+Isso gerará a seguinte sequência de logs:
+```
+> text "Hello!" -> 0
+10:21:05 INFO [test/process_runner.cpp:147] (2): Executing command 'text', sending 'Hello!' to node 0.
+10:21:05 INFO [lib/channels/channel.cpp:79] (3): Sent packet SYN 0/0 to 127.0.0.1:3000 (12 bytes).
+10:21:06 INFO [lib/pipeline/fault_injection/fault_injection_layer.cpp:81] (4): Received SYN 0/0 from 127.0.0.1:3000 (0 bytes).
+10:21:06 INFO [lib/channels/channel.cpp:79] (3): Sent packet SYN+ACK 0/0 to 127.0.0.1:3000 (12 bytes).
+10:21:06 INFO [lib/pipeline/fault_injection/fault_injection_layer.cpp:81] (4): Received SYN+ACK 0/0 from 127.0.0.1:3000 (0 bytes).
+10:21:06 INFO [lib/communication/connection.cpp:170] (4): syn_received: connection established.
+10:21:06 INFO [lib/channels/channel.cpp:79] (3): Sent packet DATA+END 1/0 to 127.0.0.1:3000 (18 bytes).
+10:21:07 INFO [lib/pipeline/fault_injection/fault_injection_layer.cpp:81] (4): Received DATA+END 1/0 from 127.0.0.1:3000 (6 bytes).
+10:21:07 INFO [lib/channels/channel.cpp:79] (3): Sent packet ACK 1/0 to 127.0.0.1:3000 (12 bytes).
+Received 'Hello!' (6 bytes) from 0
+Saved message to file [messages/f7673f99-fae8-4139-ad28-8fe23cbd1eea].
+10:21:07 INFO [lib/pipeline/fault_injection/fault_injection_layer.cpp:81] (4): Received ACK 1/0 from 127.0.0.1:3000 (0 bytes).
+10:21:07 INFO [lib/pipeline/transmission/transmission_queue.cpp:140] (4): Transmission 127.0.0.1:3000 / 1 is completed. Sent 1 fragments, 6 bytes total.
+10:21:07 INFO [test/process_runner.cpp:186] (2): Sent message.
+>
+```
 
 É possível executar múltiplos comandos em paralelo escrevendo-os na mesma linha separados por `;`,
 
@@ -56,5 +82,5 @@ Isso seria equivalente a executar `"hi" -> 0` manualmente na linha de comando as
 - `exit`. Encerra o processo.
 
 ### Flags disponíveis
-- `-s '<comandos>'`: Executa `comando` assim que o processo for iniciado.
+- `-s '<comandos>'`: Executa `comandos` assim que o processo for iniciado.
 - `-f <fault-list>`: Define as falhas que devem ocorrer na recepção de cada pacote com base em uma lista de falhas fornecida. Exemplo: `./program 2 -f [0, L, 1000, 500]` fará com que o nó 2 receba o primeiro pacote sem atraso, perca o segundo, receba o terceiro com 1000ms de atraso e o quarto com 500ms de atraso, respectivamente. Obs: Todos os atrasos são relativos ao momento que o pacote é recebido pela porta UDP, logo, não sendo o atraso real do pacote na rede.
