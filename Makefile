@@ -38,12 +38,10 @@ default_target: release
 
 
 .PHONY: release
-release:
-	@$(MAKE) run $(id)
+release: run
 
 .PHONY: all
-all:
-	@$(MAKE) lib
+all: lib
 
 
 # make dirs
