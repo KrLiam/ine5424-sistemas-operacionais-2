@@ -1,7 +1,7 @@
 #include "pipeline/checksum/checksum_layer.h"
 #include "utils/log.h"
 
-ChecksumLayer::ChecksumLayer(PipelineHandler handler) : PipelineStep(handler, nullptr) {}
+ChecksumLayer::ChecksumLayer(PipelineHandler handler) : PipelineStep(handler) {}
 
 ChecksumLayer::~ChecksumLayer() {}
 

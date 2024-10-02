@@ -12,9 +12,9 @@ Pipeline::Pipeline(GroupRegistry *gr, const FaultConfig& fault_config) : gr(gr)
 
     layers.push_back(new ChannelLayer(handler.at_index(CHANNEL_LAYER), gr->get_local_node().get_address()));
     layers.push_back(fault_layer);
-    layers.push_back(new TransmissionLayer(handler.at_index(TRANSMISSION_LAYER), gr));
+    layers.push_back(new TransmissionLayer(handler.at_index(TRANSMISSION_LAYER), gr->get_nodes()));
     layers.push_back(new ChecksumLayer(handler.at_index(CHECKSUM_LAYER)));
-    layers.push_back(new FragmentationLayer(handler.at_index(FRAGMENTATION_LAYER), gr));
+    layers.push_back(new FragmentationLayer(handler.at_index(FRAGMENTATION_LAYER)));
 
     attach_layers();
 }

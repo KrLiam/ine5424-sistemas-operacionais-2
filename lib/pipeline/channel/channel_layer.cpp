@@ -3,7 +3,7 @@
 #include "pipeline/channel/channel_layer.h"
 #include "utils/log.h"
 
-ChannelLayer::ChannelLayer(PipelineHandler handler, SocketAddress local_address) : PipelineStep(handler, nullptr)
+ChannelLayer::ChannelLayer(PipelineHandler handler, SocketAddress local_address) : PipelineStep(handler)
 {
     channel = std::make_unique<Channel>(local_address);
     receiver_thread = std::thread([this]()

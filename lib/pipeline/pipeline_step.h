@@ -9,15 +9,13 @@
 #include "core/event_bus.h"
 
 class ReliableCommunication;
-class GroupRegistry;
 
 class PipelineStep
 {
 protected:
     PipelineHandler handler;
-    GroupRegistry *gr;
 public:
-    PipelineStep(PipelineHandler &handler, GroupRegistry *gr);
+    PipelineStep(PipelineHandler &handler);
 
     virtual ~PipelineStep();
 

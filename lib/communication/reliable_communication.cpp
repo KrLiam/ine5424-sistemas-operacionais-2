@@ -56,7 +56,7 @@ ReceiveResult ReliableCommunication::receive(char *m)
         log_warn("User's buffer is smaller than the message; truncating it.");
     }
 
-    Node node = gr->get_node(message.origin);
+    Node node = gr->get_nodes().get_node(message.origin);
     return ReceiveResult{
         length : len,
         truncated_bytes : message.length - len,
@@ -102,7 +102,7 @@ Message ReliableCommunication::create_message(std::string receiver_id, const Mes
         transmission_uuid : UUID(""),
         number : 0,
         origin : gr->get_local_node().get_address(),
-        destination : gr->get_node(receiver_id).get_address(),
+        destination : gr->get_nodes().get_node(receiver_id).get_address(),
         type : MessageType::APPLICATION,
         data : {0},
         length : data.size,

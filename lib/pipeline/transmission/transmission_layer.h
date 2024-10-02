@@ -16,6 +16,7 @@ class TransmissionLayer : public PipelineStep
 {
 private:
     Timer timer;
+    const NodeMap &nodes;
 
     std::unordered_map<std::string, std::unique_ptr<TransmissionQueue>> queue_map;
 
@@ -27,7 +28,7 @@ private:
     TransmissionQueue& get_queue(const std::string& id);
 
 public:
-    TransmissionLayer(PipelineHandler handler, GroupRegistry *gr);
+    TransmissionLayer(PipelineHandler handler, const NodeMap &nodes);
     ~TransmissionLayer() override;
 
     void attach(EventBus&);

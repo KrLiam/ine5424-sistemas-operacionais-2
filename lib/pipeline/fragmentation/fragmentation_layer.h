@@ -16,11 +16,11 @@ class FragmentationLayer final : public PipelineStep
 
     std::string get_message_identifier(Packet p)
     {
-        return format("%s/%s", gr->get_node(p.meta.origin).get_address().to_string().c_str(), std::to_string(p.data.header.get_message_number()).c_str());
+        return format("%s/%s", p.meta.origin.to_string().c_str(), std::to_string(p.data.header.get_message_number()).c_str());
     }
 
 public:
-    FragmentationLayer(PipelineHandler handler, GroupRegistry *gr);
+    FragmentationLayer(PipelineHandler handler);
     ~FragmentationLayer() override;
 
     void attach(EventBus&);

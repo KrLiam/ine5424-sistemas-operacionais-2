@@ -17,9 +17,7 @@ public:
     GroupRegistry(std::string local_id);
     ~GroupRegistry();
 
-    const Node &get_node(std::string id);
-    const Node &get_node(SocketAddress address);
-    const std::map<std::string, Node> &get_nodes();
+    const NodeMap &get_nodes();
     const Node &get_local_node();
 
     bool has_connection(std::string id) {
@@ -28,7 +26,7 @@ public:
 
     Connection& get_connection(SocketAddress address)
     {
-        return get_connection(get_node(address));
+        return get_connection(nodes.get_node(address));
     }
     Connection& get_connection(const Node& node)
     {
@@ -50,7 +48,7 @@ public:
 private:
     std::string local_id;
 
-    std::map<std::string, Node> nodes;
+    NodeMap nodes;
     std::map<std::string, Connection> connections;
 
     void read_nodes_from_configuration(std::string local_id);

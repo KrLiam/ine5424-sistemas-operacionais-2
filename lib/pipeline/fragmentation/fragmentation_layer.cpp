@@ -1,8 +1,8 @@
 #include "pipeline/fragmentation/fragmentation_layer.h"
 #include <cmath>
 
-FragmentationLayer::FragmentationLayer(PipelineHandler handler, GroupRegistry *gr)
-    : PipelineStep(handler, gr)
+FragmentationLayer::FragmentationLayer(PipelineHandler handler)
+    : PipelineStep(handler)
 {
 }
 

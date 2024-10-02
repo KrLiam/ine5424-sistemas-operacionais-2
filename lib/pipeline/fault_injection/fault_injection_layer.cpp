@@ -12,7 +12,7 @@ FaultInjectionLayer::FaultInjectionLayer(PipelineHandler handler) : FaultInjecti
 FaultInjectionLayer::FaultInjectionLayer(
     PipelineHandler handler, int min_delay, int max_delay, double lose_chance
 ) :
-    PipelineStep(handler, nullptr),
+    PipelineStep(handler),
     min_delay(min_delay),
     max_delay(max_delay),
     lose_chance(lose_chance)

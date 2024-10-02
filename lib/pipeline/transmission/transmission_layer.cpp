@@ -1,6 +1,7 @@
 #include "pipeline/transmission/transmission_layer.h"
 
-TransmissionLayer::TransmissionLayer(PipelineHandler handler, GroupRegistry *gr) : PipelineStep(handler, gr)
+TransmissionLayer::TransmissionLayer(PipelineHandler handler, const NodeMap &nodes)
+    : PipelineStep(handler), nodes(nodes)
 {
 }
 
@@ -32,7 +33,7 @@ void TransmissionLayer::send(Packet packet)
         return;
     }
 
-    const Node& destination = gr->get_node(packet.meta.destination);
+    const Node& destination = nodes.get_node(packet.meta.destination);
     const std::string& id = destination.get_id();
     TransmissionQueue& queue = get_queue(id);
     queue.add_packet(packet);
@@ -41,7 +42,7 @@ void TransmissionLayer::send(Packet packet)
 void TransmissionLayer::ack_received(const PacketAckReceived& event) {    
     Packet& packet = event.ack_packet;
 
-    const Node& origin = gr->get_node(packet.meta.origin);
+    const Node& origin = nodes.get_node(packet.meta.origin);
     const std::string& id = origin.get_id();
     TransmissionQueue& queue = get_queue(id);
 
@@ -51,7 +52,7 @@ void TransmissionLayer::ack_received(const PacketAckReceived& event) {
 void TransmissionLayer::pipeline_cleanup(const PipelineCleanup& event) {    
     Message& message = event.message;
 
-    const Node& origin = gr->get_node(message.destination);
+    const Node& origin = nodes.get_node(message.destination);
     const std::string& id = origin.get_id();
     TransmissionQueue& queue = get_queue(id);
 
@@ -62,7 +63,7 @@ void TransmissionLayer::receive(Packet packet)
 {
     log_trace("Packet [", packet.to_string(PacketFormat::RECEIVED), "] received on transmission layer.");
 
-    if (!gr->packet_originates_from_group(packet))
+    if (!nodes.contains(packet.meta.origin))
     {
         log_debug("Packet ", packet.to_string(PacketFormat::RECEIVED), " does not originate from group; dropping.");
         return;
