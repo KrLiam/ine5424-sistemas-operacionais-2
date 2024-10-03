@@ -18,7 +18,7 @@ private:
     Timer timer;
     const NodeMap &nodes;
 
-    std::unordered_map<MessageIdentity, std::unique_ptr<TransmissionQueue>> queue_map;
+    std::unordered_map<MessageIdentity, std::shared_ptr<TransmissionQueue>> queue_map;
 
     Observer<PacketAckReceived> obs_ack_received;
     void ack_received(const PacketAckReceived& event);

@@ -9,8 +9,10 @@ TransmissionLayer::~TransmissionLayer()
 {
 }
 TransmissionQueue& TransmissionLayer::get_queue(const MessageIdentity& id) {
-    if (!queue_map.contains(id))
-        queue_map.insert({id, std::make_unique<TransmissionQueue>(timer, handler, nodes)});
+    if (!queue_map.contains(id)) {
+        auto queue = std::make_shared<TransmissionQueue>(timer, handler, nodes);
+        queue_map.insert({id, queue});
+    }
 
     return *queue_map.at(id);
 }
@@ -24,6 +26,9 @@ void TransmissionLayer::attach(EventBus& bus) {
 
 void TransmissionLayer::send(Packet packet)
 {
+    const PacketMetadata& meta = packet.meta;
+    const PacketHeader& header = packet.data.header;
+
     log_trace("Packet [", packet.to_string(PacketFormat::SENT), "] sent to transmission layer.");
 
     if (!packet.meta.expects_ack)
@@ -33,7 +38,7 @@ void TransmissionLayer::send(Packet packet)
         return;
     }
 
-    TransmissionQueue& queue = get_queue(packet.data.header.id);
+    TransmissionQueue& queue = get_queue({meta.destination, header.id.msg_num, header.id.sequence_type});
     queue.add_packet(packet);
 }
 
@@ -47,7 +52,7 @@ void TransmissionLayer::ack_received(const PacketAckReceived& event) {
 void TransmissionLayer::pipeline_cleanup(const PipelineCleanup& event) {    
     Message& message = event.message;
 
-    TransmissionQueue& queue = get_queue(message.id);
+    TransmissionQueue& queue = get_queue({message.destination, message.id.msg_num, message.id.sequence_type});
     queue.reset();
 }
 
