@@ -29,7 +29,7 @@ void Connection::observe_pipeline()
 void Connection::message_defragmentation_is_complete(const MessageDefragmentationIsComplete &event)
 {
     Packet &packet = event.packet;
-    if (packet.meta.origin != remote_node.get_address())
+    if (packet.data.header.id.origin != remote_node.get_address())
         return;
 
     if (application_buffer.can_produce())
@@ -283,18 +283,24 @@ void Connection::last_ack(Packet p)
 
 void Connection::send_flag(unsigned char flags)
 {
+    MessageIdentity id = {
+        origin : local_node.get_address(),
+        msg_num : next_number,
+        sequence_type : MessageSequenceType::UNICAST
+    };
+
     PacketHeader header;
     memset(&header, 0, sizeof(PacketHeader));
-    header.msg_num = next_number;
+
+    header.id = id;
     header.type = MessageType::CONTROL;
-    memcpy(reinterpret_cast<unsigned char *>(&header) + 10, &flags, 1);
+    header.flags = flags;
 
     PacketData data;
     memset(&data, 0, sizeof(PacketData));
     data.header = header;
 
     Packet packet;
-    packet.meta.origin = local_node.get_address();
     packet.meta.destination = remote_node.get_address();
     packet.data = data;
 
@@ -307,20 +313,18 @@ void Connection::send_ack(Packet packet)
     memset(&data, 0, sizeof(PacketData));
 
     data.header = {
-                   msg_num : packet.data.header.msg_num,
-                   fragment_num : packet.data.header.fragment_num,
-                   checksum : 0,
-                   ack : 1,
-                   rst : 0,
-                   syn : 0,
-                   fin : 0,
-                   reserved : 0,
-                   end : 0,
-                   type : MessageType::CONTROL
-                   };
+        id : {
+            origin : local_node.get_address(),
+            msg_num : packet.data.header.id.msg_num,
+            sequence_type : packet.data.header.id.sequence_type
+        },
+        fragment_num : packet.data.header.fragment_num,
+        checksum : 0,
+        flags : ACK,
+        type : MessageType::CONTROL
+    };
     PacketMetadata meta = {
         transmission_uuid : UUID(""),
-        origin : local_node.get_address(),
         destination : remote_node.get_address(),
         message_length : 0,
         expects_ack : 0

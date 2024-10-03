@@ -39,7 +39,7 @@ void FragmentAssembler::add_packet(Packet &packet)
 
     message.number = header.get_message_number();
     message.type = header.get_message_type();
-    message.origin = meta.origin;
+    message.origin = header.id.origin;
     message.destination = meta.destination;
 
     if (header.is_end())

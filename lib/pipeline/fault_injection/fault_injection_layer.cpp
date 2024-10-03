@@ -53,7 +53,7 @@ void FaultInjectionLayer::receive(Packet packet) {
     int range_length = max_delay - min_delay;
     if (delay == -1 && range_length) {
         delay = min_delay + std::rand() % range_length;
-        [[maybe_unused]] unsigned int msg_num = packet.data.header.msg_num;
+        [[maybe_unused]] unsigned int msg_num = packet.data.header.id.msg_num;
         [[maybe_unused]] unsigned int fragment_num = packet.data.header.fragment_num;
         
         log_debug(

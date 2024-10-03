@@ -18,7 +18,6 @@ Packet Fragmenter::create_packet() {
 
     PacketMetadata meta = {
         transmission_uuid : message.transmission_uuid,
-        origin : message.origin,
         destination : message.destination,
         message_length : message_length,
         expects_ack : 1
@@ -26,15 +25,14 @@ Packet Fragmenter::create_packet() {
 
     PacketData data = {
         header : {
-            msg_num : message.number,
+            id : {
+                origin : message.origin,
+                msg_num : message.number,
+                sequence_type : MessageSequenceType::UNICAST // TODO definir na msg
+            },
             fragment_num : i,
             checksum : 0,
-            ack : 0,
-            rst : 0,
-            syn : 0,
-            fin : 0,
-            reserved: 0,
-            end : last_fragment,
+            flags : last_fragment ? END : 0,
             type : message.type,
         },
         message_data : 0

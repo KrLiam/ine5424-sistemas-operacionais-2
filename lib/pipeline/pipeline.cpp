@@ -87,6 +87,6 @@ void Pipeline::receive(Packet packet, int step_index)
         return;
     }
     // TODO: na nova tentativa de conexão, dá pra chamar um metodo q faz a msm coisa q o establish_connections(), só q pra uma só
-    Connection &conn = gr->get_connection(packet.meta.origin);
+    Connection &conn = gr->get_connection(packet.data.header.id.origin);
     conn.receive(packet);
 }

@@ -2,22 +2,46 @@
 
 #include "core/message.h"
 
+
+enum MessageSequenceType {
+    UNICAST = 0,
+    BROADCAST = 1
+};
+
+struct MessageIdentity {
+    SocketAddress origin;
+    uint32_t msg_num;
+    MessageSequenceType sequence_type;
+
+    bool operator==(const MessageIdentity& other) const;
+};
+
+template<> struct std::hash<MessageIdentity> {
+    std::size_t operator()(const MessageIdentity& id) const {
+        return std::hash<SocketAddress>()(id.origin)
+            ^ std::hash<uint32_t>()(id.msg_num)
+            ^ std::hash<uint32_t>()(id.sequence_type);
+    }
+};
+
+
+const uint8_t ACK = 0b10000000;
+const uint8_t RST = 0b01000000;
+const uint8_t SYN = 0b00100000;
+const uint8_t FIN = 0b00010000;
+const uint8_t END = 0b00001000;
+
 struct PacketHeader
 {
-    unsigned int msg_num : 32;
-    unsigned int fragment_num : 32;
-    unsigned int checksum : 16;
-    unsigned int ack : 1;
-    unsigned int rst : 1;
-    unsigned int syn : 1;
-    unsigned int fin : 1;
-    unsigned int reserved: 4;
-    unsigned int end : 1;
-    unsigned int type : 4;
+    MessageIdentity id;
+    uint32_t fragment_num;
+    uint16_t checksum;
+    uint8_t flags;
+    uint8_t type;
 
     uint32_t get_message_number() const
     {
-        return (uint32_t)msg_num;
+        return id.msg_num;
     }
 
     uint32_t get_fragment_number() const
@@ -27,27 +51,27 @@ struct PacketHeader
 
     bool is_ack() const
     {
-        return (bool)ack;
+        return flags & ACK;
     }
 
     bool is_end() const
     {
-        return (bool)end;
+        return flags & END;
     }
 
     bool is_syn() const
     {
-        return (bool)syn;
+        return flags & SYN;
     }
 
     bool is_rst() const
     {
-        return (bool)rst;
+        return flags & RST;
     }
 
     bool is_fin() const
     {
-        return (bool)fin;
+        return flags & FIN;
     }
 
     MessageType get_message_type() const
@@ -68,7 +92,6 @@ struct PacketData
 struct PacketMetadata
 {
     UUID transmission_uuid{""};
-    SocketAddress origin = {{0, 0, 0, 0}, 0};
     SocketAddress destination = {{0, 0, 0, 0}, 0};
     int message_length = 0;
     bool expects_ack = 0;
@@ -99,14 +122,14 @@ struct Packet
         if (header.is_ack()) flags += flags.length() ? "+ACK" : "ACK";
         if (header.is_end()) flags += flags.length() ? "+END" : "SYN";
 
-        std::string origin = meta.origin.to_string();
+        std::string origin = data.header.id.origin.to_string();
         std::string destination = meta.destination.to_string();
 
         if (type == PacketFormat::RECEIVED) {
             return format(
                 "%s %u/%u from %s",
                 flags.c_str(),
-                data.header.msg_num,
+                data.header.id.msg_num,
                 data.header.fragment_num,
                 origin.c_str()
             );
@@ -116,16 +139,17 @@ struct Packet
             return format(
                 "%s %u/%u to %s",
                 flags.c_str(),
-                data.header.msg_num,
+                data.header.id.msg_num,
                 data.header.fragment_num,
                 destination.c_str()
             );
         }
 
         return format(
-            "%s %u/%u from %s to %s",
+            "%u %s %u/%u from %s to %s",
+            header.flags,
             flags.c_str(),
-            data.header.msg_num,
+            data.header.id.msg_num,
             data.header.fragment_num,
             origin.c_str(),
             destination.c_str()
@@ -134,7 +158,10 @@ struct Packet
 
     bool operator==(const Packet &other) const
     {
-        return meta.origin == other.meta.origin && meta.destination == other.meta.destination && meta.message_length == other.meta.message_length && data.header.msg_num == other.data.header.msg_num && data.header.fragment_num == other.data.header.fragment_num;
+        return meta.destination == other.meta.destination
+            && meta.message_length == other.meta.message_length
+            && data.header.id == other.data.header.id
+            && data.header.fragment_num == other.data.header.fragment_num;
     }
 };
 

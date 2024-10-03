@@ -8,10 +8,10 @@ TransmissionLayer::TransmissionLayer(PipelineHandler handler, const NodeMap &nod
 TransmissionLayer::~TransmissionLayer()
 {
 }
-
 TransmissionQueue& TransmissionLayer::get_queue(const std::string& id) {
     if (!queue_map.contains(id))
         queue_map.insert({id, std::make_unique<TransmissionQueue>(timer, handler, nodes)});
+
     return *queue_map.at(id);
 }
 
@@ -33,16 +33,17 @@ void TransmissionLayer::send(Packet packet)
         return;
     }
 
-    const Node& destination = nodes.get_node(packet.meta.destination);
-    const std::string& id = destination.get_id();
+    const Node& origin = nodes.get_node(packet.data.header.id.origin);
+    const std::string& id = origin.get_id();
     TransmissionQueue& queue = get_queue(id);
+    
     queue.add_packet(packet);
 }
 
 void TransmissionLayer::ack_received(const PacketAckReceived& event) {    
     Packet& packet = event.ack_packet;
 
-    const Node& origin = nodes.get_node(packet.meta.origin);
+    const Node& origin = nodes.get_node(packet.data.header.id.origin);
     const std::string& id = origin.get_id();
     TransmissionQueue& queue = get_queue(id);
 
@@ -63,7 +64,7 @@ void TransmissionLayer::receive(Packet packet)
 {
     log_trace("Packet [", packet.to_string(PacketFormat::RECEIVED), "] received on transmission layer.");
 
-    if (!nodes.contains(packet.meta.origin))
+    if (!nodes.contains(packet.data.header.id.origin))
     {
         log_debug("Packet ", packet.to_string(PacketFormat::RECEIVED), " does not originate from group; dropping.");
         return;
