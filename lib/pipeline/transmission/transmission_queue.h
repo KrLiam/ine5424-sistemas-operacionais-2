@@ -6,6 +6,7 @@
 #include <map>
 
 #include "core/packet.h"
+#include "core/node.h"
 #include "utils/date.h"
 #include "pipeline/pipeline_handler.h"
 
@@ -13,16 +14,20 @@ struct QueueEntry {
     Packet packet;
     int timeout_id = -1;
     int tries = 0;
+    std::unordered_set<SocketAddress> pending_receivers;
+
+    QueueEntry(const Packet& packet);
 };
+
 
 class TransmissionQueue
 {
 private:
     Timer& timer;
     PipelineHandler& handler;
+    const NodeMap& nodes;
 
     std::map<uint32_t, QueueEntry> entries;
-
     std::unordered_set<uint32_t> pending;
 
     uint32_t message_num = UINT32_MAX;
@@ -35,7 +40,7 @@ private:
 
     void timeout(uint32_t num);
 public:
-    TransmissionQueue(Timer& timer, PipelineHandler& handler);
+    TransmissionQueue(Timer& timer, PipelineHandler& handler, const NodeMap& nodes);
 
     uint32_t get_total_bytes();
 

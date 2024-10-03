@@ -10,7 +10,7 @@ Pipeline::Pipeline(GroupRegistry *gr, const FaultConfig& fault_config) : gr(gr)
     FaultInjectionLayer* fault_layer = new FaultInjectionLayer(handler.at_index(FAULT_INJECTION_LAYER), 200, 500, 0);
     fault_layer->enqueue_fault(fault_config.faults);
 
-    layers.push_back(new ChannelLayer(handler.at_index(CHANNEL_LAYER), gr->get_local_node().get_address()));
+    layers.push_back(new ChannelLayer(handler.at_index(CHANNEL_LAYER), gr->get_local_node().get_address(), gr->get_nodes()));
     layers.push_back(fault_layer);
     layers.push_back(new TransmissionLayer(handler.at_index(TRANSMISSION_LAYER), gr->get_nodes()));
     layers.push_back(new ChecksumLayer(handler.at_index(CHECKSUM_LAYER)));

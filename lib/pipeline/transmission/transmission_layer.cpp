@@ -11,7 +11,7 @@ TransmissionLayer::~TransmissionLayer()
 
 TransmissionQueue& TransmissionLayer::get_queue(const std::string& id) {
     if (!queue_map.contains(id))
-        queue_map.insert({id, std::make_unique<TransmissionQueue>(timer, handler)});
+        queue_map.insert({id, std::make_unique<TransmissionQueue>(timer, handler, nodes)});
     return *queue_map.at(id);
 }
 

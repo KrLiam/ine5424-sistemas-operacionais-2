@@ -45,6 +45,8 @@ public:
 
     std::map<std::string, Node>::iterator begin();
     std::map<std::string, Node>::iterator end();
+    std::map<std::string, Node>::const_iterator begin() const;
+    std::map<std::string, Node>::const_iterator end() const;
 
     void clear();
 };

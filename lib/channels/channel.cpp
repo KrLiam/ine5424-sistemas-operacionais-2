@@ -56,6 +56,8 @@ void Channel::send(Packet packet)
     [[maybe_unused]] const PacketHeader& header = packet.data.header;
     const SocketAddress destination = packet.meta.destination;
 
+    if (destination == BROADCAST_ADDRESS) return;
+
     send_mutex.lock();
 
     out_address.sin_port = htons(destination.port);

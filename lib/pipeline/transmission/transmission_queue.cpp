@@ -2,18 +2,38 @@
 #include "core/constants.h"
 #include "core/event.h"
 
-TransmissionQueue::TransmissionQueue(Timer& timer, PipelineHandler& handler)
-    : timer(timer), handler(handler)
+
+QueueEntry::QueueEntry(const Packet& packet) : packet(packet) {}
+
+
+TransmissionQueue::TransmissionQueue(Timer& timer, PipelineHandler& handler, const NodeMap& nodes)
+    : timer(timer), handler(handler), nodes(nodes)
 {
 }
 
 void TransmissionQueue::send(uint32_t num) {
     QueueEntry& entry = entries.at(num);
+    Packet& packet = entry.packet;
+    const SocketAddress& receiver_address = packet.meta.destination;
 
-    handler.forward_send(entry.packet);
+    handler.forward_send(packet);
     entry.tries++;
 
+    if (receiver_address == BROADCAST_ADDRESS) {
+        for (const auto& [id, node] : nodes) {
+            const SocketAddress& address = node.get_address();
+            if (address == BROADCAST_ADDRESS) continue; // teste
+
+            entry.pending_receivers.emplace(address);
+            log_info("Added pending ack ", num, " of remote ", address.to_string());
+        }
+    }
+    else {
+        entry.pending_receivers.emplace(receiver_address);
+    }
+
     pending.emplace(num);
+
     entry.timeout_id = timer.add(ACK_TIMEOUT, [this, num]() { timeout(num); });
 }
 
@@ -100,7 +120,7 @@ void TransmissionQueue::add_packet(const Packet& packet)
         return;
     }
     
-    entries.emplace(num, QueueEntry{packet : packet});
+    entries.emplace(num, QueueEntry(packet));
     send(num);
 
     if (packet.data.header.is_end())
@@ -113,22 +133,26 @@ void TransmissionQueue::receive_ack(const Packet& ack_packet)
 {
     uint32_t msg_num = ack_packet.data.header.get_message_number();
     uint32_t frag_num = ack_packet.data.header.get_fragment_number();
+    const SocketAddress& receiver_address = ack_packet.meta.origin;
 
     if (msg_num != message_num) return;
 
     if (!entries.contains(frag_num)) return;
     QueueEntry& entry = entries.at(frag_num);
-    
     const Packet& packet = entry.packet;
+
+    entry.pending_receivers.erase(receiver_address);
+    log_info("Removing pending ack ", frag_num, " of remote ", receiver_address.to_string(), ". over: ", !entry.pending_receivers.size());
+    if (entry.pending_receivers.size()) return;
+
+    pending.erase(frag_num);
+    log_info("Completed: ", completed());
 
     if (entry.timeout_id != -1)
     {
-        log_debug("Cancelling timer of packet ", message_num, "/", frag_num, ".");
         timer.cancel(entry.timeout_id);
         entry.timeout_id = -1;
     }
-
-    pending.erase(frag_num);
 
     mutex_timeout.lock();
     if (completed()) {

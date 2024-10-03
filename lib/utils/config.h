@@ -49,6 +49,18 @@ struct IPv4
     }
 };
 
+template<> struct std::hash<IPv4> {
+    std::size_t operator()(const IPv4& p) const {
+        return std::hash<unsigned char>()(p.a)
+            ^ std::hash<unsigned char>()(p.b)
+            ^ std::hash<unsigned char>()(p.c)
+            ^ std::hash<unsigned char>()(p.d);
+    }
+};
+
+const IPv4 BROADCAST_ADDRESS = {255, 255, 255, 255};
+
+
 struct SocketAddress
 {
     IPv4 address;
@@ -62,7 +74,18 @@ struct SocketAddress
     {
         return other.address == address && other.port == port;
     }
+    bool operator==(const IPv4& address) const
+    {
+        return this->address == address;
+    }
 };
+
+template<> struct std::hash<SocketAddress> {
+    std::size_t operator()(const SocketAddress& p) const {
+        return std::hash<IPv4>()(p.address) ^ std::hash<int>()(p.port);
+    }
+};
+
 
 struct NodeConfig
 {

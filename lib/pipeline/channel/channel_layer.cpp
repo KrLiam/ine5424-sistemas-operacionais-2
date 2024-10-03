@@ -3,7 +3,8 @@
 #include "pipeline/channel/channel_layer.h"
 #include "utils/log.h"
 
-ChannelLayer::ChannelLayer(PipelineHandler handler, SocketAddress local_address) : PipelineStep(handler)
+ChannelLayer::ChannelLayer(PipelineHandler handler, SocketAddress local_address, const NodeMap& nodes)
+    : PipelineStep(handler), nodes(nodes)
 {
     channel = std::make_unique<Channel>(local_address);
     receiver_thread = std::thread([this]()
@@ -36,7 +37,18 @@ void ChannelLayer::receiver()
 
 void ChannelLayer::send(Packet packet)
 {
-    channel->send(packet);
+    const SocketAddress& destination = packet.meta.destination;
+
+    if (destination == BROADCAST_ADDRESS) {
+        for (const auto& [id, node] : nodes) {
+
+            packet.meta.destination = node.get_address();
+            channel->send(packet);
+        }
+    }
+    else {
+        channel->send(packet);
+    }
 }
 
 void ChannelLayer::receive(Packet packet)

@@ -77,6 +77,14 @@ std::map<std::string, Node>::iterator NodeMap::end() {
     return nodes.end();
 }
 
+std::map<std::string, Node>::const_iterator NodeMap::begin() const {
+    return nodes.begin();
+}
+
+std::map<std::string, Node>::const_iterator NodeMap::end() const {
+    return nodes.end();
+}
+
 void NodeMap::clear() {
     nodes.clear();
 }
