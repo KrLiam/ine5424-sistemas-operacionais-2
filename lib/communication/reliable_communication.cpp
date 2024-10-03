@@ -56,11 +56,11 @@ ReceiveResult ReliableCommunication::receive(char *m)
         log_warn("User's buffer is smaller than the message; truncating it.");
     }
 
-    Node node = gr->get_nodes().get_node(message.origin);
+    Node node = gr->get_nodes().get_node(message.id.origin);
     return ReceiveResult{
         length : len,
         truncated_bytes : message.length - len,
-        sender_address : message.origin,
+        sender_address : message.id.origin,
         sender_id : node.get_id()
     };
 }
@@ -99,9 +99,12 @@ bool ReliableCommunication::send(std::string id, MessageData data)
 Message ReliableCommunication::create_message(std::string receiver_id, const MessageData &data)
 {
     Message m = {
+        id : {
+            origin : gr->get_local_node().get_address(),
+            msg_num : 0,
+            sequence_type : MessageSequenceType::UNICAST
+        },
         transmission_uuid : UUID(""),
-        number : 0,
-        origin : gr->get_local_node().get_address(),
         destination : gr->get_nodes().get_node(receiver_id).get_address(),
         type : MessageType::APPLICATION,
         data : {0},

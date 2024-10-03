@@ -500,7 +500,7 @@ void Connection::update()
 
 void Connection::send(Message message)
 {
-    message.number = new_message_number();
+    message.id.msg_num = new_message_number();
     pipeline.send(message);
 }
 
@@ -521,13 +521,13 @@ void Connection::receive(Message message)
         return;
     }
 
-    if (message.number < expected_number)
+    if (message.id.msg_num < expected_number)
     {
         log_warn("Message ", message.to_string(), " was already received; dropping it.");
         return;
     }
 
-    if (message.number > expected_number)
+    if (message.id.msg_num > expected_number)
     {
         log_warn("Message ", message.to_string(), " is unexpected, current number expected is ", expected_number, "; dropping it.");
         return;

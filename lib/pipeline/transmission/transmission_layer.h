@@ -18,14 +18,14 @@ private:
     Timer timer;
     const NodeMap &nodes;
 
-    std::unordered_map<std::string, std::unique_ptr<TransmissionQueue>> queue_map;
+    std::unordered_map<MessageIdentity, std::unique_ptr<TransmissionQueue>> queue_map;
 
     Observer<PacketAckReceived> obs_ack_received;
     void ack_received(const PacketAckReceived& event);
     Observer<PipelineCleanup> obs_pipeline_cleanup;
     void pipeline_cleanup(const PipelineCleanup& event);
 
-    TransmissionQueue& get_queue(const std::string& id);
+    TransmissionQueue& get_queue(const MessageIdentity& id);
 
 public:
     TransmissionLayer(PipelineHandler handler, const NodeMap &nodes);

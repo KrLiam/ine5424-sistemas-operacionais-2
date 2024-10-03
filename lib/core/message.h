@@ -13,13 +13,34 @@ enum MessageType
     CONTROL = 1,
 };
 
+enum MessageSequenceType {
+    UNICAST = 0,
+    BROADCAST = 1
+};
+
+struct MessageIdentity {
+    SocketAddress origin;
+    uint32_t msg_num;
+    MessageSequenceType sequence_type;
+
+    bool operator==(const MessageIdentity& other) const;
+};
+
+template<> struct std::hash<MessageIdentity> {
+    std::size_t operator()(const MessageIdentity& id) const {
+        return std::hash<SocketAddress>()(id.origin)
+            ^ std::hash<uint32_t>()(id.msg_num)
+            ^ std::hash<uint32_t>()(id.sequence_type);
+    }
+};
+
+
 struct Message
 {
     inline const static int MAX_SIZE = 65536;
 
+    MessageIdentity id;
     UUID transmission_uuid;
-    uint32_t number;
-    SocketAddress origin;
     SocketAddress destination;
     MessageType type;
 
@@ -28,7 +49,7 @@ struct Message
 
     std::string to_string() const
     {
-        return format("%s -> %s", origin.to_string().c_str(), destination.to_string().c_str());
+        return format("%s -> %s", id.origin.to_string().c_str(), destination.to_string().c_str());
     }
 
 };

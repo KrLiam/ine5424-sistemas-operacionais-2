@@ -8,7 +8,7 @@ TransmissionLayer::TransmissionLayer(PipelineHandler handler, const NodeMap &nod
 TransmissionLayer::~TransmissionLayer()
 {
 }
-TransmissionQueue& TransmissionLayer::get_queue(const std::string& id) {
+TransmissionQueue& TransmissionLayer::get_queue(const MessageIdentity& id) {
     if (!queue_map.contains(id))
         queue_map.insert({id, std::make_unique<TransmissionQueue>(timer, handler, nodes)});
 
@@ -33,30 +33,21 @@ void TransmissionLayer::send(Packet packet)
         return;
     }
 
-    const Node& origin = nodes.get_node(packet.data.header.id.origin);
-    const std::string& id = origin.get_id();
-    TransmissionQueue& queue = get_queue(id);
-    
+    TransmissionQueue& queue = get_queue(packet.data.header.id);
     queue.add_packet(packet);
 }
 
 void TransmissionLayer::ack_received(const PacketAckReceived& event) {    
     Packet& packet = event.ack_packet;
 
-    const Node& origin = nodes.get_node(packet.data.header.id.origin);
-    const std::string& id = origin.get_id();
-    TransmissionQueue& queue = get_queue(id);
-
+    TransmissionQueue& queue = get_queue(packet.data.header.id);
     queue.receive_ack(packet);
 }
 
 void TransmissionLayer::pipeline_cleanup(const PipelineCleanup& event) {    
     Message& message = event.message;
 
-    const Node& origin = nodes.get_node(message.destination);
-    const std::string& id = origin.get_id();
-    TransmissionQueue& queue = get_queue(id);
-
+    TransmissionQueue& queue = get_queue(message.id);
     queue.reset();
 }
 

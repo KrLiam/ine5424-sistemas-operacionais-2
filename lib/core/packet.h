@@ -3,28 +3,6 @@
 #include "core/message.h"
 
 
-enum MessageSequenceType {
-    UNICAST = 0,
-    BROADCAST = 1
-};
-
-struct MessageIdentity {
-    SocketAddress origin;
-    uint32_t msg_num;
-    MessageSequenceType sequence_type;
-
-    bool operator==(const MessageIdentity& other) const;
-};
-
-template<> struct std::hash<MessageIdentity> {
-    std::size_t operator()(const MessageIdentity& id) const {
-        return std::hash<SocketAddress>()(id.origin)
-            ^ std::hash<uint32_t>()(id.msg_num)
-            ^ std::hash<uint32_t>()(id.sequence_type);
-    }
-};
-
-
 const uint8_t ACK = 0b10000000;
 const uint8_t RST = 0b01000000;
 const uint8_t SYN = 0b00100000;

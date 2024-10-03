@@ -25,11 +25,7 @@ Packet Fragmenter::create_packet() {
 
     PacketData data = {
         header : {
-            id : {
-                origin : message.origin,
-                msg_num : message.number,
-                sequence_type : MessageSequenceType::UNICAST // TODO definir na msg
-            },
+            id : message.id,
             fragment_num : i,
             checksum : 0,
             flags : last_fragment ? END : 0,

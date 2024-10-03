@@ -37,9 +37,8 @@ void FragmentAssembler::add_packet(Packet &packet)
     memcpy(&message.data[pos_in_msg], packet.data.message_data, len);
     bytes_received += len;
 
-    message.number = header.get_message_number();
+    message.id = header.id;
     message.type = header.get_message_type();
-    message.origin = header.id.origin;
     message.destination = meta.destination;
 
     if (header.is_end())
