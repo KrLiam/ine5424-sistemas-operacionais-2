@@ -68,7 +68,6 @@ private:
     std::mutex mutex_transmissions;
     std::mutex mutex_packets;
 
-
     const std::map<ConnectionState, std::function<void(Packet)>> packet_receive_handlers = {
         {ESTABLISHED, std::bind(&Connection::established, this, _1)},
         {SYN_SENT, std::bind(&Connection::syn_sent, this, _1)},
@@ -76,6 +75,11 @@ private:
         {CLOSED, std::bind(&Connection::closed, this, _1)},
         {FIN_WAIT, std::bind(&Connection::fin_wait, this, _1)},
         {LAST_ACK, std::bind(&Connection::last_ack, this, _1)}};
+
+    const std::map<ConnectionState, std::function<void()>> post_transition_handlers = {
+        {ESTABLISHED, std::bind(&Connection::on_established, this)},
+        {CLOSED, std::bind(&Connection::on_closed, this)}
+    };
 
     const std::map<ConnectionState, std::string> state_names = {
         {ESTABLISHED, "established"},
@@ -87,15 +91,15 @@ private:
 
     void transmit(Packet);
 
-    void connect();
-    bool disconnect();
-
     void closed(Packet p);
     void syn_sent(Packet p);
     void syn_received(Packet p);
     void established(Packet p);
     void fin_wait(Packet p);
     void last_ack(Packet p);
+
+    void on_closed();
+    void on_established();
 
     void send_flag(unsigned char flags);
     void send_ack(Packet packet);
@@ -134,11 +138,16 @@ public:
         BufferSet<std::string>& connection_update_buffer
     );
 
+    ConnectionState get_state() const;
+
     bool enqueue(Transmission& transmission);
 
     void request_update();
 
     void update();
+
+    void connect();
+    bool disconnect();
 
     void send(Message message);
     void send(Packet packet);

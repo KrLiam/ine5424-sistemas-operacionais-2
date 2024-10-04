@@ -4,14 +4,15 @@
 
 #include "pipeline/pipeline_handler.h"
 #include "pipeline/pipeline_step.h"
-#include "communication/group_registry.h"
 #include "pipeline/transmission/transmission_layer.h"
 #include "pipeline/fragmentation/fragmentation_layer.h"
 #include "pipeline/fault_injection/fault_injection_layer.h"
 #include "core/event_bus.h"
+#include "communication/connection.h"
 
 class PipelineStep;
 class ReliableCommunication;
+class GroupRegistry;
 
 class Pipeline
 {

@@ -65,9 +65,11 @@ void Connection::transmission_fail(const TransmissionFail &event)
     complete_transmission();
 }
 
+ConnectionState Connection::get_state() const { return state; }
+
 void Connection::connect()
 {
-    if (state == ESTABLISHED)
+    if (state != CLOSED)
         return;
 
     log_trace("connect: sending SYN.");
@@ -126,6 +128,16 @@ void Connection::closed(Packet p)
     send_flag(RST);
 }
 
+void Connection::on_established() {
+    ConnectionEstablished event(remote_node);
+    pipeline.notify(event);
+}
+
+void Connection::on_closed() {
+    ConnectionClosed event(remote_node);
+    pipeline.notify(event);
+}
+
 void Connection::syn_sent(Packet p)
 {
     if (close_on_rst(p))
@@ -143,7 +155,9 @@ void Connection::syn_sent(Packet p)
             send_flag(ACK);
             next_number = 1;
             expected_number = 1;
+
             change_state(ESTABLISHED);
+
             return;
         }
         log_trace("syn_sent: received SYN from simultaneous connection; transitioning to syn_received and sending SYN+ACK.");
@@ -168,7 +182,9 @@ void Connection::syn_received(Packet p)
         expected_number = 1;
         log_trace("syn_received: received ACK.");
         log_info("syn_received: connection established.");
+
         change_state(ESTABLISHED);
+
         return;
     }
 
@@ -180,7 +196,9 @@ void Connection::syn_received(Packet p)
             next_number++;
             log_debug("syn_received: received SYN+ACK.");
             log_info("syn_received: connection established.");
+
             change_state(ESTABLISHED);
+            
             return;
         }
         log_debug("syn_received: received SYN; sending SYN+ACK.");
@@ -396,6 +414,10 @@ void Connection::change_state(ConnectionState new_state)
     if (state == ConnectionState::ESTABLISHED)
     {
         request_update();
+    }
+
+    if (post_transition_handlers.contains(state)) {
+        post_transition_handlers.at(state)();
     }
 }
 

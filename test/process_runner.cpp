@@ -177,8 +177,7 @@ void send_thread(SenderThreadArgs* args) {
 
             log_info("Executing command '", name, "', sending '", text, "'");
 
-            comm->broadcast({text.c_str(), text.length()});
-            success = true;
+            success = comm->broadcast({text.c_str(), text.length()});
         }
         else if (command->type == CommandType::dummy) {
             DummyCommand* cmd = static_cast<DummyCommand*>(command.get());

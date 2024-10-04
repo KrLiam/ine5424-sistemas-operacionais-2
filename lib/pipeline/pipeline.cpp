@@ -2,6 +2,7 @@
 #include "pipeline/channel/channel_layer.h"
 #include "pipeline/fault_injection/fault_injection_layer.h"
 #include "pipeline/checksum/checksum_layer.h"
+#include "communication/group_registry.h"
 
 Pipeline::Pipeline(GroupRegistry *gr, const FaultConfig& fault_config) : gr(gr)
 {

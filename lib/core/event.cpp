@@ -2,6 +2,10 @@
 
 Event::Event() {}
 
+ConnectionEstablished::ConnectionEstablished(const Node& node) : node(node) {}
+
+ConnectionClosed::ConnectionClosed(const Node& node) : node(node) {}
+
 PacketAckReceived::PacketAckReceived(Packet& ack_packet) : ack_packet(ack_packet) {}
 
 TransmissionFail::TransmissionFail(Packet& faulty_packet) : faulty_packet(faulty_packet) {}

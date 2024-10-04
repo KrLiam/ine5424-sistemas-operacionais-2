@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/packet.h"
+#include "core/node.h"
 
 enum EventType {
     BASE = -1,
@@ -9,7 +10,9 @@ enum EventType {
     TRANSMISSION_COMPLETE = 2,
     MESSAGE_DEFRAGMENTATION_IS_COMPLETE = 3,
     FORWARD_DEFRAGMENTED_MESSAGE = 4,
-    PIPELINE_CLEANUP = 5
+    PIPELINE_CLEANUP = 5,
+    CONNECTION_ESTABLISHED = 6,
+    CONNECTION_FAIL =7,
 };
 
 struct Event {
@@ -17,6 +20,22 @@ struct Event {
 
 protected:
     Event();
+};
+
+struct ConnectionEstablished : public Event {
+    static EventType type() { return EventType::CONNECTION_ESTABLISHED; }
+
+    const Node& node;
+
+    ConnectionEstablished(const Node& node);
+};
+
+struct ConnectionClosed : public Event {
+    static EventType type() { return EventType::CONNECTION_FAIL; }
+
+    const Node& node;
+
+    ConnectionClosed(const Node& node);
 };
 
 struct PacketAckReceived : public Event {

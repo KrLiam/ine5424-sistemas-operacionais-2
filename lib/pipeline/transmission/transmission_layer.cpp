@@ -1,5 +1,7 @@
 #include "pipeline/transmission/transmission_layer.h"
 
+using namespace std::placeholders;
+
 TransmissionLayer::TransmissionLayer(PipelineHandler handler, const NodeMap &nodes)
     : PipelineStep(handler), nodes(nodes)
 {
@@ -23,10 +25,9 @@ TransmissionQueue& TransmissionLayer::get_queue(const MessageIdentity& id) {
                 log_info("Added queue to ", expanded_id.origin.to_string(), " ", expanded_id.msg_num, " ", expanded_id.sequence_type);
             }
         }
-        else {
-            queue_map.insert({id, queue});
-            log_info("Added queue to ", id.origin.to_string(), " ", id.msg_num, " ", id.sequence_type);
-        }
+
+        queue_map.insert({id, queue});
+        log_info("Added queue to ", id.origin.to_string(), " ", id.msg_num, " ", id.sequence_type);
     }
 
     return *queue_map.at(id);

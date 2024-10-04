@@ -1,6 +1,8 @@
 #include "pipeline/fragmentation/fragmentation_layer.h"
 #include <cmath>
 
+using namespace std::placeholders;
+
 FragmentationLayer::FragmentationLayer(PipelineHandler handler)
     : PipelineStep(handler)
 {

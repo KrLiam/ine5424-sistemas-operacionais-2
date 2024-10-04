@@ -49,7 +49,7 @@ public:
     void shutdown();
 
     bool send(std::string id, MessageData data);
-    void broadcast(MessageData data);
+    bool broadcast(MessageData data);
     ReceiveResult receive(char *m);
 
     GroupRegistry *get_group_registry();

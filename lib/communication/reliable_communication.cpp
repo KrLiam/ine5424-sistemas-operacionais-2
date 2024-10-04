@@ -96,7 +96,7 @@ bool ReliableCommunication::send(std::string id, MessageData data)
     return result.success;
 }
 
-void ReliableCommunication::broadcast(MessageData data) {
+bool ReliableCommunication::broadcast(MessageData data) {
     if (data.size == std::size_t(-1))
         data.size = user_buffer_size;
 
@@ -106,13 +106,16 @@ void ReliableCommunication::broadcast(MessageData data) {
             "Unable to broadcast message of ", data.size, " bytes. ",
             "Maximum supported length is ", Message::MAX_SIZE, " bytes."
         );
-        return;
+        return false;
     }
 
     Transmission transmission = create_transmission(BROADCAST_ID, data);
     gr->enqueue(transmission);
     
-    transmission.wait_result();
+    TransmissionResult result = transmission.wait_result();
+    log_debug("Transmission ", transmission.uuid, " returned result to application.");
+
+    return result.success;
 }
 
 Message ReliableCommunication::create_message(std::string receiver_id, const MessageData &data) {

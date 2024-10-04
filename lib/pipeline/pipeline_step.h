@@ -1,7 +1,6 @@
 #pragma once
 
 #include "pipeline/pipeline_handler.h"
-#include "communication/group_registry.h"
 #include "core/message.h"
 #include "core/packet.h"
 #include "core/constants.h"

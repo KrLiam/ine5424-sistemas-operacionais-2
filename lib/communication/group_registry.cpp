@@ -66,6 +66,6 @@ void GroupRegistry::establish_connections(
         );
 
     broadcast_connection =  std::make_unique<BroadcastConnection>(
-        connections, connection_update_buffer
+        connections, connection_update_buffer, pipeline
     );
 }
