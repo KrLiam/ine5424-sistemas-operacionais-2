@@ -5,10 +5,15 @@
 #include "core/message.h"
 #include "utils/uuid.h"
 
+
+const std::string BROADCAST_ID = "";
+
+
 struct TransmissionResult {
     bool success;
     // ...
 };
+
 
 class Transmission {
 public:
@@ -28,7 +33,9 @@ public:
     bool completed = false;
     TransmissionResult result;
 
-    Transmission(std::string receiver_id, Message message);
+    Transmission(Message message, std::string receiver_id);
+
+    bool is_broadcast() const;
 
     void set_result(bool success);
 

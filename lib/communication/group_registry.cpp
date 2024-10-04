@@ -32,6 +32,26 @@ void GroupRegistry::read_nodes_from_configuration(std::string local_id)
     }
 }
 
+bool GroupRegistry::enqueue(Transmission& transmission) {
+    if (transmission.is_broadcast()) {
+        return broadcast_connection->enqueue(transmission);
+    }
+
+    Connection& connection = get_connection(transmission.receiver_id);
+    return connection.enqueue(transmission);
+}
+
+void GroupRegistry::update(std::string id) {
+    if (id == BROADCAST_ID) {
+        broadcast_connection->update();
+        return;
+    }
+
+    Connection &connection = get_connection(id);
+    connection.update();
+}
+
+
 void GroupRegistry::establish_connections(
     Pipeline &pipeline,
     Buffer<Message> &application_buffer,
@@ -44,4 +64,8 @@ void GroupRegistry::establish_connections(
             std::forward_as_tuple(id),
             std::forward_as_tuple(local_node, node, pipeline, application_buffer, connection_update_buffer)
         );
+
+    broadcast_connection =  std::make_unique<BroadcastConnection>(
+        connections, connection_update_buffer
+    );
 }

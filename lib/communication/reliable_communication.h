@@ -49,6 +49,7 @@ public:
     void shutdown();
 
     bool send(std::string id, MessageData data);
+    void broadcast(MessageData data);
     ReceiveResult receive(char *m);
 
     GroupRegistry *get_group_registry();
@@ -63,10 +64,11 @@ private:
     std::size_t user_buffer_size;
     Buffer<Message> application_buffer{"application receive"};
 
-    Message create_message(std::string id, const MessageData& data);
-    Transmission create_transmission(std::string id, const MessageData& data);
+    Message create_message(std::string receiver_id, const MessageData& data);
+    Message create_message(SocketAddress receiver_address, const MessageData& data);
 
-    bool enqueue(Transmission& transmission);
+    Transmission create_transmission(std::string receiver_id, const MessageData& data);
+    Transmission create_transmission(SocketAddress receiver_address, const MessageData& data);
 
     void send_routine();
 };

@@ -4,6 +4,7 @@
 #include <map>
 
 #include "communication/connection.h"
+#include "communication/broadcast_connection.h"
 #include "core/node.h"
 #include "core/message.h"
 #include "core/packet.h"
@@ -37,7 +38,9 @@ public:
         return connections.at(id);
     }
 
-    bool packet_originates_from_group(Packet packet);
+    bool enqueue(Transmission& transmission);
+
+    void update(std::string id);
 
     void establish_connections(
         Pipeline& pipeline,
@@ -50,6 +53,7 @@ private:
 
     NodeMap nodes;
     std::map<std::string, Connection> connections;
+    std::unique_ptr<BroadcastConnection> broadcast_connection;
 
     void read_nodes_from_configuration(std::string local_id);
 };

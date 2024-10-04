@@ -169,6 +169,17 @@ void send_thread(SenderThreadArgs* args) {
 
             success = comm->send(send_id, {text.c_str(), text.length()});
         }
+        else if (command->type == CommandType::broadcast) {
+            BroadcastCommand* cmd = static_cast<BroadcastCommand*>(command.get());
+
+            std::string& text = cmd->text;
+            std::string name = cmd->name();
+
+            log_info("Executing command '", name, "', sending '", text, "'");
+
+            comm->broadcast({text.c_str(), text.length()});
+            success = true;
+        }
         else if (command->type == CommandType::dummy) {
             DummyCommand* cmd = static_cast<DummyCommand*>(command.get());
 

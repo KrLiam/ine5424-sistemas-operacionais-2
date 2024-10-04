@@ -26,6 +26,7 @@ private:
     void pipeline_cleanup(const PipelineCleanup& event);
 
     TransmissionQueue& get_queue(const MessageIdentity& id);
+    void clear_queue(const MessageIdentity& id);
 
 public:
     TransmissionLayer(PipelineHandler handler, const NodeMap &nodes);

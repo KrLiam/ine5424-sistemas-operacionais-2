@@ -6,7 +6,8 @@
 enum CommandType {
     text = 0,
     file = 1,
-    dummy = 2
+    dummy = 2,
+    broadcast = 3
 };
 
 struct Command {
@@ -22,6 +23,14 @@ struct TextCommand : public Command {
     std::string send_id;
 
     TextCommand(std::string text, std::string send_id);
+
+    virtual std::string name();
+};
+
+struct BroadcastCommand : public Command {
+    std::string text;
+
+    BroadcastCommand(std::string text);
 
     virtual std::string name();
 };

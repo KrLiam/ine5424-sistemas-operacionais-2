@@ -4,12 +4,16 @@
 
 #include "communication/transmission.h"
 
-Transmission::Transmission(std::string receiver_id, Message m)
+Transmission::Transmission(Message m, std::string receiver_id)
     : uuid(UUID()),
       receiver_id(receiver_id),
       message(m)
 {
     message.transmission_uuid = uuid;
+}
+
+bool Transmission::is_broadcast() const {
+    return receiver_id == BROADCAST_ID;
 }
 
 void Transmission::set_result(bool success) {

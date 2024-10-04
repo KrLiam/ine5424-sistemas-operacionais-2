@@ -13,6 +13,11 @@ TextCommand::TextCommand(std::string text, std::string send_id)
 
 std::string TextCommand::name() { return "text"; }
 
+BroadcastCommand::BroadcastCommand(std::string text)
+    : Command(CommandType::broadcast), text(text) {}
+
+std::string BroadcastCommand::name() { return "broadcast"; }
+
 DummyCommand::DummyCommand(size_t size, std::string send_id)
     : Command(CommandType::dummy), size(size), send_id(send_id) {}
 
@@ -83,7 +88,7 @@ std::shared_ptr<Command> parse_command(Reader& reader) {
         std::string send_id = parse_destination(reader);
         return std::make_shared<FileCommand>(path, send_id);
     }
-    if (keyword == "text" || reader.peek() == '"') {
+    if (keyword == "text" || (!keyword.length() && reader.peek() == '"') ) {
         std::string text = parse_string(reader);
         std::string send_id = parse_destination(reader);
         return std::make_shared<TextCommand>(text, send_id);
@@ -93,6 +98,10 @@ std::shared_ptr<Command> parse_command(Reader& reader) {
 
         std::string send_id = parse_destination(reader);
         return std::make_shared<DummyCommand>(size, send_id);
+    }
+    if (keyword == "broadcast") {
+        std::string text = parse_string(reader);
+        return std::make_shared<BroadcastCommand>(text);
     }
 
     if (keyword.length()) {

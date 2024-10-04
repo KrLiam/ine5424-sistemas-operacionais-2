@@ -80,7 +80,7 @@ bool ReliableCommunication::send(std::string id, MessageData data)
     }
 
     Transmission transmission = create_transmission(id, data);
-    bool enqueued = enqueue(transmission);
+    bool enqueued = gr->enqueue(transmission);
 
     if (!enqueued) {
         log_warn(
@@ -96,35 +96,63 @@ bool ReliableCommunication::send(std::string id, MessageData data)
     return result.success;
 }
 
-Message ReliableCommunication::create_message(std::string receiver_id, const MessageData &data)
+void ReliableCommunication::broadcast(MessageData data) {
+    if (data.size == std::size_t(-1))
+        data.size = user_buffer_size;
+
+    if (data.size > Message::MAX_SIZE)
+    {
+        log_error(
+            "Unable to broadcast message of ", data.size, " bytes. ",
+            "Maximum supported length is ", Message::MAX_SIZE, " bytes."
+        );
+        return;
+    }
+
+    Transmission transmission = create_transmission(BROADCAST_ID, data);
+    gr->enqueue(transmission);
+    
+    transmission.wait_result();
+}
+
+Message ReliableCommunication::create_message(std::string receiver_id, const MessageData &data) {
+    const Node& receiver = gr->get_nodes().get_node(receiver_id);
+    return create_message(receiver.get_address(), data);
+}
+Message ReliableCommunication::create_message(SocketAddress receiver_address, const MessageData &data)
 {
+    const Node& local = gr->get_local_node();
+
     Message m = {
         id : {
-            origin : gr->get_local_node().get_address(),
+            origin : local.get_address(),
             msg_num : 0,
-            sequence_type : MessageSequenceType::UNICAST
+            sequence_type : receiver_address == BROADCAST_ADDRESS ?
+                MessageSequenceType::BROADCAST : MessageSequenceType::UNICAST
         },
         transmission_uuid : UUID(""),
-        destination : gr->get_nodes().get_node(receiver_id).get_address(),
+        destination : receiver_address,
         type : MessageType::APPLICATION,
         data : {0},
         length : data.size,
     };
     memcpy(m.data, data.ptr, data.size);
+
     return m;
 }
 
 Transmission ReliableCommunication::create_transmission(std::string receiver_id, const MessageData &data)
 {
-    Message message = create_message(receiver_id, data);
+    Message message;
+    
+    if (receiver_id == BROADCAST_ID) {
+        message = create_message({BROADCAST_ADDRESS, 0}, data);
+    }
+    else {
+        message = create_message(receiver_id, data);
+    }
 
-    return Transmission(receiver_id, message);
-}
-
-bool ReliableCommunication::enqueue(Transmission &transmission)
-{
-    Connection &connection = gr->get_connection(transmission.receiver_id);
-    return connection.enqueue(transmission);
+    return Transmission(message, receiver_id);
 }
 
 void ReliableCommunication::send_routine()
@@ -141,7 +169,6 @@ void ReliableCommunication::send_routine()
             return;
         }
 
-        Connection &connection = gr->get_connection(id);
-        connection.update();
+        gr->update(id);
     }
 }
