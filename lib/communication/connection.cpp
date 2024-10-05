@@ -215,10 +215,10 @@ void Connection::established(Packet p)
     if (p.data.header.is_rst())
     {
         cancel_transmissions();
-        reset_message_numbers();
-        send_syn(0);
-        change_state(SYN_SENT);
-        set_timeout();
+        // reset_message_numbers();
+        // send_syn(0);
+        change_state(CLOSED);
+        // set_timeout();
         return;
     }
 
