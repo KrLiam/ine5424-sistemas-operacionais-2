@@ -148,4 +148,6 @@ struct Packet
     }
 };
 
-
+struct SynData {
+    uint32_t broadcast_number;
+};

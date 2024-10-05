@@ -11,17 +11,17 @@ TransmissionDispatcher::TransmissionDispatcher(
     pipeline(pipeline),
     max_transmissions(MAX_ENQUEUED_TRANSMISSIONS) {};
 
-bool TransmissionDispatcher::is_empty() {
+bool TransmissionDispatcher::is_empty() const {
     return transmissions.empty();
 }
 
-bool TransmissionDispatcher::is_active() {
+bool TransmissionDispatcher::is_active() const {
     return active_transmission != nullptr;
 }
 
-uint32_t TransmissionDispatcher::get_next_number() { return next_number; }
+uint32_t TransmissionDispatcher::get_next_number() const { return next_number; }
 
-const Transmission* TransmissionDispatcher::get_active() { return active_transmission; }
+const Transmission* TransmissionDispatcher::get_active() const { return active_transmission; }
 
 bool TransmissionDispatcher::enqueue(Transmission& transmission) {
     mutex_transmissions.lock();

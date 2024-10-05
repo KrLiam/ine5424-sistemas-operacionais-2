@@ -58,14 +58,22 @@ void GroupRegistry::establish_connections(
     BufferSet<std::string> &connection_update_buffer
 ) {
     Node local_node = get_local_node();
-    for (auto &[id, node] : nodes)
-        connections.emplace(
-            std::piecewise_construct,
-            std::forward_as_tuple(id),
-            std::forward_as_tuple(local_node, node, pipeline, application_buffer, connection_update_buffer)
-        );
 
     broadcast_connection =  std::make_unique<BroadcastConnection>(
         connections, connection_update_buffer, pipeline
     );
+
+    for (auto &[id, node] : nodes)
+        connections.emplace(
+            std::piecewise_construct,
+            std::forward_as_tuple(id),
+            std::forward_as_tuple(
+                local_node,
+                node,
+                pipeline,
+                application_buffer,
+                connection_update_buffer,
+                broadcast_connection->get_dispatcher()
+            )
+        );
 }

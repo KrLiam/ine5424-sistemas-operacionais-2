@@ -7,10 +7,12 @@ Connection::Connection(
     Node remote_node,
     Pipeline &pipeline,
     Buffer<Message> &application_buffer,
-    BufferSet<std::string> &connection_update_buffer
+    BufferSet<std::string> &connection_update_buffer,
+    const TransmissionDispatcher& broadcast_dispatcher
 ) :
     pipeline(pipeline),
     application_buffer(application_buffer),
+    broadcast_dispatcher(broadcast_dispatcher),
     local_node(local_node),
     remote_node(remote_node),
     connection_update_buffer(connection_update_buffer),
@@ -65,7 +67,7 @@ void Connection::connect()
     log_trace("connect: sending SYN.");
     reset_message_numbers();
     change_state(SYN_SENT);
-    send_flag(SYN);
+    send_syn(0);
     set_timeout();
 }
 
@@ -105,10 +107,11 @@ void Connection::closed(Packet p)
 {
     if (p.data.header.is_syn() && !p.data.header.is_ack() && p.data.header.get_message_number() == 0)
     {
-        reset_message_numbers();
         log_trace("closed: received SYN; sending SYN+ACK.");
+        reset_message_numbers();
+        resync_broadcast_on_syn(p);
+        send_syn(ACK);
         change_state(SYN_RECEIVED);
-        send_flag(SYN | ACK);
         set_timeout();
         return;
     }
@@ -141,19 +144,27 @@ void Connection::syn_sent(Packet p)
         if (p.data.header.is_ack())
         {
             log_trace("syn_sent: received SYN+ACK; sending ACK.");
-            log_info("syn_sent: connection established.");
+
+            resync_broadcast_on_syn(p);
+
             send_flag(ACK);
             dispatcher.reset_number(1);
             expected_number = 1;
 
+            log_info("syn_sent: connection established.");
             change_state(ESTABLISHED);
 
             return;
         }
+
         log_trace("syn_sent: received SYN from simultaneous connection; transitioning to syn_received and sending SYN+ACK.");
+        
+        resync_broadcast_on_syn(p);
+
+        send_syn(ACK);
         change_state(SYN_RECEIVED);
-        send_flag(SYN | ACK);
         set_timeout();
+
         return;
     }
 }
@@ -171,28 +182,31 @@ void Connection::syn_received(Packet p)
         dispatcher.reset_number(1);
         expected_number = 1;
         log_trace("syn_received: received ACK.");
-        log_info("syn_received: connection established.");
 
         change_state(ESTABLISHED);
+        log_info("syn_received: connection established.");
 
         return;
     }
 
     if (p.data.header.is_syn())
     {
+
         if (p.data.header.is_ack())
         {
+            log_debug("syn_received: received SYN+ACK.");
+
+            resync_broadcast_on_syn(p);
             send_flag(ACK);
             dispatcher.increment_number();
-            log_debug("syn_received: received SYN+ACK.");
-            log_info("syn_received: connection established.");
 
             change_state(ESTABLISHED);
+            log_info("syn_received: connection established.");
             
             return;
         }
         log_debug("syn_received: received SYN; sending SYN+ACK.");
-        send_flag(SYN | ACK);
+        send_syn(ACK);
     }
 }
 
@@ -202,8 +216,8 @@ void Connection::established(Packet p)
     {
         cancel_transmissions();
         reset_message_numbers();
+        send_syn(0);
         change_state(SYN_SENT);
-        send_flag(SYN);
         set_timeout();
         return;
     }
@@ -212,8 +226,9 @@ void Connection::established(Packet p)
     {
         cancel_transmissions();
         reset_message_numbers();
+        resync_broadcast_on_syn(p);
+        send_syn(ACK);
         change_state(SYN_RECEIVED);
-        send_flag(SYN | ACK);
         set_timeout();
     }
 
@@ -234,11 +249,32 @@ void Connection::established(Packet p)
 
     uint32_t message_number = p.data.header.get_message_number();
     MessageSequenceType type = p.data.header.id.sequence_type;
-    uint32_t number = type == MessageSequenceType::BROADCAST ? expected_broadcast_number : expected_number;
 
+    uint32_t number = type == MessageSequenceType::BROADCAST ? expected_broadcast_number : expected_number;
+    uint32_t initial_number = type == MessageSequenceType::BROADCAST ? initial_broadcast_number : 0;
+
+    if (message_number < initial_number)
+    {
+        log_debug(
+            "Received ",
+            p.to_string(PacketFormat::RECEIVED),
+            " which is prior to current connection with initial number ",
+            initial_number,
+            "; ignoring it."
+        );
+        return;
+    }
     if (message_number > number)
     {
-        log_debug("Received ", p.to_string(PacketFormat::RECEIVED), " that expects confirmation, but message number ", message_number, " is higher than the expected ", number, "; ignoring it.");
+        log_debug(
+            "Received ",
+            p.to_string(PacketFormat::RECEIVED),
+            " that expects confirmation, but message number ",
+            message_number,
+            " is higher than the expected ",
+            number,
+            "; ignoring it."
+        );
         return;
     }
 
@@ -292,7 +328,19 @@ void Connection::last_ack(Packet p)
     }
 }
 
-void Connection::send_flag(unsigned char flags)
+void Connection::send_syn(uint8_t extra_flags)
+{
+    SynData data = {
+        broadcast_number : broadcast_dispatcher.get_next_number()
+    };
+
+    send_flag(SYN | extra_flags, MessageData::from(data));
+}
+
+void Connection::send_flag(uint8_t flags) {
+    return send_flag(flags, {nullptr, 0});
+}
+void Connection::send_flag(uint8_t flags, MessageData message_data)
 {
     MessageIdentity id = {
         origin : local_node.get_address(),
@@ -311,8 +359,14 @@ void Connection::send_flag(unsigned char flags)
     memset(&data, 0, sizeof(PacketData));
     data.header = header;
 
+    if (message_data.size)
+    {
+        memcpy(&data.message_data, message_data.ptr, message_data.size);
+    }
+
     Packet packet;
     packet.meta.destination = remote_node.get_address();
+    packet.meta.message_length = message_data.size;
     packet.data = data;
 
     transmit(packet);
@@ -373,6 +427,18 @@ bool Connection::rst_on_syn(Packet p)
         return true;
     }
     return false;
+}
+
+bool Connection::resync_broadcast_on_syn(Packet p) {
+    if (!p.data.header.is_syn() || p.meta.message_length != sizeof(SynData)) return false;
+
+    SynData* data = reinterpret_cast<SynData*>(p.data.message_data);
+    
+    initial_broadcast_number = data->broadcast_number;
+    expected_broadcast_number = initial_broadcast_number;
+    log_info("Broadcast sequence with node ", local_node.get_id(), " was resync to ", initial_broadcast_number);
+
+    return true;
 }
 
 void Connection::reset_message_numbers()

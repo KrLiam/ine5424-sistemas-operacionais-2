@@ -29,11 +29,11 @@ public:
         Pipeline& pipeline
     );
 
-    bool is_empty();
-    bool is_active();
+    bool is_empty() const;
+    bool is_active() const;
 
-    uint32_t get_next_number();
-    const Transmission* get_active();
+    uint32_t get_next_number() const;
+    const Transmission* get_active() const;
 
     bool enqueue(Transmission& transmission);
 

@@ -42,6 +42,7 @@ class Connection
 private:
     Pipeline &pipeline;
     Buffer<Message> &application_buffer;
+    const TransmissionDispatcher& broadcast_dispatcher;
 
     Node local_node;
     Node remote_node;
@@ -101,11 +102,15 @@ private:
     void on_closed();
     void on_established();
 
-    void send_flag(unsigned char flags);
+    void send_syn(uint8_t extra_flags);
+    
+    void send_flag(uint8_t flags);
+    void send_flag(uint8_t flags, MessageData data);
     void send_ack(Packet packet);
 
     bool close_on_rst(Packet p);
     bool rst_on_syn(Packet p);
+    bool resync_broadcast_on_syn(Packet p);
 
     void set_timeout();
     void connection_timeout();
@@ -133,7 +138,8 @@ public:
         Node remote_node,
         Pipeline &pipeline,
         Buffer<Message> &application_buffer,
-        BufferSet<std::string>& connection_update_buffer
+        BufferSet<std::string>& connection_update_buffer,
+        const TransmissionDispatcher& broadcast_dispatcher
     );
 
     ConnectionState get_state() const;

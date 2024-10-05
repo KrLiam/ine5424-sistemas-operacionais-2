@@ -35,6 +35,21 @@ template<> struct std::hash<MessageIdentity> {
 };
 
 
+struct MessageData
+{
+    const char *ptr;
+    std::size_t size = -1;
+
+    MessageData(const char *ptr) : ptr(ptr) {}
+    MessageData(const char *ptr, std::size_t size) : ptr(ptr), size(size) {}
+
+    template <typename T>
+    static MessageData from(T& data)
+    {
+        return MessageData(reinterpret_cast<char*>(&data), sizeof(T));
+    }
+};
+
 struct Message
 {
     inline const static int MAX_SIZE = 65536;

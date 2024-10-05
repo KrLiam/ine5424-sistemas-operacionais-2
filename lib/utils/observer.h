@@ -17,7 +17,7 @@ class Subject {
 
         observers.erase(observers.begin() + i);
         observer->subject = NULL;
-        log_debug("Detached observer ", &observer);
+        // log_debug("Detached observer ", &observer);
     }
 
 public:
@@ -33,7 +33,7 @@ public:
 
         observer.subject = this;
         observers.push_back(&observer);
-        log_debug("Attached observer ", &observer);
+        // log_debug("Attached observer ", &observer);
         return true;
     }
 

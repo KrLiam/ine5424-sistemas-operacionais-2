@@ -30,6 +30,8 @@ public:
         Pipeline& pipeline
     );
 
+    const TransmissionDispatcher& get_dispatcher() const;
+
     bool enqueue(Transmission& transmission);
 
     void request_update();

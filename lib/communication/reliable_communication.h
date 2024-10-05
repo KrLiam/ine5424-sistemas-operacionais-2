@@ -19,15 +19,6 @@
 
 class Pipeline;
 
-struct MessageData
-{
-    const char *ptr;
-    std::size_t size = -1;
-
-    MessageData(const char *ptr) : ptr(ptr) {}
-    MessageData(const char *ptr, std::size_t size) : ptr(ptr), size(size) {}
-};
-
 struct ReceiveResult {
     size_t length;
     size_t truncated_bytes;

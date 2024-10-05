@@ -14,6 +14,7 @@ BroadcastConnection::BroadcastConnection(
     observe_pipeline();
 }
 
+const TransmissionDispatcher& BroadcastConnection::get_dispatcher() const { return dispatcher; }
 
 void BroadcastConnection::observe_pipeline() {
     obs_connection_established.on(std::bind(&BroadcastConnection::connection_established, this, _1));
