@@ -5,7 +5,11 @@ BroadcastConnection::BroadcastConnection(
     std::map<std::string, Connection>& connections,
     BufferSet<std::string>& connection_update_buffer,
     Pipeline& pipeline
-) : connections(connections), pipeline(pipeline), connection_update_buffer(connection_update_buffer)
+) :
+    connections(connections),
+    pipeline(pipeline),
+    dispatcher(BROADCAST_ID, connection_update_buffer, pipeline),
+    connection_update_buffer(connection_update_buffer)
 {
     observe_pipeline();
 }
@@ -27,76 +31,21 @@ void BroadcastConnection::connection_established(const ConnectionEstablished&) {
 }
 
 void BroadcastConnection::connection_closed(const ConnectionClosed&) {
-    cancel_transmissions();
+    dispatcher.cancel_all();
 }
 
 void BroadcastConnection::transmission_complete(const TransmissionComplete& event) {
-    if (!active_transmission)
-        return;
-
     const UUID &uuid = event.uuid;
+    const Transmission* active = dispatcher.get_active();
 
-    if (uuid != active_transmission->uuid)
-        return;
-
-    active_transmission->set_result(true);
-    complete_transmission();
+    if (active && uuid == active->uuid) dispatcher.complete(true);
 }
 
 void BroadcastConnection::transmission_fail(const TransmissionFail& event) {
-    if (!active_transmission)
-        return;
+    const UUID &uuid = event.faulty_packet.meta.transmission_uuid;
+    const Transmission* active = dispatcher.get_active();
 
-    Packet &packet = event.faulty_packet;
-    const UUID &uuid = packet.meta.transmission_uuid;
-
-    if (uuid != active_transmission->uuid)
-        return;
-
-    active_transmission->set_result(false);
-    complete_transmission();
-}
-
-void BroadcastConnection::complete_transmission() {
-    if (!active_transmission)
-        return;
-
-    mutex_transmissions.lock();
-    int size = transmissions.size();
-    for (int i = 0; i < size; i++)
-    {
-        if (transmissions[i] != active_transmission)
-            continue;
-
-        transmissions.erase(transmissions.begin() + i);
-        break;
-    }
-    mutex_transmissions.unlock();
-
-    active_transmission->release();
-    active_transmission = nullptr;
-
-    if (transmissions.size())
-        request_update();
-}
-
-void BroadcastConnection::cancel_transmissions()
-{
-    if (active_transmission)
-    {
-        active_transmission->active = false;
-        pipeline.notify(PipelineCleanup(active_transmission->message));
-        active_transmission = nullptr;
-    }
-
-    mutex_transmissions.lock();
-    for (Transmission *transmission : transmissions)
-    {
-        transmission->set_result(false);
-        transmission->release();
-    }
-    transmissions.clear();
-    mutex_transmissions.unlock();
+    if (active && uuid == active->uuid) dispatcher.complete(false);
 }
 
 void BroadcastConnection::request_update() {
@@ -104,19 +53,12 @@ void BroadcastConnection::request_update() {
 }
 
 bool BroadcastConnection::enqueue(Transmission& transmission) {
-    mutex_transmissions.lock();
-    transmissions.push_back(&transmission);
-    mutex_transmissions.unlock();
-
-    request_update();
-
-    return true;
+    return dispatcher.enqueue(transmission);
 }
 
 void BroadcastConnection::update() {
-    if (transmissions.empty()) return;
-
-    if (active_transmission) return;
+    if (dispatcher.is_empty()) return;
+    if (dispatcher.is_active()) return;
 
     bool established = true;
 
@@ -134,6 +76,5 @@ void BroadcastConnection::update() {
 
     if (!established) return;
 
-    active_transmission = transmissions.at(0);
-    pipeline.send(active_transmission->message);
+    dispatcher.update();
 }

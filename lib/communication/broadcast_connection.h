@@ -8,14 +8,8 @@ class BroadcastConnection {
     std::map<std::string, Connection>& connections;
     Pipeline& pipeline;
 
-    Transmission* active_transmission = nullptr;
-    std::vector<Transmission*> transmissions;
-    std::mutex mutex_transmissions;
-
+    TransmissionDispatcher dispatcher;
     BufferSet<std::string>& connection_update_buffer;
-
-    void cancel_transmissions();
-    void complete_transmission();
 
     void observe_pipeline();
 
