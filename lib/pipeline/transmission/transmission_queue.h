@@ -41,6 +41,7 @@ private:
     void timeout(uint32_t num);
 public:
     TransmissionQueue(Timer& timer, PipelineHandler& handler, const NodeMap& nodes);
+    ~TransmissionQueue();
 
     uint32_t get_total_bytes();
 

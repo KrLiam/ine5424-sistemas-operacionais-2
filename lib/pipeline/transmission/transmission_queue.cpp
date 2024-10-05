@@ -11,6 +11,12 @@ TransmissionQueue::TransmissionQueue(Timer& timer, PipelineHandler& handler, con
 {
 }
 
+TransmissionQueue::~TransmissionQueue() {
+    for (auto& [_, entry] : entries) {
+        if (entry.timeout_id != -1) timer.cancel(entry.timeout_id);
+    }
+}
+
 void TransmissionQueue::send(uint32_t num) {
     QueueEntry& entry = entries.at(num);
     Packet& packet = entry.packet;

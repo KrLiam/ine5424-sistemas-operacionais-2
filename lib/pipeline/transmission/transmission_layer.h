@@ -25,6 +25,7 @@ private:
     Observer<PipelineCleanup> obs_pipeline_cleanup;
     void pipeline_cleanup(const PipelineCleanup& event);
 
+    bool has_queue(const MessageIdentity& id);
     TransmissionQueue& get_queue(const MessageIdentity& id);
     void clear_queue(const MessageIdentity& id);
 
