@@ -22,12 +22,12 @@ TransmissionQueue& TransmissionLayer::get_queue(const MessageIdentity& id) {
                     sequence_type : id.sequence_type
                 };
                 queue_map.insert({expanded_id, queue});
-                log_info("Added queue to ", expanded_id.origin.to_string(), " ", expanded_id.msg_num, " ", expanded_id.sequence_type);
+                // log_info("Added queue to ", expanded_id.origin.to_string(), " ", expanded_id.msg_num, " ", expanded_id.sequence_type);
             }
         }
 
         queue_map.insert({id, queue});
-        log_info("Added queue to ", id.origin.to_string(), " ", id.msg_num, " ", id.sequence_type);
+        // log_info("Added queue to ", id.origin.to_string(), " ", id.msg_num, " ", id.sequence_type);
     }
 
     return *queue_map.at(id);
@@ -41,14 +41,14 @@ void TransmissionLayer::clear_queue(const MessageIdentity& id) {
                 sequence_type : id.sequence_type
             };
             queue_map.erase(expanded_id);
-            log_info("Cleared queue to ", expanded_id.origin.to_string(), " ", expanded_id.msg_num, " ", expanded_id.sequence_type);
+            // log_info("Cleared queue to ", expanded_id.origin.to_string(), " ", expanded_id.msg_num, " ", expanded_id.sequence_type);
         }
 
         return;
     }
     
     queue_map.erase(id);
-    log_info("Cleared queue to ", id.origin.to_string(), " ", id.msg_num, " ", id.sequence_type);
+    // log_info("Cleared queue to ", id.origin.to_string(), " ", id.msg_num, " ", id.sequence_type);
 
 }
 

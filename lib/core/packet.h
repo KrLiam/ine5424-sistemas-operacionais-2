@@ -103,32 +103,37 @@ struct Packet
         std::string origin = data.header.id.origin.to_string();
         std::string destination = meta.destination.to_string();
 
+        char sequence_type = header.id.sequence_type == MessageSequenceType::BROADCAST ? 'b' : 'u';
+
         if (type == PacketFormat::RECEIVED) {
             return format(
-                "%s %u/%u from %s",
+                "%s %u/%u%c from %s",
                 flags.c_str(),
                 data.header.id.msg_num,
                 data.header.fragment_num,
+                sequence_type,
                 origin.c_str()
             );
         }
         
         if (type == PacketFormat::SENT) {
             return format(
-                "%s %u/%u to %s",
+                "%s %u/%u%c to %s",
                 flags.c_str(),
                 data.header.id.msg_num,
                 data.header.fragment_num,
+                sequence_type,
                 destination.c_str()
             );
         }
 
         return format(
-            "%u %s %u/%u from %s to %s",
+            "%u %s %u/%u%c from %s to %s",
             header.flags,
             flags.c_str(),
             data.header.id.msg_num,
             data.header.fragment_num,
+            sequence_type,
             origin.c_str(),
             destination.c_str()
         );

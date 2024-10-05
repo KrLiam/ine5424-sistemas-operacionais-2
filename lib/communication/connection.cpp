@@ -231,11 +231,14 @@ void Connection::established(Packet p)
         pipeline.notify(PacketAckReceived(p));
         return;
     }
-    uint32_t message_number = p.data.header.get_message_number();
 
-    if (message_number > expected_number)
+    uint32_t message_number = p.data.header.get_message_number();
+    MessageSequenceType type = p.data.header.id.sequence_type;
+    uint32_t number = type == MessageSequenceType::BROADCAST ? expected_broadcast_number : expected_number;
+
+    if (message_number > number)
     {
-        log_debug("Received ", p.to_string(PacketFormat::RECEIVED), " that expects confirmation, but message number ", message_number, " is higher than the expected ", expected_number, "; ignoring it.");
+        log_debug("Received ", p.to_string(PacketFormat::RECEIVED), " that expects confirmation, but message number ", message_number, " is higher than the expected ", number, "; ignoring it.");
         return;
     }
 
@@ -463,20 +466,32 @@ void Connection::receive(Message message)
         return;
     }
 
-    if (message.id.msg_num < expected_number)
+    MessageSequenceType type = message.id.sequence_type;
+    uint32_t number = type == MessageSequenceType::BROADCAST ? expected_broadcast_number : expected_number;
+
+    if (message.id.msg_num < number)
     {
         log_warn("Message ", message.to_string(), " was already received; dropping it.");
         return;
     }
 
-    if (message.id.msg_num > expected_number)
+    if (message.id.msg_num > number)
     {
-        log_warn("Message ", message.to_string(), " is unexpected, current number expected is ", expected_number, "; dropping it.");
+        log_warn("Message ", message.to_string(), " is unexpected, current number expected is ", number, "; dropping it.");
         return;
     }
 
-    expected_number++;
-    application_buffer.produce(message);
+    if (type == MessageSequenceType::BROADCAST)
+    {
+        expected_broadcast_number++;
+        application_buffer.produce(message); // TODO buffer separado pro deliver
+    }
+    else
+    {
+        expected_number++;
+        application_buffer.produce(message);
+    }
+
 }
 
 void Connection::transmit(Packet p)

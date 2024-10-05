@@ -25,7 +25,7 @@ void TransmissionQueue::send(uint32_t num) {
             if (address == BROADCAST_ADDRESS) continue; // teste
 
             entry.pending_receivers.emplace(address);
-            log_info("Added pending ack ", num, " of remote ", address.to_string());
+            // log_info("Added pending ack ", num, " of remote ", address.to_string());
         }
     }
     else {
@@ -142,11 +142,11 @@ void TransmissionQueue::receive_ack(const Packet& ack_packet)
     const Packet& packet = entry.packet;
 
     entry.pending_receivers.erase(receiver_address);
-    log_info("Removing pending ack ", frag_num, " of remote ", receiver_address.to_string(), ". over: ", !entry.pending_receivers.size());
+    // log_info("Removing pending ack ", frag_num, " of remote ", receiver_address.to_string(), ". over: ", !entry.pending_receivers.size());
     if (entry.pending_receivers.size()) return;
 
     pending.erase(frag_num);
-    log_info("Completed: ", completed());
+    // log_info("Completed: ", completed());
 
     if (entry.timeout_id != -1)
     {
