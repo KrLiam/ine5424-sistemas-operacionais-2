@@ -436,7 +436,7 @@ bool Connection::resync_broadcast_on_syn(Packet p) {
     
     initial_broadcast_number = data->broadcast_number;
     expected_broadcast_number = initial_broadcast_number;
-    log_info("Broadcast sequence with node ", local_node.get_id(), " was resync to ", initial_broadcast_number);
+    log_info("Broadcast sequence with node ", remote_node.get_id(), " was resync to ", initial_broadcast_number);
 
     return true;
 }
