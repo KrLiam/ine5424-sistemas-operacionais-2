@@ -8,7 +8,6 @@
 #include "pipeline/fragmentation/fragmentation_layer.h"
 #include "pipeline/fault_injection/fault_injection_layer.h"
 #include "core/event_bus.h"
-#include "communication/connection.h"
 
 class PipelineStep;
 class ReliableCommunication;

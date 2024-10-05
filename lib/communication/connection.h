@@ -21,7 +21,7 @@
 #include "core/constants.h"
 #include "core/event.h"
 #include "utils/observer.h"
-#include "communication/transmission.h"
+#include "communication/transmission_dispatcher.h"
 
 using namespace std::placeholders;
 
@@ -49,23 +49,20 @@ private:
     ConnectionState state = CLOSED;
     std::condition_variable state_change;
 
-    Transmission* active_transmission = nullptr;
-    std::vector<Transmission*> transmissions;
     // Atualmente só tá sendo enviado packet sem esperar ACK, a ideia é fazer com que a mesma lógica de
     // aguardar o envio seja possível para os pacotes da lib
     // Para isso, vai ser necessário adaptar para ter um TransmissionQueue por ato de send
     // ou um TransmissionQueue só suportar mensagem + pacotes não relacionados
     std::vector<Packet> packets_to_send;
     BufferSet<std::string>& connection_update_buffer;
+    TransmissionDispatcher dispatcher;
 
-    uint32_t next_number = 0;
     uint32_t expected_number = 0;
 
     Timer timer{};
     int handshake_timer_id = -1;
 
     std::mutex mutex;
-    std::mutex mutex_transmissions;
     std::mutex mutex_packets;
 
     const std::map<ConnectionState, std::function<void(Packet)>> packet_receive_handlers = {
@@ -110,11 +107,9 @@ private:
     void set_timeout();
     void connection_timeout();
 
-    uint32_t new_message_number();
     void reset_message_numbers();
 
     void cancel_transmissions();
-    void complete_transmission();
 
     std::string get_current_state_name();
     void change_state(ConnectionState new_state);
@@ -149,7 +144,6 @@ public:
     void connect();
     bool disconnect();
 
-    void send(Message message);
     void send(Packet packet);
 
     void receive(Packet packet);

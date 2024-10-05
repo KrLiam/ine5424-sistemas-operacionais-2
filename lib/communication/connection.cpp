@@ -7,11 +7,14 @@ Connection::Connection(
     Node remote_node,
     Pipeline &pipeline,
     Buffer<Message> &application_buffer,
-    BufferSet<std::string> &connection_update_buffer) : pipeline(pipeline),
-                                                        application_buffer(application_buffer),
-                                                        local_node(local_node),
-                                                        remote_node(remote_node),
-                                                        connection_update_buffer(connection_update_buffer)
+    BufferSet<std::string> &connection_update_buffer
+) :
+    pipeline(pipeline),
+    application_buffer(application_buffer),
+    local_node(local_node),
+    remote_node(remote_node),
+    connection_update_buffer(connection_update_buffer),
+    dispatcher(remote_node.get_id(), connection_update_buffer, pipeline)                                          
 {
     observe_pipeline();
 }
@@ -38,31 +41,18 @@ void Connection::message_defragmentation_is_complete(const MessageDefragmentatio
 
 void Connection::transmission_complete(const TransmissionComplete &event)
 {
-    if (!active_transmission)
-        return;
-
     const UUID &uuid = event.uuid;
+    const Transmission* active = dispatcher.get_active();
 
-    if (uuid != active_transmission->uuid)
-        return;
-
-    active_transmission->set_result(true);
-    complete_transmission();
+    if (active && uuid == active->uuid) dispatcher.complete(true);
 }
 
 void Connection::transmission_fail(const TransmissionFail &event)
 {
-    if (!active_transmission)
-        return;
+    const UUID &uuid = event.faulty_packet.meta.transmission_uuid;
+    const Transmission* active = dispatcher.get_active();
 
-    Packet &packet = event.faulty_packet;
-    const UUID &uuid = packet.meta.transmission_uuid;
-
-    if (uuid != active_transmission->uuid)
-        return;
-
-    active_transmission->set_result(false);
-    complete_transmission();
+    if (active && uuid == active->uuid) dispatcher.complete(false);
 }
 
 ConnectionState Connection::get_state() const { return state; }
@@ -153,7 +143,7 @@ void Connection::syn_sent(Packet p)
             log_trace("syn_sent: received SYN+ACK; sending ACK.");
             log_info("syn_sent: connection established.");
             send_flag(ACK);
-            next_number = 1;
+            dispatcher.reset_number(1);
             expected_number = 1;
 
             change_state(ESTABLISHED);
@@ -178,7 +168,7 @@ void Connection::syn_received(Packet p)
 
     if (p.data.header.is_ack())
     {
-        next_number = 1;
+        dispatcher.reset_number(1);
         expected_number = 1;
         log_trace("syn_received: received ACK.");
         log_info("syn_received: connection established.");
@@ -193,7 +183,7 @@ void Connection::syn_received(Packet p)
         if (p.data.header.is_ack())
         {
             send_flag(ACK);
-            next_number++;
+            dispatcher.increment_number();
             log_debug("syn_received: received SYN+ACK.");
             log_info("syn_received: connection established.");
 
@@ -303,7 +293,7 @@ void Connection::send_flag(unsigned char flags)
 {
     MessageIdentity id = {
         origin : local_node.get_address(),
-        msg_num : next_number,
+        msg_num : dispatcher.get_next_number(),
         sequence_type : MessageSequenceType::UNICAST
     };
 
@@ -382,15 +372,10 @@ bool Connection::rst_on_syn(Packet p)
     return false;
 }
 
-uint32_t Connection::new_message_number()
-{
-    return next_number++;
-}
-
 void Connection::reset_message_numbers()
 {
     expected_number = 0;
-    next_number = 0;
+    dispatcher.reset_number(0);
 }
 
 std::string Connection::get_current_state_name()
@@ -423,21 +408,7 @@ void Connection::change_state(ConnectionState new_state)
 
 bool Connection::enqueue(Transmission &transmission)
 {
-    mutex_transmissions.lock();
-
-    if (transmissions.size() >= MAX_ENQUEUED_TRANSMISSIONS) {
-        mutex_transmissions.unlock();
-        return false;
-    }
-    
-    transmissions.push_back(&transmission);
-
-    mutex_transmissions.unlock();
-
-    log_debug("Enqueued transmission ", transmission.uuid, " on connection of node ", transmission.receiver_id);
-
-    request_update();
-    return true;
+    return dispatcher.enqueue(transmission);
 }
 
 void Connection::request_update()
@@ -445,45 +416,9 @@ void Connection::request_update()
     connection_update_buffer.produce(remote_node.get_id());
 }
 
-void Connection::complete_transmission()
-{
-    if (!active_transmission)
-        return;
-
-    int size = transmissions.size();
-    for (int i = 0; i < size; i++)
-    {
-        if (transmissions[i] != active_transmission)
-            continue;
-
-        transmissions.erase(transmissions.begin() + i);
-        break;
-    }
-
-    active_transmission->release();
-    active_transmission = nullptr;
-
-    if (transmissions.size())
-        request_update();
-}
-
 void Connection::cancel_transmissions()
 {
-    if (active_transmission)
-    {
-        active_transmission->active = false;
-        pipeline.notify(PipelineCleanup(active_transmission->message));
-        active_transmission = nullptr;
-    }
-
-    mutex_transmissions.lock();
-    for (Transmission *transmission : transmissions)
-    {
-        transmission->set_result(false);
-        transmission->release();
-    }
-    transmissions.clear();
-    mutex_transmissions.unlock();
+    dispatcher.cancel_all();
 
     mutex_packets.lock();
     packets_to_send.clear();
@@ -500,8 +435,7 @@ void Connection::update()
     packets_to_send.clear();
     mutex_packets.unlock();
 
-    if (!transmissions.size())
-        return;
+    if (dispatcher.is_empty()) return;
 
     if (state == ConnectionState::CLOSED)
     {
@@ -509,21 +443,7 @@ void Connection::update()
         return;
     }
 
-    if (state != ConnectionState::ESTABLISHED)
-        return;
-
-    if (!active_transmission)
-    {
-        active_transmission = transmissions[0];
-        active_transmission->active = true;
-        send(active_transmission->message);
-    }
-}
-
-void Connection::send(Message message)
-{
-    message.id.msg_num = new_message_number();
-    pipeline.send(message);
+    if (state == ConnectionState::ESTABLISHED) dispatcher.update();
 }
 
 void Connection::send(Packet packet)
