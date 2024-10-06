@@ -18,7 +18,7 @@ class FailureDetection
 
     std::map<std::string, uint64_t> last_alive;
 
-    GroupRegistry *gr; // TODO: usar shared_ptr
+    std::shared_ptr<GroupRegistry> gr;
 
     EventBus &event_bus;
 
@@ -77,7 +77,7 @@ class FailureDetection
     }
 
 public:
-    FailureDetection(GroupRegistry *gr, EventBus &event_bus, unsigned int alive) : gr(gr), event_bus(event_bus), alive(alive), keep_alive(alive * MAX_HEARTBEAT_TRIES)
+    FailureDetection(std::shared_ptr<GroupRegistry> gr, EventBus &event_bus, unsigned int alive) : gr(gr), event_bus(event_bus), alive(alive), keep_alive(alive * MAX_HEARTBEAT_TRIES)
     {
         attach();
 

@@ -44,11 +44,11 @@ public:
     bool broadcast(MessageData data);
     ReceiveResult receive(char *m);
 
-    GroupRegistry *get_group_registry();
+    std::shared_ptr<GroupRegistry> get_group_registry();
 
 private:
     Pipeline *pipeline;
-    GroupRegistry *gr;
+    std::shared_ptr<GroupRegistry> gr;
     std::unique_ptr<FailureDetection> failure_detection;
     
     EventBus event_bus;

@@ -18,7 +18,7 @@ ReliableCommunication::ReliableCommunication(
 {
     Config config = ConfigReader::parse_file("nodes.conf");
 
-    gr = new GroupRegistry(local_id, config);
+    gr = std::make_shared<GroupRegistry>(local_id, config);
     pipeline = new Pipeline(gr, event_bus, fault_config);
 
     sender_thread = std::thread([this]()
@@ -34,7 +34,6 @@ ReliableCommunication::~ReliableCommunication()
     if (sender_thread.joinable())
         sender_thread.join();
 
-    delete gr;
     delete pipeline;
 }
 
@@ -42,7 +41,7 @@ void ReliableCommunication::shutdown() {
     application_buffer.terminate();
 }
 
-GroupRegistry *ReliableCommunication::get_group_registry()
+std::shared_ptr<GroupRegistry> ReliableCommunication::get_group_registry()
 {
     return gr;
 }
