@@ -5,7 +5,7 @@
 #include "communication/group_registry.h"
 #include "communication/connection.h"
 
-Pipeline::Pipeline(GroupRegistry *gr, const FaultConfig& fault_config) : gr(gr)
+Pipeline::Pipeline(GroupRegistry *gr, EventBus& event_bus, const FaultConfig& fault_config) : gr(gr), event_bus(event_bus)
 {
     PipelineHandler handler = PipelineHandler(*this, event_bus, -1);
 

@@ -144,5 +144,7 @@ Config ConfigReader::parse()
     expect('}');
     expect(';');
 
+    // TODO: parse do `alive`
+
     return Config{nodes};
 }

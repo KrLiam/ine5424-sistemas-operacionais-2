@@ -17,12 +17,13 @@ ReliableCommunication::ReliableCommunication(
     application_buffer(INTERMEDIARY_BUFFER_ITEMS)
 {
     gr = new GroupRegistry(_local_id);
-    pipeline = new Pipeline(gr, fault_config);
+    pipeline = new Pipeline(gr, event_bus, fault_config);
 
     sender_thread = std::thread([this]()
                                 { send_routine(); });
 
     gr->establish_connections(*pipeline, application_buffer, connection_update_buffer);
+    failure_detection = std::make_unique<FailureDetection>(gr, event_bus, 1000); // TODO: utilizar valor obtido da config `alive`
 }
 
 ReliableCommunication::~ReliableCommunication()

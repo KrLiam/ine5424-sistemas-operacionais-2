@@ -17,7 +17,7 @@ class Pipeline
 {
 private:
     std::vector<PipelineStep *> layers;
-    EventBus event_bus;
+    EventBus& event_bus;
 
     GroupRegistry *gr;
 
@@ -49,7 +49,7 @@ public:
     static const unsigned int CHECKSUM_LAYER = 3;
     static const unsigned int FRAGMENTATION_LAYER = 4;
 
-    Pipeline(GroupRegistry *gr, const FaultConfig& fault_config);
+    Pipeline(GroupRegistry *gr, EventBus& event_bus, const FaultConfig& fault_config);
 
     ~Pipeline();
 

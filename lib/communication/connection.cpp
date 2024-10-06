@@ -26,9 +26,11 @@ void Connection::observe_pipeline()
     obs_message_defragmentation_is_complete.on(std::bind(&Connection::message_defragmentation_is_complete, this, _1));
     obs_transmission_complete.on(std::bind(&Connection::transmission_complete, this, _1));
     obs_transmission_fail.on(std::bind(&Connection::transmission_fail, this, _1));
+    obs_node_death.on(std::bind(&Connection::node_death, this, _1));
     pipeline.attach(obs_message_defragmentation_is_complete);
     pipeline.attach(obs_transmission_complete);
     pipeline.attach(obs_transmission_fail);
+    pipeline.attach(obs_node_death); // TODO: arrumar o local disso, já q uma conexão fechar não faz parte do pipeline
 }
 
 void Connection::message_defragmentation_is_complete(const MessageDefragmentationIsComplete &event)
@@ -56,6 +58,12 @@ void Connection::transmission_fail(const TransmissionFail &event)
 
     if (active && uuid == active->uuid) dispatcher.complete(false);
 }
+
+void Connection::node_death(const NodeDeath& event)
+{
+    cancel_transmissions();
+    change_state(CLOSED);
+};
 
 ConnectionState Connection::get_state() const { return state; }
 
@@ -244,6 +252,12 @@ void Connection::established(Packet p)
     {
         log_debug("Received ", p.to_string(PacketFormat::RECEIVED), "; removing from list of packets with pending ACKs.");
         pipeline.notify(PacketAckReceived(p));
+        return;
+    }
+
+    if (p.data.header.get_message_type() == MessageType::HEARTBEAT)
+    {
+        pipeline.notify(HeartbeatReceived(remote_node)); // TODO: arrumar o lugar disso. o heartbeatreceived não tem nada a ver com o pipeline
         return;
     }
 
@@ -566,4 +580,34 @@ void Connection::transmit(Packet p)
     packets_to_send.push_back(p);
     mutex_packets.unlock();
     request_update();
+}
+
+void Connection::heartbeat()
+{
+    log_trace("Heartbeating to ", remote_node.get_address().to_string(), ".");
+
+    PacketData data;
+    memset(&data, 0, sizeof(PacketData));
+    data.header = {
+        id : {
+            origin : local_node.get_address(),
+            msg_num : 0,
+            sequence_type : MessageSequenceType::UNICAST
+        },
+        type : MessageType::HEARTBEAT
+    };
+
+    PacketMetadata meta = {
+        transmission_uuid : UUID(""),
+        destination : remote_node.get_address(),
+        message_length : 0,
+        expects_ack : 0
+    };
+
+    Packet heartbeat_packet = {
+        data : data,
+        meta : meta
+    };
+
+    transmit(heartbeat_packet);
 }

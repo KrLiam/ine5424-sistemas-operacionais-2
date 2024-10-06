@@ -18,3 +18,7 @@ MessageDefragmentationIsComplete::MessageDefragmentationIsComplete(Packet& packe
 ForwardDefragmentedMessage::ForwardDefragmentedMessage(Packet& packet) : packet(packet) {}
 
 PipelineCleanup::PipelineCleanup(Message& message) : message(message) {}
+
+HeartbeatReceived::HeartbeatReceived(Node& remote_node) : remote_node(remote_node) {}
+
+NodeDeath::NodeDeath(const Node& remote_node) : remote_node(remote_node) {}

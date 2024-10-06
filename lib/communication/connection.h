@@ -127,10 +127,12 @@ private:
     Observer<MessageDefragmentationIsComplete> obs_message_defragmentation_is_complete;
     Observer<TransmissionComplete> obs_transmission_complete;
     Observer<TransmissionFail> obs_transmission_fail;
+    Observer<NodeDeath> obs_node_death;
     
     void message_defragmentation_is_complete(const MessageDefragmentationIsComplete& event);
     void transmission_complete(const TransmissionComplete& event);
     void transmission_fail(const TransmissionFail& event);
+    void node_death(const NodeDeath& event);
 
 public:
     Connection(
@@ -157,4 +159,6 @@ public:
 
     void receive(Packet packet);
     void receive(Message message);
+
+    void heartbeat();
 };

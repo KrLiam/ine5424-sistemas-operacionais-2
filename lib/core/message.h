@@ -11,6 +11,7 @@ enum MessageType
 {
     APPLICATION = 0,
     CONTROL = 1,
+    HEARTBEAT = 2,
 };
 
 enum MessageSequenceType {

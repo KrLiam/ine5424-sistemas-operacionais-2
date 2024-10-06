@@ -12,7 +12,9 @@ enum EventType {
     FORWARD_DEFRAGMENTED_MESSAGE = 4,
     PIPELINE_CLEANUP = 5,
     CONNECTION_ESTABLISHED = 6,
-    CONNECTION_FAIL =7,
+    CONNECTION_FAIL = 7,
+    HEARTBEAT_RECEIVED = 8,
+    NODE_DEATH = 9,
 };
 
 struct Event {
@@ -86,4 +88,20 @@ struct PipelineCleanup : public Event {
     Message& message;
 
     PipelineCleanup(Message& message);
+};
+
+struct HeartbeatReceived : public Event {
+    static EventType type() { return EventType::HEARTBEAT_RECEIVED; }
+
+    Node& remote_node;
+
+    HeartbeatReceived(Node& remote_node);
+};
+
+struct NodeDeath: public Event {
+    static EventType type() { return EventType::NODE_DEATH; }
+
+    const Node& remote_node;
+
+    NodeDeath(const Node& remote_node);
 };

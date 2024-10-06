@@ -16,6 +16,7 @@
 #include "utils/format.h"
 #include "communication/transmission.h"
 #include "pipeline/fault_injection/fault_injection_layer.h"
+#include "failure_detection/failure_detection.h"
 
 class Pipeline;
 
@@ -48,6 +49,9 @@ public:
 private:
     Pipeline *pipeline;
     GroupRegistry *gr;
+    std::unique_ptr<FailureDetection> failure_detection;
+    
+    EventBus event_bus;
 
     std::thread sender_thread;
     BufferSet<std::string> connection_update_buffer;
