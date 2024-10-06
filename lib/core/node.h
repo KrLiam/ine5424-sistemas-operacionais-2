@@ -28,6 +28,8 @@ public:
     bool is_remote() const;
 
     std::string to_string() const;
+
+    bool operator==(const Node& other) const;
 };
 
 class NodeMap {

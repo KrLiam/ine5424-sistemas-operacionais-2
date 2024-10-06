@@ -3,27 +3,29 @@
 #include "pipeline/fault_injection/fault_injection_layer.h"
 
 ReliableCommunication::ReliableCommunication(
-    std::string _local_id,
-    std::size_t _user_buffer_size
-) : ReliableCommunication(_local_id, _user_buffer_size, FaultConfig()) {}
+    std::string local_id,
+    std::size_t user_buffer_size
+) : ReliableCommunication(local_id, user_buffer_size, FaultConfig()) {}
 
 ReliableCommunication::ReliableCommunication(
-    std::string _local_id,
-    std::size_t _user_buffer_size,
+    std::string local_id,
+    std::size_t user_buffer_size,
     FaultConfig fault_config
 ) :
     connection_update_buffer("connection_update"),
-    user_buffer_size(_user_buffer_size),
+    user_buffer_size(user_buffer_size),
     application_buffer(INTERMEDIARY_BUFFER_ITEMS)
 {
-    gr = new GroupRegistry(_local_id);
+    Config config = ConfigReader::parse_file("nodes.conf");
+
+    gr = new GroupRegistry(local_id, config);
     pipeline = new Pipeline(gr, event_bus, fault_config);
 
     sender_thread = std::thread([this]()
                                 { send_routine(); });
 
     gr->establish_connections(*pipeline, application_buffer, connection_update_buffer);
-    failure_detection = std::make_unique<FailureDetection>(gr, event_bus, 1000); // TODO: utilizar valor obtido da config `alive`
+    failure_detection = std::make_unique<FailureDetection>(gr, event_bus, config.alive);
 }
 
 ReliableCommunication::~ReliableCommunication()

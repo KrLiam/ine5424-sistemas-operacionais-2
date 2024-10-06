@@ -61,8 +61,12 @@ void Connection::transmission_fail(const TransmissionFail &event)
 
 void Connection::node_death(const NodeDeath& event)
 {
+    if (event.remote_node != remote_node)
+        return;
+
     cancel_transmissions();
     change_state(CLOSED);
+    log_info("Closed connection with node ", remote_node.get_address().to_string(), ".");
 };
 
 ConnectionState Connection::get_state() const { return state; }

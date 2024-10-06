@@ -77,7 +77,7 @@ class FailureDetection
     }
 
 public:
-    FailureDetection(GroupRegistry *gr, EventBus &event_bus, unsigned int alive) : gr(gr), event_bus(event_bus), alive(alive), keep_alive(alive * 5)
+    FailureDetection(GroupRegistry *gr, EventBus &event_bus, unsigned int alive) : gr(gr), event_bus(event_bus), alive(alive), keep_alive(alive * MAX_HEARTBEAT_TRIES)
     {
         attach();
 

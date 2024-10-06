@@ -15,7 +15,7 @@ class Pipeline;
 class GroupRegistry
 {
 public:
-    GroupRegistry(std::string local_id);
+    GroupRegistry(std::string local_id, Config config);
     ~GroupRegistry();
 
     const NodeMap &get_nodes();
@@ -55,5 +55,5 @@ private:
     std::map<std::string, Connection> connections;
     std::unique_ptr<BroadcastConnection> broadcast_connection;
 
-    void read_nodes_from_configuration(std::string local_id);
+    void read_nodes_from_configuration(std::string local_id, Config config);
 };

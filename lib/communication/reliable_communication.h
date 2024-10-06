@@ -30,10 +30,10 @@ struct ReceiveResult {
 class ReliableCommunication
 {
 public:
-    ReliableCommunication(std::string _local_id, std::size_t _user_buffer_size);
+    ReliableCommunication(std::string local_id, std::size_t user_buffer_size);
     ReliableCommunication(
-        std::string _local_id,
-        std::size_t _user_buffer_size,
+        std::string local_id,
+        std::size_t user_buffer_size,
         FaultConfig fault_config
     );
     ~ReliableCommunication();

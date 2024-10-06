@@ -144,7 +144,10 @@ Config ConfigReader::parse()
     expect('}');
     expect(';');
 
-    // TODO: parse do `alive`
+    expect("alive");
+    expect('=');
+    unsigned int alive = read_int();
+    expect(';');
 
-    return Config{nodes};
+    return Config{alive, nodes};
 }

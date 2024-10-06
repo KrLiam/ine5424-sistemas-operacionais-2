@@ -1,9 +1,9 @@
 #include "communication/group_registry.h"
 #include "pipeline/pipeline.h"
 
-GroupRegistry::GroupRegistry(std::string local_id) : local_id(local_id)
+GroupRegistry::GroupRegistry(std::string local_id, Config config) : local_id(local_id)
 {
-    read_nodes_from_configuration(local_id);
+    read_nodes_from_configuration(local_id, config);
 }
 
 GroupRegistry::~GroupRegistry()
@@ -20,10 +20,9 @@ const Node &GroupRegistry::get_local_node()
     return nodes.get_node(local_id);
 }
 
-void GroupRegistry::read_nodes_from_configuration(std::string local_id)
+void GroupRegistry::read_nodes_from_configuration(std::string local_id, Config config)
 {
     nodes.clear();
-    Config config = ConfigReader::parse_file("nodes.conf");
     for (NodeConfig node_config : config.nodes)
     {
         bool is_remote = local_id != node_config.id;

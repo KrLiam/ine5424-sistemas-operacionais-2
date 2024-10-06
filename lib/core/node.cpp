@@ -27,6 +27,11 @@ std::string Node::to_string() const
     return format("%s:%s:%i", id.c_str(), address.to_string().c_str(), remote);
 }
 
+bool Node::operator==(const Node& other) const
+{
+    return address == other.address;
+}
+
 NodeMap::NodeMap() : nodes() {}
 
 NodeMap::NodeMap(std::map<std::string, Node> nodes) : nodes(nodes) {}
@@ -88,4 +93,3 @@ std::map<std::string, Node>::const_iterator NodeMap::end() const {
 void NodeMap::clear() {
     nodes.clear();
 }
-

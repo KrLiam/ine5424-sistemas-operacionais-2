@@ -97,6 +97,8 @@ struct NodeConfig
 
 struct Config
 {
+    unsigned int alive;
+
     std::vector<NodeConfig> nodes;
 
     NodeConfig &get_node(std::string id);
