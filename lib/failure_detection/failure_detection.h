@@ -89,13 +89,9 @@ public:
 
     ~FailureDetection()
     {
+        running = false;
         if (failure_detection_thread.joinable())
             failure_detection_thread.join();
-    }
-
-    void stop()
-    {
-        running = false;
     }
 
     void attach()
