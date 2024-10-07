@@ -44,7 +44,9 @@ void ChecksumLayer::receive(Packet packet)
         handler.forward_receive(packet);
     }
     else {
-        log_warn("Checksum is different: Expected ", received_checksum, ", got ", calculated_checksum);
+        if (!packet.silent()) {
+            log_warn("Checksum is different: Expected ", received_checksum, ", got ", calculated_checksum);
+        }
     }
 }
 
