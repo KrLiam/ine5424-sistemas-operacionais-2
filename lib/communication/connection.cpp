@@ -66,7 +66,6 @@ void Connection::node_death(const NodeDeath& event)
 
     cancel_transmissions();
     change_state(CLOSED);
-    log_info("Closed connection with node ", remote_node.get_address().to_string(), ".");
 };
 
 ConnectionState Connection::get_state() const { return state; }
@@ -134,11 +133,15 @@ void Connection::closed(Packet p)
 }
 
 void Connection::on_established() {
+    log_info("Established connection with node ", remote_node.get_id(), " (", remote_node.get_address().to_string(), ").");
+
     ConnectionEstablished event(remote_node);
     pipeline.notify(event);
 }
 
 void Connection::on_closed() {
+    log_info("Closed connection with node ", remote_node.get_id(), " (", remote_node.get_address().to_string(), ").");
+
     ConnectionClosed event(remote_node);
     pipeline.notify(event);
 }
@@ -163,7 +166,6 @@ void Connection::syn_sent(Packet p)
             dispatcher.reset_number(1);
             expected_number = 1;
 
-            log_info("syn_sent: connection established.");
             change_state(ESTABLISHED);
 
             return;
@@ -196,7 +198,6 @@ void Connection::syn_received(Packet p)
         log_trace("syn_received: received ACK.");
 
         change_state(ESTABLISHED);
-        log_info("syn_received: connection established.");
 
         return;
     }
@@ -213,7 +214,6 @@ void Connection::syn_received(Packet p)
             dispatcher.increment_number();
 
             change_state(ESTABLISHED);
-            log_info("syn_received: connection established.");
             
             return;
         }
@@ -340,7 +340,6 @@ void Connection::last_ack(Packet p)
     if (p.data.header.is_ack())
     {
         log_trace("last_ack: received ACK.");
-        log_info("last_ack: connection closed.");
         reset_message_numbers();
         change_state(CLOSED);
     }
@@ -425,7 +424,6 @@ bool Connection::close_on_rst(Packet p)
     if (p.data.header.is_rst() && p.data.header.get_message_number() == expected_number)
     {
         log_debug(get_current_state_name(), ": received RST.");
-        log_info(get_current_state_name(), ": connection closed.");
         reset_message_numbers();
         change_state(CLOSED);
         return true;
@@ -438,7 +436,6 @@ bool Connection::rst_on_syn(Packet p)
     if (p.data.header.is_syn())
     {
         log_debug(get_current_state_name(), ": received SYN; sending RST.");
-        log_info(get_current_state_name(), ": connection closed.");
         reset_message_numbers();
         change_state(CLOSED);
         send_flag(RST);
