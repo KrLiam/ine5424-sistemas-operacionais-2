@@ -13,6 +13,8 @@
 
 class FailureDetection
 {
+    bool running = true;
+
     unsigned int alive;
     unsigned int keep_alive;
 
@@ -47,7 +49,7 @@ class FailureDetection
     void failure_detection_routine()
     {
         log_info("Initialized failure detection thread.");
-        while (true)
+        while (running)
         {
             uint64_t now = DateUtils::now();
 
@@ -83,6 +85,17 @@ public:
 
         failure_detection_thread = std::thread([this]()
                                                { failure_detection_routine(); });
+    }
+
+    ~FailureDetection()
+    {
+        if (failure_detection_thread.joinable())
+            failure_detection_thread.join();
+    }
+
+    void stop()
+    {
+        running = false;
     }
 
     void attach()

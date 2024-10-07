@@ -33,6 +33,8 @@ ReliableCommunication::~ReliableCommunication()
     connection_update_buffer.terminate();
     if (sender_thread.joinable())
         sender_thread.join();
+    
+    failure_detection->stop();
 
     delete pipeline;
 }
