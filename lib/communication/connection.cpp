@@ -23,14 +23,30 @@ Connection::Connection(
 
 void Connection::observe_pipeline()
 {
+    obs_packet_received.on(std::bind(&Connection::packet_received, this, _1));
+    obs_message_received.on(std::bind(&Connection::message_received, this, _1));
     obs_message_defragmentation_is_complete.on(std::bind(&Connection::message_defragmentation_is_complete, this, _1));
     obs_transmission_complete.on(std::bind(&Connection::transmission_complete, this, _1));
     obs_transmission_fail.on(std::bind(&Connection::transmission_fail, this, _1));
     obs_node_death.on(std::bind(&Connection::node_death, this, _1));
+    pipeline.attach(obs_packet_received);
+    pipeline.attach(obs_message_received);
     pipeline.attach(obs_message_defragmentation_is_complete);
     pipeline.attach(obs_transmission_complete);
     pipeline.attach(obs_transmission_fail);
     pipeline.attach(obs_node_death); // TODO: arrumar o local disso, já q uma conexão fechar não faz parte do pipeline
+}
+
+void Connection::packet_received(const PacketReceived &event)
+{
+    if (event.packet.data.header.id.origin != remote_node.get_address()) return;
+    receive(event.packet);
+}
+
+void Connection::message_received(const MessageReceived &event)
+{
+    if (event.message.id.origin != remote_node.get_address()) return;
+    receive(event.message);
 }
 
 void Connection::message_defragmentation_is_complete(const MessageDefragmentationIsComplete &event)

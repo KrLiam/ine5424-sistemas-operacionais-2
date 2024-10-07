@@ -63,6 +63,8 @@ void TransmissionDispatcher::activate(Transmission* transmission) {
 
     Message& message = transmission->message;
     message.id.msg_num = next_number++;
+
+    pipeline.notify(TransmissionStarted(message));
     pipeline.send(message);
 }
 

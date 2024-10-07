@@ -77,8 +77,7 @@ void Pipeline::receive(Message message, int step_index)
         return;
     }
     // TODO: na nova tentativa de conexão, dá pra chamar um metodo q faz a msm coisa q o establish_connections(), só q pra uma só
-    Connection &conn = gr->get_connection(message.id.origin);
-    conn.receive(message);
+    event_bus.notify(MessageReceived(message));
 }
 void Pipeline::receive(Packet packet, int step_index)
 {
@@ -89,6 +88,5 @@ void Pipeline::receive(Packet packet, int step_index)
         return;
     }
     // TODO: na nova tentativa de conexão, dá pra chamar um metodo q faz a msm coisa q o establish_connections(), só q pra uma só
-    Connection &conn = gr->get_connection(packet.data.header.id.origin);
-    conn.receive(packet);
+    event_bus.notify(PacketReceived(packet));
 }

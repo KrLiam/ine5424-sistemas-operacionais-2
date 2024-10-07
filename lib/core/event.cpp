@@ -6,7 +6,14 @@ ConnectionEstablished::ConnectionEstablished(const Node& node) : node(node) {}
 
 ConnectionClosed::ConnectionClosed(const Node& node) : node(node) {}
 
+PacketReceived::PacketReceived(Packet& packet) : packet(packet) {}
+
 PacketAckReceived::PacketAckReceived(Packet& ack_packet) : ack_packet(ack_packet) {}
+
+MessageReceived::MessageReceived(Message& message) : message(message) {}
+
+TransmissionStarted::TransmissionStarted(const Message& message)
+    : message(message) {}
 
 TransmissionFail::TransmissionFail(Packet& faulty_packet) : faulty_packet(faulty_packet) {}
 

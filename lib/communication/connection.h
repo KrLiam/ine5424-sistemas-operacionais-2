@@ -124,11 +124,15 @@ private:
 
     void observe_pipeline();
 
+    Observer<PacketReceived> obs_packet_received;
+    Observer<MessageReceived> obs_message_received;
     Observer<MessageDefragmentationIsComplete> obs_message_defragmentation_is_complete;
     Observer<TransmissionComplete> obs_transmission_complete;
     Observer<TransmissionFail> obs_transmission_fail;
     Observer<NodeDeath> obs_node_death;
     
+    void packet_received(const PacketReceived& event);
+    void message_received(const MessageReceived& event);
     void message_defragmentation_is_complete(const MessageDefragmentationIsComplete& event);
     void transmission_complete(const TransmissionComplete& event);
     void transmission_fail(const TransmissionFail& event);

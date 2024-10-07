@@ -5,16 +5,19 @@
 
 enum EventType {
     BASE = -1,
-    PACKET_ACK_RECEIVED = 0,
-    TRANSMISSION_FAIL = 1,
-    TRANSMISSION_COMPLETE = 2,
-    MESSAGE_DEFRAGMENTATION_IS_COMPLETE = 3,
-    FORWARD_DEFRAGMENTED_MESSAGE = 4,
-    PIPELINE_CLEANUP = 5,
-    CONNECTION_ESTABLISHED = 6,
-    CONNECTION_FAIL = 7,
-    HEARTBEAT_RECEIVED = 8,
-    NODE_DEATH = 9,
+    PACKET_RECEIVED = 0,
+    PACKET_ACK_RECEIVED = 1,
+    MESSAGE_RECEIVED = 2,
+    TRANSMISSION_STARTED = 3,
+    TRANSMISSION_FAIL = 4,
+    TRANSMISSION_COMPLETE = 5,
+    MESSAGE_DEFRAGMENTATION_IS_COMPLETE = 6,
+    FORWARD_DEFRAGMENTED_MESSAGE = 7,
+    PIPELINE_CLEANUP = 8,
+    CONNECTION_ESTABLISHED = 9,
+    CONNECTION_FAIL = 10,
+    HEARTBEAT_RECEIVED = 11,
+    NODE_DEATH = 12,
 };
 
 struct Event {
@@ -40,12 +43,36 @@ struct ConnectionClosed : public Event {
     ConnectionClosed(const Node& node);
 };
 
+struct PacketReceived : public Event {
+    static EventType type() { return EventType::PACKET_RECEIVED; }
+
+    Packet& packet;
+
+    PacketReceived(Packet& packet);
+};
+
 struct PacketAckReceived : public Event {
     static EventType type() { return EventType::PACKET_ACK_RECEIVED; }
 
     Packet& ack_packet;
 
     PacketAckReceived(Packet& ack_packet);
+};
+
+struct MessageReceived : public Event {
+    static EventType type() { return EventType::MESSAGE_RECEIVED; }
+
+    Message& message;
+
+    MessageReceived(Message& message);
+};
+
+struct TransmissionStarted : public Event {
+    static EventType type() { return EventType::TRANSMISSION_STARTED; }
+
+    const Message& message;
+
+    TransmissionStarted(const Message& message);
 };
 
 struct TransmissionFail : public Event {
