@@ -42,11 +42,15 @@ void TransmissionLayer::send(Packet packet)
     const PacketMetadata& meta = packet.meta;
     const PacketHeader& header = packet.data.header;
 
-    log_trace("Packet [", packet.to_string(PacketFormat::SENT), "] sent to transmission layer.");
+    if (!packet.silent()) {
+        log_trace("Packet [", packet.to_string(PacketFormat::SENT), "] sent to transmission layer.");
+    }
 
     if (!packet.meta.expects_ack)
     {
-        log_debug("Packet [", packet.to_string(PacketFormat::SENT), "] does not require ACK, sending forward.");
+        if (!packet.silent()) {
+            log_debug("Packet [", packet.to_string(PacketFormat::SENT), "] does not require ACK, sending forward.");
+        }
         handler.forward_send(packet);
         return;
     }
@@ -77,7 +81,9 @@ void TransmissionLayer::pipeline_cleanup(const PipelineCleanup& event) {
 
 void TransmissionLayer::receive(Packet packet)
 {
-    log_trace("Packet [", packet.to_string(PacketFormat::RECEIVED), "] received on transmission layer.");
+    if (!packet.silent()) {
+        log_trace("Packet [", packet.to_string(PacketFormat::RECEIVED), "] received on transmission layer.");
+    }
 
     if (!nodes.contains(packet.data.header.id.origin))
     {

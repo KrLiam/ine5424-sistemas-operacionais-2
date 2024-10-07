@@ -56,15 +56,17 @@ void FaultInjectionLayer::receive(Packet packet) {
         [[maybe_unused]] unsigned int msg_num = packet.data.header.id.msg_num;
         [[maybe_unused]] unsigned int fragment_num = packet.data.header.fragment_num;
         
-        log_debug(
-            "Reception of packet ",
-            msg_num,
-            "/",
-            fragment_num,
-            " is delayed by ",
-            delay,
-            " ms."
-        );
+        if (!packet.silent()) {
+            log_debug(
+                "Reception of packet ",
+                msg_num,
+                "/",
+                fragment_num,
+                " is delayed by ",
+                delay,
+                " ms."
+            );
+        }
     }
 
     if (delay > 0) {
@@ -78,6 +80,8 @@ void FaultInjectionLayer::receive(Packet packet) {
 }
 
 void FaultInjectionLayer::proceed_receive(Packet packet) {
-    log_info("Received ", packet.to_string(PacketFormat::RECEIVED), " (", packet.meta.message_length, " bytes).");
+    if (!packet.silent()) {
+        log_info("Received ", packet.to_string(PacketFormat::RECEIVED), " (", packet.meta.message_length, " bytes).");
+    }
     handler.forward_receive(packet);
 }

@@ -27,13 +27,17 @@ void FragmentationLayer::send(Message message)
 
 void FragmentationLayer::send(Packet packet)
 {
-    log_trace("Packet [", packet.to_string(PacketFormat::SENT), "] sent to fragmentation layer.");
+    if (!packet.silent()) {
+        log_trace("Packet [", packet.to_string(PacketFormat::SENT), "] sent to fragmentation layer.");
+    }
     handler.forward_send(packet);
 }
 
 void FragmentationLayer::receive(Packet packet)
 {
-    log_trace("Packet [", packet.to_string(PacketFormat::RECEIVED), "] received on fragmentation layer.");
+    if (!packet.silent()) {
+        log_trace("Packet [", packet.to_string(PacketFormat::RECEIVED), "] received on fragmentation layer.");
+    }
     handler.forward_receive(packet);
 
     if (packet.data.header.get_message_type() != MessageType::APPLICATION)
@@ -50,7 +54,9 @@ void FragmentationLayer::receive(Packet packet)
     if (!assembler.is_complete())
         return;
 
-    log_debug("Received all fragments; notifying connection.");
+    if (!packet.silent()) {
+        log_debug("Received all fragments; notifying connection.");
+    }
     handler.notify(MessageDefragmentationIsComplete(packet));
 }
 

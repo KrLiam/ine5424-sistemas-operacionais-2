@@ -73,6 +73,7 @@ struct PacketMetadata
     SocketAddress destination = {{0, 0, 0, 0}, 0};
     int message_length = 0;
     bool expects_ack = 0;
+    bool silent = 0;
 };
 
 
@@ -87,6 +88,7 @@ struct Packet
     PacketData data;
     PacketMetadata meta;
 
+    bool silent() { return meta.silent; }
 
     std::string to_string(PacketFormat type = PacketFormat::ALL) const
     {

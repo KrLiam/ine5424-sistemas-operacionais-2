@@ -514,7 +514,7 @@ void Connection::cancel_transmissions()
 
 void Connection::update()
 {
-    log_trace("Updating connection with node ", remote_node.get_id());
+    // log_trace("Updating connection with node ", remote_node.get_id());
 
     mutex_packets.lock();
     for (Packet p : packets_to_send)
@@ -605,7 +605,8 @@ void Connection::heartbeat()
         transmission_uuid : UUID(""),
         destination : remote_node.get_address(),
         message_length : 0,
-        expects_ack : 0
+        expects_ack : 0,
+        silent : 1
     };
 
     Packet heartbeat_packet = {

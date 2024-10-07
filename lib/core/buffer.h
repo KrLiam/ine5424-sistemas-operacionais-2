@@ -30,7 +30,7 @@ public:
     T consume()
     {
         while (empty() && !terminating) {
-            log_trace("Waiting to consume on [", name, "] buffer.");
+            // log_trace("Waiting to consume on [", name, "] buffer.");
             std::unique_lock<std::mutex> lock(empty_mutex);
             empty_cv.wait(lock);
         }
@@ -44,7 +44,7 @@ public:
 
         full_cv.notify_one();
 
-        log_trace("Consumed item to [", name, "] buffer.");
+        // log_trace("Consumed item to [", name, "] buffer.");
 
         mutex.unlock();
 
@@ -54,7 +54,7 @@ public:
     void produce(const T &item)
     {
         while (full() && !terminating) {
-            log_trace("Waiting to produce on [", name, "] buffer.");
+            // log_trace("Waiting to produce on [", name, "] buffer.");
             std::unique_lock<std::mutex> lock(full_mutex);
             full_cv.wait(lock);
         }
@@ -66,7 +66,7 @@ public:
         buffer.push(item);
         empty_cv.notify_one();
 
-        log_trace("Produced item to [", name, "] buffer.");
+        // log_trace("Produced item to [", name, "] buffer.");
 
         mutex.unlock();
     }
@@ -128,7 +128,7 @@ public:
 
     void produce(const T& value) {
         while (full() && !terminating) {
-            log_trace("Waiting to produce on [", name, "] buffer.");
+            // log_trace("Waiting to produce on [", name, "] buffer.");
             std::unique_lock<std::mutex> lock(full_mutex);
             full_cv.wait(lock);
         }
@@ -140,14 +140,14 @@ public:
         values.emplace(value);
         empty_cv.notify_one();
 
-        log_trace("Produced item to [", name, "] buffer.");
+        // log_trace("Produced item to [", name, "] buffer.");
 
         values_mutex.unlock();
     }
 
     T consume() {
         while (empty() && !terminating) {
-            log_trace("Waiting to consume on [", name, "] buffer.");
+            // log_trace("Waiting to consume on [", name, "] buffer.");
             std::unique_lock<std::mutex> lock(empty_mutex);
             empty_cv.wait(lock);
         }
@@ -160,7 +160,7 @@ public:
         values.erase(values.begin());
         full_cv.notify_one();
 
-        log_trace("Consumed item to [", name, "] buffer.");
+        // log_trace("Consumed item to [", name, "] buffer.");
 
         values_mutex.unlock();
 

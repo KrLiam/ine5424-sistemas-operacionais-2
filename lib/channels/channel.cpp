@@ -75,10 +75,14 @@ void Channel::send(Packet packet)
 
     if (bytes_sent < 0)
     {
-        log_warn("Unable to send message to ", destination.to_string(), ".");
+        if (!packet.silent()) {
+            log_warn("Unable to send message to ", destination.to_string(), ".");
+        }
         return;
     }
-    log_info("Sent packet ", packet.to_string(PacketFormat::SENT), " (", bytes_sent, " bytes).");
+    if (!packet.silent()) {
+        log_info("Sent packet ", packet.to_string(PacketFormat::SENT), " (", bytes_sent, " bytes).");
+    }
 }
 
 Packet Channel::receive()
@@ -86,7 +90,7 @@ Packet Channel::receive()
     Packet packet;
     socklen_t in_address_len = sizeof(in_address);
 
-    log_trace("Waiting to receive data.");
+    // log_trace("Waiting to receive data.");
     int bytes_received = recvfrom(
         socket_descriptor,
         (char *)&packet.data,
@@ -100,6 +104,7 @@ Packet Channel::receive()
 
     packet.meta.destination = address;
     packet.meta.message_length = bytes_received - sizeof(PacketHeader);
+    packet.meta.silent = packet.data.header.type == MessageType::HEARTBEAT;
 
     return packet;
 }

@@ -7,7 +7,9 @@ ChecksumLayer::~ChecksumLayer() {}
 
 void ChecksumLayer::send(Packet packet)
 {
-    log_trace("Packet ", packet.to_string(PacketFormat::SENT), " sent to checksum layer.");
+    if (!packet.silent()) {
+        log_trace("Packet ", packet.to_string(PacketFormat::SENT), " sent to checksum layer.");
+    }
 
     PacketData &data = packet.data;
 
@@ -15,7 +17,9 @@ void ChecksumLayer::send(Packet packet)
     prepare_packet_buffer(data, packet.meta.message_length, buffer);
 
     unsigned short checksum = CRC16::calculate(buffer, PacketData::MAX_PACKET_SIZE);
-    log_debug("Calculated checksum: ", checksum);
+    if (!packet.silent()) {
+        log_debug("Calculated checksum: ", checksum);
+    }
 
     packet.data.header.checksum = checksum;
     handler.forward_send(packet);
@@ -23,7 +27,9 @@ void ChecksumLayer::send(Packet packet)
 
 void ChecksumLayer::receive(Packet packet)
 {
-    log_trace("Packet ", packet.to_string(PacketFormat::RECEIVED), " received on checksum layer.");
+    if (!packet.silent()) {
+        log_trace("Packet ", packet.to_string(PacketFormat::RECEIVED), " received on checksum layer.");
+    }
 
     unsigned short received_checksum = packet.data.header.checksum;
     PacketData &data = packet.data;
