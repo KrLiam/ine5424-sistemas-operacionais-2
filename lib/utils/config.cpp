@@ -112,14 +112,10 @@ SocketAddress ConfigReader::parse_socket_address()
     return SocketAddress{ip, port};
 }
 
-Config ConfigReader::parse()
+std::vector<NodeConfig> ConfigReader::parse_nodes()
 {
-    reset();
-
     std::vector<NodeConfig> nodes;
 
-    expect("nodes");
-    expect('=');
     expect('{');
 
     while (true)
@@ -141,13 +137,62 @@ Config ConfigReader::parse()
         expect('}');
         read(',');
     }
+
     expect('}');
-    expect(';');
 
-    expect("alive");
-    expect('=');
-    unsigned int alive = read_int();
-    expect(';');
+    return nodes;
+}
 
-    return Config{alive, nodes};
+uint32_t ConfigReader::parse_alive()
+{
+    return read_int();
+}
+
+BroadcastType ConfigReader::parse_broadcast()
+{
+    std::string value = read_word();
+    // TODO seria bom converter pra lowercase
+
+    if (value == "beb") return BroadcastType::BEB;
+    if (value == "urb") return BroadcastType::URB;
+    if (value == "ab") return BroadcastType::AB;
+
+    throw parse_error(format("Invalid broadcast type '%s' at config file.", value.c_str()));
+}
+
+Config ConfigReader::parse()
+{
+    reset();
+
+    Config config;
+
+    while (peek()) {
+        int pos = get_pos();
+        std::string target = read_word();
+
+        if (!target.length()) {
+            throw parse_error(
+                format("Unexpected '%c' at pos %i of config file.", peek(), get_pos())
+            );
+        }
+
+        expect('=');
+
+        if (target == "nodes") {
+            config.nodes = parse_nodes();
+        }
+        else if (target == "alive") {
+            config.alive = parse_alive();
+        }
+        else if (target == "broadcast") {
+            config.broadcast = parse_broadcast();
+        }
+        else throw parse_error(
+            format("Invalid '%s' at pos %i of config file.", target.c_str(), pos)
+        );
+
+        expect(';');
+    }
+
+    return config;
 }

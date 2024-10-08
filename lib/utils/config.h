@@ -95,11 +95,17 @@ struct NodeConfig
     std::string to_string() const;
 };
 
+enum BroadcastType {
+    BEB = 0,
+    URB = 1,
+    AB = 2
+};
+
 struct Config
 {
-    unsigned int alive;
-
     std::vector<NodeConfig> nodes;
+    unsigned int alive = 1000;
+    BroadcastType broadcast = BroadcastType::BEB;
 
     NodeConfig &get_node(std::string id);
 
@@ -116,5 +122,8 @@ public:
 
     IPv4 parse_ipv4();
     SocketAddress parse_socket_address();
+    std::vector<NodeConfig> parse_nodes();
+    uint32_t parse_alive();
+    BroadcastType parse_broadcast();
     Config parse();
 };
