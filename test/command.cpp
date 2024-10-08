@@ -5,6 +5,7 @@
 #include "utils/reader.h"
 #include "utils/format.h"
 #include "utils/log.h"
+#include <communication/transmission.h>
 
 Command::Command(CommandType type) : type(type) {}
 
@@ -71,6 +72,9 @@ std::string parse_path(Reader& reader) {
 
 std::string parse_destination(Reader& reader) {
     reader.expect("->");
+
+    if (reader.read('*')) return BROADCAST_ID;
+
     std::string send_id = reader.read_word();
 
     if (!send_id.length()) throw std::invalid_argument(

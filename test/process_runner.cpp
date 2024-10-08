@@ -150,6 +150,26 @@ struct SenderThreadArgs {
     std::shared_ptr<Command> command;
 };
 
+
+bool send_message(
+    ReliableCommunication* comm,
+    std::string node_id,
+    MessageData data,
+    std::string cmd_name,
+    std::string data_description
+) {
+    if (node_id == BROADCAST_ID) {
+        log_info(
+            "Executing command '", cmd_name, "', broadcasting ", data_description, "."
+        );
+        return comm->broadcast(data);
+    }
+
+    log_info(
+        "Executing command '", cmd_name, "', sending ", data_description, " to node ", node_id, "."
+    );
+    return comm->send(node_id, data);
+}
 void send_thread(SenderThreadArgs* args) {
     std::shared_ptr<Command> command = args->command;
     ReliableCommunication* comm = args->comm;
@@ -162,43 +182,48 @@ void send_thread(SenderThreadArgs* args) {
             TextCommand* cmd = static_cast<TextCommand*>(command.get());
 
             std::string& text = cmd->text;
-            send_id = cmd->send_id;
-            std::string name = cmd->name();
 
-            log_info("Executing command '", name, "', sending '", text, "' to node ", send_id, ".");
-
-            success = comm->send(send_id, {text.c_str(), text.length()});
+            success = send_message(
+                comm,
+                cmd->send_id,
+                {text.c_str(), text.length()},
+                cmd->name(),
+                format("'%s'", text.c_str())
+            );
         }
         else if (command->type == CommandType::broadcast) {
             BroadcastCommand* cmd = static_cast<BroadcastCommand*>(command.get());
 
             std::string& text = cmd->text;
-            std::string name = cmd->name();
 
-            log_info("Executing command '", name, "', sending '", text, "'");
-
-            success = comm->broadcast({text.c_str(), text.length()});
+            success = send_message(
+                comm,
+                BROADCAST_ID,
+                {text.c_str(), text.length()},
+                cmd->name(),
+                format("'%s'", text.c_str())
+            );
         }
         else if (command->type == CommandType::dummy) {
             DummyCommand* cmd = static_cast<DummyCommand*>(command.get());
 
             size_t size = cmd->size;
-            send_id = cmd->send_id;
-            std::string name = cmd->name();
 
             std::unique_ptr<char[]> data = std::make_unique<char[]>(size);
             create_dummy_data(data.get(), size);
 
-            log_info("Executing command '", name, "', sending ", size, " bytes of dummy data to node ", send_id, ".");
-
-            success = comm->send(send_id, {data.get(), size});
+            success = send_message(
+                comm,
+                cmd->send_id,
+                {data.get(), size},
+                cmd->name(),
+                format("%u bytes of dummy data", size)
+            );
         }
         else if (command->type == CommandType::file) {
             FileCommand* cmd = static_cast<FileCommand*>(command.get());
 
             std::string& path = cmd->path;
-            send_id = cmd->send_id;
-            std::string name = cmd->name();
 
             std::ifstream file(path, std::ios::binary | std::ios::ate);
             size_t size = file.tellg();
@@ -207,17 +232,29 @@ void send_thread(SenderThreadArgs* args) {
             char buffer[size];
             if (file.read(buffer, size))
             {
-                log_info("Executing command '", name, "', sending ", size, " bytes of dummy data to node ", send_id, ".");
-
-                success = comm->send(send_id, {buffer, size});
+                success = send_message(
+                    comm,
+                    cmd->send_id,
+                    {buffer, size},
+                    cmd->name(),
+                    format("%u bytes from file '%s'", size, path.c_str())
+                );
             }
         }
 
-        if (success) {
-            log_print("Successfuly sent message to node ", send_id);
+        bool broadcast = send_id == BROADCAST_ID;
+
+        if (success && !broadcast) {
+            log_print("Successfuly sent message to node ", send_id, ".");
+        }
+        else if (success && broadcast) {
+            log_print("Successfuly broadcasted message.");
+        }
+        else if (!success && broadcast) {
+            log_print("Could not broadcast message.");
         }
         else {
-            log_error("Could not send message to node ", send_id);
+            log_error("Could not send message to node ", send_id, ".");
         }
     }
     catch (std::invalid_argument& err) {
