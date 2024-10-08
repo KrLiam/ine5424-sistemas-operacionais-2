@@ -41,7 +41,8 @@ Function tryDeliver([s, m]):
 ```
 
 Os subconjuntos `delivered` e `pending` foram substituídos por um
-sistema de números de sequência. Uma mensagem `m` de origem `s` e número `n` é dada como entregue se `n < expected_num[s]` e `[s, n, m]` não está na fila de entrega `delivery_queue`:
+sistema de números de sequência. Uma mensagem `m` de origem `s` e número `n` é dada como entregue se `n < expected_num[s]` e `[s, n, m]` não está na fila de entrega `delivery_queue`.
+
 ```
 Implements:
     UniformReliableBroadcast, instance urb.
@@ -94,4 +95,4 @@ Function tryDeliver([s, n, m]):
 
 Problemas do algoritmo acima:
 - Não garante ordem de entrega para mensagens de mesma origem. Para isso, `delivery_queue` deveria ser, de fato, uma fila e apenas a primeira entrada de uma dada origem pode ser entregue.
-- Para um grupo de `N` nós, a mensagem é retransmitida `N` vezes. Se `N` for relativamente pequeno e a perda de pacotes for alta, pode ser que todos os pacotes sejam perdidos e algum nó não receba a mensagem. Para isso, deve-se realizar time outs de entradas na `delivery_queue` que acionam a retransmissão da mensagem até que todos os ACKs sejam recebidos. Obs: Os receptores não podem, em hipotése alguma, cancelar a entrega de uma mensagem por limite de retransmissão, pois não receber um ACK de um nó `p` não significa que o nó ´p` não entregou a mensagem, pois o ACK pode ter sido apenas perdido.
+- Para um grupo de `N` nós, a mensagem é retransmitida `N` vezes. Se `N` for relativamente pequeno e a perda de pacotes for alta, pode ser que todos os pacotes sejam perdidos e algum nó não receba a mensagem. Para isso, deve-se realizar time outs de entradas na `delivery_queue` que acionam a retransmissão da mensagem até que o ACK de todos os processos corretos sejam recebidos. Obs: Os receptores não podem, em hipotése alguma, cancelar a entrega de uma mensagem por limite de retransmissão, pois não receber um ACK de um nó `p` não significa que o nó `p` não entregou a mensagem, mas que o ACK pode ter sido apenas perdido. Neste caso, aguarda-se o anúncio do heartbeat para tomar `p` como morto e ajustar o conjunto de processos corretos.
