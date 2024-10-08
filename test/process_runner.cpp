@@ -291,7 +291,15 @@ void server(ThreadArgs* args) {
         }
         
         if (result.length == 0) break;
-        log_print("Received '", std::string(buffer, result.length).c_str(), "' (", result.length, " bytes) from ", result.sender_id);
+
+        std::string message_data(buffer, result.length);
+
+        if (message_data.length() > 100 )
+        {
+            message_data = message_data.substr(0, 100) + "...";
+        }
+
+        log_print("Received '", message_data.c_str(), "' (", result.length, " bytes) from ", result.sender_id);
 
         mkdir("messages", S_IRWXU);
         std::string output_filename = "messages/" + UUID().as_string();
