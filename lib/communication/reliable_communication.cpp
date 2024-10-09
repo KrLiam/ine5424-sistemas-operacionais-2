@@ -116,7 +116,7 @@ bool ReliableCommunication::broadcast(MessageData data) {
         return false;
     }
 
-    Transmission transmission = create_transmission(BROADCAST_ID, data, MessageType::BEB);
+    Transmission transmission = create_transmission(BROADCAST_ID, data, MessageType::URB);
     gr->enqueue(transmission);
     
     TransmissionResult result = transmission.wait_result();

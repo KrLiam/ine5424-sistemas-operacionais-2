@@ -22,7 +22,9 @@ void TransmissionQueue::send(uint32_t num) {
     Packet& packet = entry.packet;
     const SocketAddress& receiver_address = packet.meta.destination;
 
-    handler.forward_send(packet);
+    if (!packet.meta.urb_retransmission || entry.tries != 0) {
+        handler.forward_send(packet);
+    }
     entry.tries++;
 
     if (receiver_address == BROADCAST_ADDRESS) {

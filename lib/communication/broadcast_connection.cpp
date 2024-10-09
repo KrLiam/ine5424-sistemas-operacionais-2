@@ -2,11 +2,13 @@
 #include "communication/broadcast_connection.h"
 
 BroadcastConnection::BroadcastConnection(
+    const Node& local_node,
     std::map<std::string, Connection>& connections,
     BufferSet<std::string>& connection_update_buffer,
     Buffer<Message>& deliver_buffer,
     Pipeline& pipeline
 ) :
+    local_node(local_node),
     connections(connections),
     pipeline(pipeline),
     dispatcher(BROADCAST_ID, connection_update_buffer, pipeline),
@@ -45,16 +47,29 @@ void BroadcastConnection::connection_closed(const ConnectionClosed&) {
 
 void BroadcastConnection::fragment_received(const FragmentReceived &event)
 {
-    if (event.packet.data.header.id.sequence_type != MessageSequenceType::BROADCAST) return;
-    
-    MessageType type = event.packet.data.header.type;
+    const Packet& packet = event.packet;
+    const PacketHeader& header = packet.data.header;
+    MessageType type = header.type;
 
-    if (type == MessageType::URB) {
-        Packet packet = event.packet;
-        packet.meta.destination = {BROADCAST_ADDRESS, 0};
-        packet.meta.expects_ack = true;
-        packet.meta.urb_retransmission = true;
-        pipeline.send(packet);
+    if (header.id.sequence_type != MessageSequenceType::BROADCAST) return;    
+
+    if (type == MessageType::URB && header.id.origin != local_node.get_address()) {
+        // apenas deve fazer a retransmissão se o fragmento já nao foi retransmitido.
+        // precisa-se obter a informação de que um fragmento é ou não repetido.
+        //
+        // possivel solução:
+        // para o primeiro fragmento recebido de uma mensagem, gerar um uuid, criar
+        // uma entrada de retransmissao e marcar este fragmento como retransmitido.
+        // daí o broadcast connection observa por TransmissionComplete desta mensagem para
+        // dar a retransmissao como completa;
+
+        Packet rt_packet = packet;
+
+        log_info("Received URB fragment ", rt_packet.to_string(PacketFormat::RECEIVED), ". Retransmitting back.");
+        rt_packet.meta.destination = {BROADCAST_ADDRESS, 0};
+        rt_packet.meta.expects_ack = true;
+        rt_packet.meta.urb_retransmission = true;
+        pipeline.send(rt_packet);
     }
 }
 
@@ -62,7 +77,8 @@ void BroadcastConnection::packet_ack_received(const PacketAckReceived &event)
 {
     if (event.ack_packet.data.header.id.sequence_type != MessageSequenceType::BROADCAST) return;
     
-    MessageType type = event.ack_packet.data.header.type;
+    // aqui devemos guardar acks de outros nós
+    // que chegaram antes do nó local receber o fragmento
 }
 
 void BroadcastConnection::deliver_message(const DeliverMessage &event)
@@ -75,7 +91,8 @@ void BroadcastConnection::deliver_message(const DeliverMessage &event)
         deliver_buffer.produce(event.message);
     }
     else if (type == MessageType::URB) {
-
+        // aqui deve-se guardar a mensagem no struct no RetransmissionEntry
+        deliver_buffer.produce(event.message);
     }
 }
 

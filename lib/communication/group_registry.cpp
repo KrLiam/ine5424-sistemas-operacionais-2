@@ -60,7 +60,7 @@ void GroupRegistry::establish_connections(
     Node local_node = get_local_node();
 
     broadcast_connection =  std::make_unique<BroadcastConnection>(
-        connections, connection_update_buffer, deliver_buffer, pipeline
+        local_node, connections, connection_update_buffer, deliver_buffer, pipeline
     );
 
     for (auto &[id, node] : nodes)

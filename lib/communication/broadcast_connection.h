@@ -5,6 +5,7 @@
 #include "communication/transmission.h"
 
 class BroadcastConnection {
+    const Node& local_node; 
     std::map<std::string, Connection>& connections;
     Pipeline& pipeline;
 
@@ -32,6 +33,7 @@ class BroadcastConnection {
 
 public:
     BroadcastConnection(
+        const Node& local_node,
         std::map<std::string, Connection>& connections,
         BufferSet<std::string>& connection_update_buffer,
         Buffer<Message>& deliver_buffer,
