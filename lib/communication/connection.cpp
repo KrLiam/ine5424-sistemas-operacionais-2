@@ -312,7 +312,7 @@ void Connection::established(Packet p)
         return;
     }
 
-    if (p.data.header.get_message_type() == MessageType::APPLICATION && !application_buffer.can_produce())
+    if (message_type::is_application(p.data.header.get_message_type()) && !application_buffer.can_produce())
     {
         log_warn("Application buffer is full; ignoring packet.");
         return;
@@ -405,7 +405,7 @@ void Connection::send_flag(uint8_t flags, MessageData message_data)
     transmit(packet);
 }
 
-void Connection::send_ack(Packet packet)
+void Connection::send_ack(Packet packet, bool broadcast)
 {
     PacketData data;
     memset(&data, 0, sizeof(PacketData));

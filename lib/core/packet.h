@@ -15,7 +15,7 @@ struct PacketHeader
     uint32_t fragment_num;
     uint16_t checksum;
     uint8_t flags;
-    uint8_t type;
+    MessageType type;
 
     uint32_t get_message_number() const
     {
@@ -95,7 +95,7 @@ struct Packet
         const PacketHeader& header = data.header;
 
         std::string flags;
-        if (header.type == MessageType::APPLICATION) flags += "DATA";
+        if (message_type::is_application(header.type)) flags += "DATA";
         if (header.is_syn()) flags += flags.length() ? "+SYN" : "SYN";
         if (header.is_rst()) flags += flags.length() ? "+RST" : "RST";
         if (header.is_fin()) flags += flags.length() ? "+FIN" : "FIN";

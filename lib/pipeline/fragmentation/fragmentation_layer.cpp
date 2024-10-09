@@ -40,7 +40,7 @@ void FragmentationLayer::receive(Packet packet)
     }
     handler.forward_receive(packet);
 
-    if (packet.data.header.get_message_type() != MessageType::APPLICATION)
+    if (!message_type::is_application(packet.data.header.get_message_type()))
         return;
 
     std::string message_id = get_message_identifier(packet);

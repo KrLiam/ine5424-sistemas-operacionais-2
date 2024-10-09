@@ -7,11 +7,27 @@
 #include <cstring>
 #include <cstdint>
 
-enum MessageType
+enum class MessageType
 {
-    APPLICATION = 0,
-    CONTROL = 1,
-    HEARTBEAT = 2,
+    // Padrão
+    // <type0><type1><type2><type3><type4><type5><broadcast><application>
+    // type: tipo da mensagem.
+    // broadcast: se a mensagem é broadcast.
+    // application: se a mensagem é da aplicação.
+
+    // Mensagens da lib
+    CONTROL   = 0b00000000,
+    HEARTBEAT = 0b00000100,
+    // Mensagens da aplicação
+    SEND      = 0b00000001,
+    BEB       = 0b00000011,
+    URB       = 0b00000111,
+    AB        = 0b00001011
+};
+// queria tanto que enums pudessem ter métodos :(
+namespace message_type {
+    bool is_application(MessageType type);
+    bool is_broadcast(MessageType type);
 };
 
 enum MessageSequenceType {

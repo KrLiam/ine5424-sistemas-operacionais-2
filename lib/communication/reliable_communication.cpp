@@ -137,7 +137,7 @@ Message ReliableCommunication::create_message(SocketAddress receiver_address, co
         },
         transmission_uuid : UUID(""),
         destination : receiver_address,
-        type : MessageType::APPLICATION,
+        type : MessageType::SEND,
         data : {0},
         length : data.size,
     };

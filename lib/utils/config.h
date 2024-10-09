@@ -95,7 +95,7 @@ struct NodeConfig
     std::string to_string() const;
 };
 
-enum BroadcastType {
+enum class BroadcastType {
     BEB = 0,
     URB = 1,
     AB = 2
