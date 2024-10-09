@@ -106,9 +106,9 @@ struct TransmissionComplete : public Event {
 
     UUID uuid;
     SocketAddress remote_address;
-    uint32_t msg_num;
+    MessageIdentity id;
 
-    TransmissionComplete(UUID transmission_uuid, const SocketAddress& remote_address, uint32_t msg_num);
+    TransmissionComplete(UUID transmission_uuid, const MessageIdentity& id, const SocketAddress& remote_address);
 };
 
 struct MessageDefragmentationIsComplete : public Event {

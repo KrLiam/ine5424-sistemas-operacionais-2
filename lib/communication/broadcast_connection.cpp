@@ -1,6 +1,8 @@
 
 #include "communication/broadcast_connection.h"
 
+RetransmissionEntry::RetransmissionEntry() {}
+
 BroadcastConnection::BroadcastConnection(
     const Node& local_node,
     std::map<std::string, Connection>& connections,
@@ -47,25 +49,26 @@ void BroadcastConnection::connection_closed(const ConnectionClosed&) {
 
 void BroadcastConnection::fragment_received(const FragmentReceived &event)
 {
-    const Packet& packet = event.packet;
-    const PacketHeader& header = packet.data.header;
-    MessageType type = header.type;
+    const PacketHeader& header = event.packet.data.header;
+    const MessageIdentity& id = header.id;
 
-    if (header.id.sequence_type != MessageSequenceType::BROADCAST) return;    
+    if (id.sequence_type != MessageSequenceType::BROADCAST) return;    
 
-    if (type == MessageType::URB && header.id.origin != local_node.get_address()) {
-        // apenas deve fazer a retransmissão se o fragmento já nao foi retransmitido.
-        // precisa-se obter a informação de que um fragmento é ou não repetido.
-        //
-        // possivel solução:
-        // para o primeiro fragmento recebido de uma mensagem, gerar um uuid, criar
-        // uma entrada de retransmissao e marcar este fragmento como retransmitido.
-        // daí o broadcast connection observa por TransmissionComplete desta mensagem para
-        // dar a retransmissao como completa;
+    if (header.type == MessageType::URB) {
+        if (id.origin == local_node.get_address()) return;
 
-        Packet rt_packet = packet;
+        if (!retransmissions.contains(id)) {
+            retransmissions.emplace(id, RetransmissionEntry());
+        }
+        RetransmissionEntry& entry = retransmissions.at(id);
+
+        if (entry.retransmitted_fragments.contains(id.msg_num)) return;
+        entry.retransmitted_fragments.emplace(id.msg_num);
+
+        Packet rt_packet = event.packet;
 
         log_info("Received URB fragment ", rt_packet.to_string(PacketFormat::RECEIVED), ". Retransmitting back.");
+        rt_packet.meta.transmission_uuid = entry.uuid;
         rt_packet.meta.destination = {BROADCAST_ADDRESS, 0};
         rt_packet.meta.expects_ack = true;
         rt_packet.meta.urb_retransmission = true;
@@ -81,6 +84,16 @@ void BroadcastConnection::packet_ack_received(const PacketAckReceived &event)
     // que chegaram antes do nó local receber o fragmento
 }
 
+
+void BroadcastConnection::try_deliver(const MessageIdentity& id) {
+    RetransmissionEntry& entry = retransmissions.at(id);
+
+    if (entry.acks_received && entry.message_received) {
+        deliver_buffer.produce(entry.message);
+        retransmissions.erase(id);
+    }
+}
+
 void BroadcastConnection::deliver_message(const DeliverMessage &event)
 {
     if (event.message.id.sequence_type != MessageSequenceType::BROADCAST) return;
@@ -91,13 +104,24 @@ void BroadcastConnection::deliver_message(const DeliverMessage &event)
         deliver_buffer.produce(event.message);
     }
     else if (type == MessageType::URB) {
-        // aqui deve-se guardar a mensagem no struct no RetransmissionEntry
-        deliver_buffer.produce(event.message);
+        RetransmissionEntry& entry = retransmissions.at(event.message.id);
+        entry.message = event.message;
+        entry.message_received = true;
+
+        try_deliver(event.message.id);
     }
 }
 
 void BroadcastConnection::transmission_complete(const TransmissionComplete& event) {
     const UUID &uuid = event.uuid;
+
+    if (retransmissions.contains(event.id)) {
+        RetransmissionEntry& entry = retransmissions.at(event.id);
+        entry.acks_received = true;
+
+        try_deliver(event.id);
+    }
+
     const Transmission* active = dispatcher.get_active();
 
     if (active && uuid == active->uuid) dispatcher.complete(true);

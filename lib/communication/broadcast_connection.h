@@ -4,16 +4,29 @@
 #include "pipeline/pipeline.h"
 #include "communication/transmission.h"
 
+struct RetransmissionEntry {
+    UUID uuid;
+    Message message;
+    std::unordered_set<uint32_t> retransmitted_fragments;
+    bool message_received = false;
+    bool acks_received = false;
+
+    RetransmissionEntry();
+};
+
 class BroadcastConnection {
     const Node& local_node; 
     std::map<std::string, Connection>& connections;
     Pipeline& pipeline;
 
     TransmissionDispatcher dispatcher;
+    std::unordered_map<MessageIdentity, RetransmissionEntry> retransmissions;
     BufferSet<std::string>& connection_update_buffer;
     Buffer<Message>& deliver_buffer;
 
     void observe_pipeline();
+
+    void try_deliver(const MessageIdentity&);
 
     Observer<ConnectionEstablished> obs_connection_established;
     Observer<ConnectionClosed> obs_connection_closed;

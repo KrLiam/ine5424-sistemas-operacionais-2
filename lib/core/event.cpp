@@ -21,8 +21,8 @@ TransmissionStarted::TransmissionStarted(const Message& message)
 
 TransmissionFail::TransmissionFail(Packet& faulty_packet) : faulty_packet(faulty_packet) {}
 
-TransmissionComplete::TransmissionComplete(UUID uuid, const SocketAddress& remote_address, uint32_t msg_num)
-    : uuid(uuid), remote_address(remote_address), msg_num(msg_num) {}
+TransmissionComplete::TransmissionComplete(UUID uuid, const MessageIdentity& id, const SocketAddress& remote_address)
+    : uuid(uuid), id(id), remote_address(remote_address) {}
 
 MessageDefragmentationIsComplete::MessageDefragmentationIsComplete(Packet& packet) : packet(packet) {}
 

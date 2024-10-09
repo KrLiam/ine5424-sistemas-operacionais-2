@@ -167,7 +167,7 @@ void TransmissionQueue::receive_ack(const Packet& ack_packet)
         const UUID& uuid = packet.meta.transmission_uuid;
         SocketAddress remote_address = packet.meta.destination;
         uint32_t msg_num = packet.data.header.get_message_number();
-        TransmissionComplete event(uuid, remote_address, msg_num);
+        TransmissionComplete event(uuid, packet.data.header.id, remote_address);
 
         log_info(
             "Transmission ", remote_address.to_string(), " / ", msg_num, " is completed. Sent ",
