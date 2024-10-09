@@ -73,6 +73,7 @@ struct PacketMetadata
     SocketAddress destination = {{0, 0, 0, 0}, 0};
     int message_length = 0;
     bool expects_ack = 0;
+    bool urb_retransmission = 0;
     bool silent = 0;
 };
 

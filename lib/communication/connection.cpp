@@ -46,6 +46,7 @@ void Connection::packet_received(const PacketReceived &event)
 void Connection::message_received(const MessageReceived &event)
 {
     if (event.message.id.origin != remote_node.get_address()) return;
+    if (event.message.id.sequence_type != MessageSequenceType::UNICAST) return;
     receive(event.message);
 }
 
@@ -318,8 +319,12 @@ void Connection::established(Packet p)
         return;
     }
 
-    log_debug("Received ", p.to_string(PacketFormat::RECEIVED), " that expects confirmation; sending ACK.");
-    send_ack(p);
+    log_debug("Received ", p.to_string(PacketFormat::RECEIVED), " that expects confirmation.");
+
+    pipeline.notify(FragmentReceived(p));
+
+    bool broadcast = p.data.header.type == MessageType::URB;
+    send_ack(p, broadcast);
 }
 
 void Connection::fin_wait(Packet p)
@@ -423,7 +428,7 @@ void Connection::send_ack(Packet packet, bool broadcast)
     };
     PacketMetadata meta = {
         transmission_uuid : UUID(""),
-        destination : remote_node.get_address(),
+        destination : broadcast ? SocketAddress{BROADCAST_ADDRESS, 0} : remote_node.get_address(),
         message_length : 0,
         expects_ack : 0
     };

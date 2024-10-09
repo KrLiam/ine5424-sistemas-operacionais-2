@@ -106,7 +106,7 @@ private:
     
     void send_flag(uint8_t flags);
     void send_flag(uint8_t flags, MessageData data);
-    void send_ack(Packet packet);
+    void send_ack(Packet packet, bool broadcast = false);
 
     bool close_on_rst(Packet p);
     bool rst_on_syn(Packet p);

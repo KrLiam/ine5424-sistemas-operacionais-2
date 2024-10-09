@@ -45,6 +45,7 @@ public:
     void establish_connections(
         Pipeline& pipeline,
         Buffer<Message> &application_buffer,
+        Buffer<Message> &deliver_buffer,
         BufferSet<std::string> &connection_update_buffer
     );
 

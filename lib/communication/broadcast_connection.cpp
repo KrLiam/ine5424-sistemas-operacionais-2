@@ -4,12 +4,14 @@
 BroadcastConnection::BroadcastConnection(
     std::map<std::string, Connection>& connections,
     BufferSet<std::string>& connection_update_buffer,
+    Buffer<Message>& deliver_buffer,
     Pipeline& pipeline
 ) :
     connections(connections),
     pipeline(pipeline),
     dispatcher(BROADCAST_ID, connection_update_buffer, pipeline),
-    connection_update_buffer(connection_update_buffer)
+    connection_update_buffer(connection_update_buffer),
+    deliver_buffer(deliver_buffer)
 {
     observe_pipeline();
 }
@@ -19,10 +21,16 @@ const TransmissionDispatcher& BroadcastConnection::get_dispatcher() const { retu
 void BroadcastConnection::observe_pipeline() {
     obs_connection_established.on(std::bind(&BroadcastConnection::connection_established, this, _1));
     obs_connection_closed.on(std::bind(&BroadcastConnection::connection_closed, this, _1));
+    obs_message_received.on(std::bind(&BroadcastConnection::message_received, this, _1));
+    obs_fragment_received.on(std::bind(&BroadcastConnection::fragment_received, this, _1));
+    obs_packet_ack_received.on(std::bind(&BroadcastConnection::packet_ack_received, this, _1));
     obs_transmission_fail.on(std::bind(&BroadcastConnection::transmission_fail, this, _1));
     obs_transmission_complete.on(std::bind(&BroadcastConnection::transmission_complete, this, _1));
     pipeline.attach(obs_connection_established);
     pipeline.attach(obs_connection_closed);
+    pipeline.attach(obs_message_received);
+    pipeline.attach(obs_fragment_received);
+    pipeline.attach(obs_packet_ack_received);
     pipeline.attach(obs_transmission_complete);
     pipeline.attach(obs_transmission_fail);
 }
@@ -33,6 +41,42 @@ void BroadcastConnection::connection_established(const ConnectionEstablished&) {
 
 void BroadcastConnection::connection_closed(const ConnectionClosed&) {
     dispatcher.cancel_all();
+}
+
+void BroadcastConnection::fragment_received(const FragmentReceived &event)
+{
+    if (event.packet.data.header.id.sequence_type != MessageSequenceType::BROADCAST) return;
+    
+    MessageType type = event.packet.data.header.type;
+
+    if (type == MessageType::URB) {
+        Packet packet = event.packet;
+        packet.meta.destination = {BROADCAST_ADDRESS, 0};
+        packet.meta.expects_ack = true;
+        packet.meta.urb_retransmission = true;
+        pipeline.send(packet);
+    }
+}
+
+void BroadcastConnection::packet_ack_received(const PacketAckReceived &event)
+{
+    if (event.ack_packet.data.header.id.sequence_type != MessageSequenceType::BROADCAST) return;
+    
+    MessageType type = event.ack_packet.data.header.type;
+}
+
+void BroadcastConnection::message_received(const MessageReceived &event)
+{
+    if (event.message.id.sequence_type != MessageSequenceType::BROADCAST) return;
+    
+    MessageType type = event.message.type;
+
+    if (type == MessageType::BEB) {
+        deliver_buffer.produce(event.message);
+    }
+    else if (type == MessageType::URB) {
+
+    }
 }
 
 void BroadcastConnection::transmission_complete(const TransmissionComplete& event) {

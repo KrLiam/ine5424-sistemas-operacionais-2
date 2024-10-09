@@ -18,8 +18,9 @@ enum EventType {
     CONNECTION_FAIL = 10,
     HEARTBEAT_RECEIVED = 11,
     NODE_DEATH = 12,
+    FRAGMENT_RECEIVED = 13,
 };
-
+    
 struct Event {
     static EventType type() { return EventType::BASE; }
 
@@ -49,6 +50,14 @@ struct PacketReceived : public Event {
     Packet& packet;
 
     PacketReceived(Packet& packet);
+};
+
+struct FragmentReceived : public Event {
+    static EventType type() { return EventType::FRAGMENT_RECEIVED; }
+
+    Packet& packet;
+
+    FragmentReceived(Packet& packet);
 };
 
 struct PacketAckReceived : public Event {

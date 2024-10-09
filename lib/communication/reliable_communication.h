@@ -58,12 +58,12 @@ private:
 
     std::size_t user_buffer_size;
     Buffer<Message> application_buffer{"application receive"};
+    Buffer<Message> deliver_buffer{"deliver receive"};
 
-    Message create_message(std::string receiver_id, const MessageData& data);
-    Message create_message(SocketAddress receiver_address, const MessageData& data);
+    Message create_message(std::string receiver_id, const MessageData& data, MessageType msg_type);
+    Message create_message(SocketAddress receiver_address, const MessageData& data, MessageType msg_type);
 
-    Transmission create_transmission(std::string receiver_id, const MessageData& data);
-    Transmission create_transmission(SocketAddress receiver_address, const MessageData& data);
+    Transmission create_transmission(std::string receiver_id, const MessageData& data, MessageType msg_type);
 
     void send_routine();
 };

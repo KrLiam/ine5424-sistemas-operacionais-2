@@ -8,6 +8,8 @@ ConnectionClosed::ConnectionClosed(const Node& node) : node(node) {}
 
 PacketReceived::PacketReceived(Packet& packet) : packet(packet) {}
 
+FragmentReceived::FragmentReceived(Packet& packet) : packet(packet) {}
+
 PacketAckReceived::PacketAckReceived(Packet& ack_packet) : ack_packet(ack_packet) {}
 
 MessageReceived::MessageReceived(Message& message) : message(message) {}

@@ -24,7 +24,12 @@ ReliableCommunication::ReliableCommunication(
     sender_thread = std::thread([this]()
                                 { send_routine(); });
 
-    gr->establish_connections(*pipeline, application_buffer, connection_update_buffer);
+    gr->establish_connections(
+        *pipeline,
+        application_buffer,
+        application_buffer, // TODO substutir por deliver_buffer posteriormente, reusando o msm buffer pq dai vai precisar mudar o programa de testes
+        connection_update_buffer
+    );
     failure_detection = std::make_unique<FailureDetection>(gr, event_bus, config.alive);
 }
 
@@ -81,7 +86,7 @@ bool ReliableCommunication::send(std::string id, MessageData data)
         return false;
     }
 
-    Transmission transmission = create_transmission(id, data);
+    Transmission transmission = create_transmission(id, data, MessageType::SEND);
     bool enqueued = gr->enqueue(transmission);
 
     if (!enqueued) {
@@ -111,7 +116,7 @@ bool ReliableCommunication::broadcast(MessageData data) {
         return false;
     }
 
-    Transmission transmission = create_transmission(BROADCAST_ID, data);
+    Transmission transmission = create_transmission(BROADCAST_ID, data, MessageType::BEB);
     gr->enqueue(transmission);
     
     TransmissionResult result = transmission.wait_result();
@@ -120,11 +125,11 @@ bool ReliableCommunication::broadcast(MessageData data) {
     return result.success;
 }
 
-Message ReliableCommunication::create_message(std::string receiver_id, const MessageData &data) {
+Message ReliableCommunication::create_message(std::string receiver_id, const MessageData &data, MessageType msg_type) {
     const Node& receiver = gr->get_nodes().get_node(receiver_id);
-    return create_message(receiver.get_address(), data);
+    return create_message(receiver.get_address(), data, msg_type);
 }
-Message ReliableCommunication::create_message(SocketAddress receiver_address, const MessageData &data)
+Message ReliableCommunication::create_message(SocketAddress receiver_address, const MessageData &data, MessageType msg_type)
 {
     const Node& local = gr->get_local_node();
 
@@ -137,7 +142,7 @@ Message ReliableCommunication::create_message(SocketAddress receiver_address, co
         },
         transmission_uuid : UUID(""),
         destination : receiver_address,
-        type : MessageType::SEND,
+        type : msg_type,
         data : {0},
         length : data.size,
     };
@@ -146,15 +151,17 @@ Message ReliableCommunication::create_message(SocketAddress receiver_address, co
     return m;
 }
 
-Transmission ReliableCommunication::create_transmission(std::string receiver_id, const MessageData &data)
+Transmission ReliableCommunication::create_transmission(
+    std::string receiver_id, const MessageData &data, MessageType msg_type
+)
 {
     Message message;
     
     if (receiver_id == BROADCAST_ID) {
-        message = create_message({BROADCAST_ADDRESS, 0}, data);
+        message = create_message({BROADCAST_ADDRESS, 0}, data, msg_type);
     }
     else {
-        message = create_message(receiver_id, data);
+        message = create_message(receiver_id, data, msg_type);
     }
 
     return Transmission(message, receiver_id);

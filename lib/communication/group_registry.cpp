@@ -54,12 +54,13 @@ void GroupRegistry::update(std::string id) {
 void GroupRegistry::establish_connections(
     Pipeline &pipeline,
     Buffer<Message> &application_buffer,
+    Buffer<Message> &deliver_buffer,
     BufferSet<std::string> &connection_update_buffer
 ) {
     Node local_node = get_local_node();
 
     broadcast_connection =  std::make_unique<BroadcastConnection>(
-        connections, connection_update_buffer, pipeline
+        connections, connection_update_buffer, deliver_buffer, pipeline
     );
 
     for (auto &[id, node] : nodes)
