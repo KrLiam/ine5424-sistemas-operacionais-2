@@ -18,6 +18,7 @@ Packet Fragmenter::create_packet() {
 
     PacketMetadata meta = {
         transmission_uuid : message.transmission_uuid,
+        origin : message.origin,
         destination : message.destination,
         message_length : message_length,
         expects_ack : 1

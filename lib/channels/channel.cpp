@@ -102,6 +102,7 @@ Packet Channel::receive()
     if (bytes_received <= 0 || errno != 0)
         throw std::runtime_error("Socket closed.");
 
+    packet.meta.origin = SocketAddress::from(in_address);
     packet.meta.destination = address;
     packet.meta.message_length = bytes_received - sizeof(PacketHeader);
     packet.meta.silent = packet.data.header.type == MessageType::HEARTBEAT;

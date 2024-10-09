@@ -14,6 +14,8 @@ PacketAckReceived::PacketAckReceived(Packet& ack_packet) : ack_packet(ack_packet
 
 MessageReceived::MessageReceived(Message& message) : message(message) {}
 
+DeliverMessage::DeliverMessage(Message& message) : message(message) {}
+
 TransmissionStarted::TransmissionStarted(const Message& message)
     : message(message) {}
 

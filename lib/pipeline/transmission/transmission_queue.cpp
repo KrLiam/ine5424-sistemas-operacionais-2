@@ -139,7 +139,7 @@ void TransmissionQueue::receive_ack(const Packet& ack_packet)
 {
     uint32_t msg_num = ack_packet.data.header.get_message_number();
     uint32_t frag_num = ack_packet.data.header.get_fragment_number();
-    const SocketAddress& receiver_address = ack_packet.data.header.id.origin;
+    const SocketAddress& receiver_address = ack_packet.meta.origin;
 
     if (msg_num != message_num) return;
 

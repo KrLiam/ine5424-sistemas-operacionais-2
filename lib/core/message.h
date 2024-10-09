@@ -36,6 +36,7 @@ enum MessageSequenceType {
 };
 
 struct MessageIdentity {
+    // Endereço do nó original que envia a mensagem.
     SocketAddress origin;
     uint32_t msg_num;
     MessageSequenceType sequence_type;
@@ -73,6 +74,10 @@ struct Message
 
     MessageIdentity id;
     UUID transmission_uuid;
+    // Endereço do processo que envia a mensagem. Pode ser diferente
+    // do MessageIdentity::origin no caso de retransmissão do URB.
+    SocketAddress origin;
+    // Endereço do processo que recebe a mensagem.
     SocketAddress destination;
     MessageType type;
 

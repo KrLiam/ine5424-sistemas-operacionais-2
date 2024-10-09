@@ -2,6 +2,12 @@
 
 using namespace std::placeholders;
 
+bool TransmissionKey::operator==(const TransmissionKey& other) const {
+    return origin == other.origin
+        && destination == other.destination
+        && msg_num == other.msg_num;
+}
+
 TransmissionLayer::TransmissionLayer(PipelineHandler handler, const NodeMap &nodes)
     : PipelineStep(handler), nodes(nodes)
 {
@@ -11,21 +17,21 @@ TransmissionLayer::~TransmissionLayer()
 {
 }
 
-bool TransmissionLayer::has_queue(const MessageIdentity& id) {
-    return queue_map.contains(id);
+bool TransmissionLayer::has_queue(const TransmissionKey& key) {
+    return queue_map.contains(key);
 }
-TransmissionQueue& TransmissionLayer::get_queue(const MessageIdentity& id) {
-    if (!has_queue(id)) {
+TransmissionQueue& TransmissionLayer::get_queue(const TransmissionKey& key) {
+    if (!has_queue(key)) {
         auto queue = std::make_shared<TransmissionQueue>(timer, handler, nodes);
 
-        queue_map.insert({id, queue});
+        queue_map.insert({key, queue});
         // log_info("Added queue to ", id.origin.to_string(), " ", id.msg_num, " ", id.sequence_type);
     }
 
-    return *queue_map.at(id);
+    return *queue_map.at(key);
 }
-void TransmissionLayer::clear_queue(const MessageIdentity& id) {
-    queue_map.erase(id);
+void TransmissionLayer::clear_queue(const TransmissionKey& key) {
+    queue_map.erase(key);
     // log_info("Cleared queue to ", id.origin.to_string(), " ", id.msg_num, " ", id.sequence_type);
 
 }
@@ -55,20 +61,23 @@ void TransmissionLayer::send(Packet packet)
         return;
     }
 
-    TransmissionQueue& queue = get_queue({meta.destination, header.id.msg_num, header.id.sequence_type});
+    TransmissionKey key{header.id.origin, meta.destination, header.id.msg_num};
+    TransmissionQueue& queue = get_queue(key);
     queue.add_packet(packet);
 }
 
 void TransmissionLayer::ack_received(const PacketAckReceived& event) {    
     Packet& packet = event.ack_packet;
 
-    MessageIdentity id = packet.data.header.id;
-    if (id.sequence_type == MessageSequenceType::BROADCAST) {
-        id.origin = {BROADCAST_ADDRESS, 0};
-    }
+    const MessageIdentity& id = packet.data.header.id;
+    TransmissionKey key {
+        id.origin,
+        id.sequence_type == MessageSequenceType::BROADCAST ? SocketAddress{BROADCAST_ADDRESS, 0} : packet.meta.origin,
+        id.msg_num
+    };
 
-    if (has_queue(id)) {
-        TransmissionQueue& queue = get_queue(id);
+    if (has_queue(key)) {
+        TransmissionQueue& queue = get_queue(key);
         queue.receive_ack(packet);
     }
 }
@@ -76,7 +85,7 @@ void TransmissionLayer::ack_received(const PacketAckReceived& event) {
 void TransmissionLayer::pipeline_cleanup(const PipelineCleanup& event) {    
     Message& message = event.message;
 
-    clear_queue({message.destination, message.id.msg_num, message.id.sequence_type});
+    clear_queue({message.id.origin, message.destination, message.id.msg_num});
 }
 
 void TransmissionLayer::receive(Packet packet)
@@ -85,7 +94,7 @@ void TransmissionLayer::receive(Packet packet)
         log_trace("Packet [", packet.to_string(PacketFormat::RECEIVED), "] received on transmission layer.");
     }
 
-    if (!nodes.contains(packet.data.header.id.origin))
+    if (!nodes.contains(packet.meta.origin))
     {
         log_debug("Packet ", packet.to_string(PacketFormat::RECEIVED), " does not originate from group; dropping.");
         return;

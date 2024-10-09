@@ -141,6 +141,7 @@ Message ReliableCommunication::create_message(SocketAddress receiver_address, co
                 MessageSequenceType::BROADCAST : MessageSequenceType::UNICAST
         },
         transmission_uuid : UUID(""),
+        origin : local.get_address(),
         destination : receiver_address,
         type : msg_type,
         data : {0},

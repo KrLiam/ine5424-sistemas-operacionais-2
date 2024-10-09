@@ -19,6 +19,7 @@ enum EventType {
     HEARTBEAT_RECEIVED = 11,
     NODE_DEATH = 12,
     FRAGMENT_RECEIVED = 13,
+    DELIVER_MESSAGE = 14,
 };
     
 struct Event {
@@ -74,6 +75,14 @@ struct MessageReceived : public Event {
     Message& message;
 
     MessageReceived(Message& message);
+};
+
+struct DeliverMessage : public Event {
+    static EventType type() { return EventType::DELIVER_MESSAGE; }
+
+    Message& message;
+
+    DeliverMessage(Message& message);
 };
 
 struct TransmissionStarted : public Event {

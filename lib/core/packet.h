@@ -70,6 +70,10 @@ struct PacketData
 struct PacketMetadata
 {
     UUID transmission_uuid{""};
+    // Endereço do processo que envia o pacote. Pode ser diferente
+    // do MessageIdentity::origin no caso de retransmissão do URB.
+    SocketAddress origin = {{0, 0, 0, 0}, 0};
+    // Endereço do processo que recebe o pacote.
     SocketAddress destination = {{0, 0, 0, 0}, 0};
     int message_length = 0;
     bool expects_ack = 0;
@@ -103,7 +107,7 @@ struct Packet
         if (header.is_ack()) flags += flags.length() ? "+ACK" : "ACK";
         if (header.is_end()) flags += flags.length() ? "+END" : "SYN";
 
-        std::string origin = data.header.id.origin.to_string();
+        std::string origin = meta.origin.to_string();
         std::string destination = meta.destination.to_string();
 
         char sequence_type = header.id.sequence_type == MessageSequenceType::BROADCAST ? 'b' : 'u';

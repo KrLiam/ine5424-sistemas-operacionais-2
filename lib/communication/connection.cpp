@@ -46,7 +46,7 @@ void Connection::packet_received(const PacketReceived &event)
 void Connection::message_received(const MessageReceived &event)
 {
     if (event.message.id.origin != remote_node.get_address()) return;
-    if (event.message.id.sequence_type != MessageSequenceType::UNICAST) return;
+    // if (event.message.id.sequence_type != MessageSequenceType::UNICAST) return;
     receive(event.message);
 }
 
@@ -416,11 +416,7 @@ void Connection::send_ack(Packet packet, bool broadcast)
     memset(&data, 0, sizeof(PacketData));
 
     data.header = {
-        id : {
-            origin : local_node.get_address(),
-            msg_num : packet.data.header.id.msg_num,
-            sequence_type : packet.data.header.id.sequence_type
-        },
+        id : packet.data.header.id,
         fragment_num : packet.data.header.fragment_num,
         checksum : 0,
         flags : ACK,
@@ -428,6 +424,7 @@ void Connection::send_ack(Packet packet, bool broadcast)
     };
     PacketMetadata meta = {
         transmission_uuid : UUID(""),
+        origin : local_node.get_address(),
         destination : broadcast ? SocketAddress{BROADCAST_ADDRESS, 0} : remote_node.get_address(),
         message_length : 0,
         expects_ack : 0
@@ -583,10 +580,11 @@ void Connection::receive(Message message)
         return;
     }
 
+    pipeline.notify(DeliverMessage(message));
+
     if (type == MessageSequenceType::BROADCAST)
     {
         expected_broadcast_number++;
-        application_buffer.produce(message); // TODO buffer separado pro deliver
     }
     else
     {
@@ -621,6 +619,7 @@ void Connection::heartbeat()
 
     PacketMetadata meta = {
         transmission_uuid : UUID(""),
+        origin : local_node.get_address(),
         destination : remote_node.get_address(),
         message_length : 0,
         expects_ack : 0,
