@@ -13,16 +13,17 @@
 
 class FailureDetection
 {
-    bool running;
-
-    unsigned int alive;
-    unsigned int keep_alive;
 
     std::map<std::string, uint64_t> last_alive;
 
     std::shared_ptr<GroupRegistry> gr;
 
     EventBus &event_bus;
+
+    unsigned int alive;
+    unsigned int keep_alive;
+
+    bool running;
 
     std::thread failure_detection_thread;
 

@@ -16,10 +16,10 @@ class GroupRegistry;
 class Pipeline
 {
 private:
+    std::shared_ptr<GroupRegistry> gr;
+
     std::vector<PipelineStep *> layers;
     EventBus& event_bus;
-
-    std::shared_ptr<GroupRegistry> gr;
 
     friend PipelineHandler;
 

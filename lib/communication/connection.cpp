@@ -614,6 +614,9 @@ void Connection::heartbeat()
             msg_num : 0,
             sequence_type : MessageSequenceType::UNICAST
         },
+        fragment_num: 0,
+        checksum: 0,
+        flags: 0,
         type : MessageType::HEARTBEAT
     };
 

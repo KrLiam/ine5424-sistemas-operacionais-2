@@ -176,7 +176,6 @@ void TransmissionQueue::receive_ack(const Packet& ack_packet)
 
     if (!entries.contains(frag_num)) return;
     QueueEntry& entry = entries.at(frag_num);
-    const Packet& packet = entry.packet;
 
     entry.pending_receivers.erase(receiver_address);
     // log_info("Removing pending ack ", frag_num, " of remote ", receiver_address.to_string(), ". over: ", !entry.pending_receivers.size());

@@ -105,8 +105,8 @@ struct TransmissionComplete : public Event {
     static EventType type() { return EventType::TRANSMISSION_COMPLETE; }
 
     UUID uuid;
-    SocketAddress remote_address;
     MessageIdentity id;
+    SocketAddress remote_address;
 
     TransmissionComplete(UUID transmission_uuid, const MessageIdentity& id, const SocketAddress& remote_address);
 };
