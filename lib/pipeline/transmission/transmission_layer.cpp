@@ -41,6 +41,8 @@ void TransmissionLayer::attach(EventBus& bus) {
     bus.attach(obs_ack_received);
     obs_pipeline_cleanup.on(std::bind(&TransmissionLayer::pipeline_cleanup, this, _1));
     bus.attach(obs_pipeline_cleanup);
+    obs_node_death.on(std::bind(&TransmissionLayer::node_death, this, _1));
+    bus.attach(obs_node_death);
 }
 
 void TransmissionLayer::send(Packet packet)
@@ -86,6 +88,12 @@ void TransmissionLayer::pipeline_cleanup(const PipelineCleanup& event) {
     Message& message = event.message;
 
     clear_queue({message.id.origin, message.destination, message.id.msg_num});
+}
+
+void TransmissionLayer::node_death(const NodeDeath& event) {    
+    for (auto& [_, queue] : queue_map) {
+        queue->discard_node(event.remote_node);
+    }
 }
 
 void TransmissionLayer::receive(Packet packet)

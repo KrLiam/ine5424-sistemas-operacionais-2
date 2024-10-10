@@ -137,6 +137,35 @@ void TransmissionQueue::add_packet(const Packet& packet)
     }
 }
 
+bool TransmissionQueue::try_complete()
+{
+    mutex_timeout.lock();
+
+    const QueueEntry& entry = entries.at(0);
+    const Packet& packet = entry.packet;
+
+    bool success = completed();
+    if (success) {
+        const UUID& uuid = packet.meta.transmission_uuid;
+        SocketAddress remote_address = packet.meta.destination;
+        uint32_t msg_num = packet.data.header.get_message_number();
+        TransmissionComplete event(uuid, packet.data.header.id, remote_address);
+
+        log_info(
+            "Transmission ", remote_address.to_string(), " / ", msg_num, " is completed. Sent ",
+            end_fragment_num + 1, " fragments, ", get_total_bytes(), " bytes total."
+        );
+
+        reset();
+
+        handler.notify(event);
+    }
+
+    mutex_timeout.unlock();
+
+    return success;
+}
+
 void TransmissionQueue::receive_ack(const Packet& ack_packet)
 {
     uint32_t msg_num = ack_packet.data.header.get_message_number();
@@ -162,21 +191,14 @@ void TransmissionQueue::receive_ack(const Packet& ack_packet)
         entry.timeout_id = -1;
     }
 
-    mutex_timeout.lock();
-    if (completed()) {
-        const UUID& uuid = packet.meta.transmission_uuid;
-        SocketAddress remote_address = packet.meta.destination;
-        uint32_t msg_num = packet.data.header.get_message_number();
-        TransmissionComplete event(uuid, packet.data.header.id, remote_address);
+    try_complete();
+}
 
-        log_info(
-            "Transmission ", remote_address.to_string(), " / ", msg_num, " is completed. Sent ",
-            end_fragment_num + 1, " fragments, ", get_total_bytes(), " bytes total."
-        );
+void TransmissionQueue::discard_node(const Node& node) {
+    for (auto& [_, entry] : entries) {
+        if (!message_type::is_broadcast(entry.packet.data.header.type)) continue;
 
-        reset();
-
-        handler.notify(event);
+        entry.pending_receivers.erase(node.get_address());
+        try_complete();
     }
-    mutex_timeout.unlock();
 }

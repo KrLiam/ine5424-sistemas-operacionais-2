@@ -39,6 +39,8 @@ private:
     void send(uint32_t num);
 
     void timeout(uint32_t num);
+
+    bool try_complete();
 public:
     TransmissionQueue(Timer& timer, PipelineHandler& handler, const NodeMap& nodes);
     ~TransmissionQueue();
@@ -50,6 +52,8 @@ public:
     void add_packet(const Packet& packet);
 
     void receive_ack(const Packet& packet);
+
+    void discard_node(const Node& node);
 
     void reset();
 };

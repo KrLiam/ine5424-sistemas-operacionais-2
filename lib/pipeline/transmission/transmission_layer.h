@@ -41,6 +41,8 @@ private:
     void ack_received(const PacketAckReceived& event);
     Observer<PipelineCleanup> obs_pipeline_cleanup;
     void pipeline_cleanup(const PipelineCleanup& event);
+    Observer<NodeDeath> obs_node_death;
+    void node_death(const NodeDeath& event);
 
     bool has_queue(const TransmissionKey& id);
     TransmissionQueue& get_queue(const TransmissionKey& id);
