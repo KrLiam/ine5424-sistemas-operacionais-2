@@ -151,7 +151,7 @@ uint32_t ConfigReader::parse_alive()
 BroadcastType ConfigReader::parse_broadcast()
 {
     std::string value = read_word();
-    // TODO seria bom converter pra lowercase
+    std::transform(value.begin(), value.end(), value.begin(), ::tolower);
 
     if (value == "beb") return BroadcastType::BEB;
     if (value == "urb") return BroadcastType::URB;
