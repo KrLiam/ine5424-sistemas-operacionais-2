@@ -53,6 +53,8 @@ private:
     
     EventBus event_bus;
 
+    BroadcastType broadcast_type;
+
     std::thread sender_thread;
     BufferSet<std::string> connection_update_buffer;
 

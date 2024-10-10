@@ -18,6 +18,8 @@ ReliableCommunication::ReliableCommunication(
 {
     Config config = ConfigReader::parse_file("nodes.conf");
 
+    broadcast_type = config.broadcast;
+
     gr = std::make_shared<GroupRegistry>(local_id, config);
     pipeline = new Pipeline(gr, event_bus, fault_config);
 
@@ -116,7 +118,8 @@ bool ReliableCommunication::broadcast(MessageData data) {
         return false;
     }
 
-    Transmission transmission = create_transmission(BROADCAST_ID, data, MessageType::URB);
+    MessageType message_type = MessageType(0b11 | (static_cast<int>(broadcast_type) << 2));
+    Transmission transmission = create_transmission(BROADCAST_ID, data, message_type);
     gr->enqueue(transmission);
     
     TransmissionResult result = transmission.wait_result();
