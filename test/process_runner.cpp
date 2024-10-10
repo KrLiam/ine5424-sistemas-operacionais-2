@@ -330,7 +330,7 @@ void client(ReliableCommunication& comm) {
             commands = parse_commands(reader);
         }
         catch (std::invalid_argument& err) {
-            std::cout << "Unknown command '" << input << "'.\n--help to see the list of commands." << std::endl;
+            std::cout << "Unknown command '" << input << "'.\nhelp to see the list of commands." << std::endl;
             continue;
         }
         catch (parse_error& err) {
