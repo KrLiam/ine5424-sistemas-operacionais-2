@@ -96,7 +96,8 @@ void BroadcastConnection::try_deliver(const MessageIdentity& id) {
 
 void BroadcastConnection::deliver_message(const DeliverMessage &event)
 {
-    if (event.message.id.sequence_type != MessageSequenceType::BROADCAST) return;
+    const MessageIdentity& id = event.message.id;
+    if (id.sequence_type != MessageSequenceType::BROADCAST) return;
     
     MessageType type = event.message.type;
 
@@ -104,11 +105,14 @@ void BroadcastConnection::deliver_message(const DeliverMessage &event)
         deliver_buffer.produce(event.message);
     }
     else if (type == MessageType::URB) {
-        RetransmissionEntry& entry = retransmissions.at(event.message.id);
+        if (!retransmissions.contains(id)) {
+            retransmissions.emplace(id, RetransmissionEntry());
+        }
+        RetransmissionEntry& entry = retransmissions.at(id);
         entry.message = event.message;
         entry.message_received = true;
 
-        try_deliver(event.message.id);
+        try_deliver(id);
     }
 }
 

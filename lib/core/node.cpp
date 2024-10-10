@@ -41,7 +41,7 @@ const Node &NodeMap::get_node(std::string id) const
     auto iterator = nodes.find(id);
     if (iterator != nodes.end())
     {
-        return iterator->second;
+        return nodes.at(iterator->first);
     }
     throw std::invalid_argument(format("Node %s not found.", id.c_str()));
 }

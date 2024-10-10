@@ -57,7 +57,7 @@ void GroupRegistry::establish_connections(
     Buffer<Message> &deliver_buffer,
     BufferSet<std::string> &connection_update_buffer
 ) {
-    Node local_node = get_local_node();
+    const Node& local_node = get_local_node();
 
     broadcast_connection =  std::make_unique<BroadcastConnection>(
         local_node, connections, connection_update_buffer, deliver_buffer, pipeline
