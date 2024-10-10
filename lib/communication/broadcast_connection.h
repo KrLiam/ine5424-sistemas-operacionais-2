@@ -14,38 +14,49 @@ struct RetransmissionEntry {
     RetransmissionEntry();
 };
 
+struct SequenceNumber {
+    uint32_t initial_number;
+    uint32_t next_number;
+};
+
+
 class BroadcastConnection {
+    const NodeMap& nodes; 
     const Node& local_node; 
     std::map<std::string, Connection>& connections;
     Pipeline& pipeline;
 
     TransmissionDispatcher dispatcher;
+    std::unordered_map<std::string, SequenceNumber> sequence_numbers;
     std::unordered_map<MessageIdentity, RetransmissionEntry> retransmissions;
     BufferSet<std::string>& connection_update_buffer;
     Buffer<Message>& deliver_buffer;
 
     void observe_pipeline();
 
+    void receive_ack(Packet& ack_packet);
+    void receive_fragment(Packet& packet);
+
+    void retransmit_fragment(Packet& packet);
     void try_deliver(const MessageIdentity&);
 
     Observer<ConnectionEstablished> obs_connection_established;
     Observer<ConnectionClosed> obs_connection_closed;
     Observer<TransmissionComplete> obs_transmission_complete;
     Observer<TransmissionFail> obs_transmission_fail;
-    Observer<DeliverMessage> obs_deliver_message;
-    Observer<FragmentReceived> obs_fragment_received;
-    Observer<PacketAckReceived> obs_packet_ack_received;
+    Observer<MessageReceived> obs_message_received;
+    Observer<PacketReceived> obs_packet_received;
 
     void connection_established(const ConnectionEstablished& event);
     void connection_closed(const ConnectionClosed& event);
     void transmission_complete(const TransmissionComplete& event);
     void transmission_fail(const TransmissionFail& event);
-    void deliver_message(const DeliverMessage &event);
-    void fragment_received(const FragmentReceived &event);
-    void packet_ack_received(const PacketAckReceived &event);
+    void message_received(const MessageReceived &event);
+    void packet_received(const PacketReceived &event);
 
 public:
     BroadcastConnection(
+        const NodeMap& nodes,
         const Node& local_node,
         std::map<std::string, Connection>& connections,
         BufferSet<std::string>& connection_update_buffer,

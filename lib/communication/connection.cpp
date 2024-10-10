@@ -39,14 +39,16 @@ void Connection::observe_pipeline()
 
 void Connection::packet_received(const PacketReceived &event)
 {
-    if (event.packet.data.header.id.origin != remote_node.get_address()) return;
+    if (event.packet.meta.origin != remote_node.get_address()) return;
+    if (message_type::is_broadcast(event.packet.data.header.type)) return;
+
     receive(event.packet);
 }
 
 void Connection::message_received(const MessageReceived &event)
 {
-    if (event.message.id.origin != remote_node.get_address()) return;
-    // if (event.message.id.sequence_type != MessageSequenceType::UNICAST) return;
+    if (event.message.origin != remote_node.get_address()) return;
+    if (message_type::is_broadcast(event.message.type)) return;
     receive(event.message);
 }
 
@@ -152,7 +154,7 @@ void Connection::closed(Packet p)
 void Connection::on_established() {
     log_info("Established connection with node ", remote_node.get_id(), " (", remote_node.get_address().to_string(), ").");
 
-    ConnectionEstablished event(remote_node);
+    ConnectionEstablished event(remote_node, initial_broadcast_number);
     pipeline.notify(event);
 }
 
@@ -285,8 +287,8 @@ void Connection::established(Packet p)
     uint32_t message_number = p.data.header.get_message_number();
     MessageSequenceType type = p.data.header.id.sequence_type;
 
-    uint32_t number = type == MessageSequenceType::BROADCAST ? expected_broadcast_number : expected_number;
-    uint32_t initial_number = type == MessageSequenceType::BROADCAST ? initial_broadcast_number : 0;
+    uint32_t number = expected_number;
+    uint32_t initial_number = 0;
 
     if (message_number < initial_number)
     {
@@ -320,11 +322,7 @@ void Connection::established(Packet p)
     }
 
     log_debug("Received ", p.to_string(PacketFormat::RECEIVED), " that expects confirmation.");
-
-    pipeline.notify(FragmentReceived(p));
-
-    bool broadcast = p.data.header.type == MessageType::URB;
-    send_ack(p, broadcast);
+    transmit(create_ack(p));
 }
 
 void Connection::fin_wait(Packet p)
@@ -410,33 +408,6 @@ void Connection::send_flag(uint8_t flags, MessageData message_data)
     transmit(packet);
 }
 
-void Connection::send_ack(Packet packet, bool broadcast)
-{
-    PacketData data;
-    memset(&data, 0, sizeof(PacketData));
-
-    data.header = {
-        id : packet.data.header.id,
-        fragment_num : packet.data.header.fragment_num,
-        checksum : 0,
-        flags : ACK,
-        type : MessageType::CONTROL
-    };
-    PacketMetadata meta = {
-        transmission_uuid : UUID(""),
-        origin : local_node.get_address(),
-        destination : broadcast ? SocketAddress{BROADCAST_ADDRESS, 0} : remote_node.get_address(),
-        message_length : 0,
-        expects_ack : 0
-    };
-    Packet ack_packet = {
-        data : data,
-        meta : meta
-    };
-
-    transmit(ack_packet);
-}
-
 bool Connection::close_on_rst(Packet p)
 {
     if (p.data.header.is_rst() && p.data.header.get_message_number() == expected_number)
@@ -468,8 +439,6 @@ bool Connection::resync_broadcast_on_syn(Packet p) {
     SynData* data = reinterpret_cast<SynData*>(p.data.message_data);
     
     initial_broadcast_number = data->broadcast_number;
-    expected_broadcast_number = initial_broadcast_number;
-    log_info("Broadcast sequence with node ", remote_node.get_id(), " was resync to ", initial_broadcast_number);
 
     return true;
 }
@@ -566,7 +535,7 @@ void Connection::receive(Message message)
     }
 
     MessageSequenceType type = message.id.sequence_type;
-    uint32_t number = type == MessageSequenceType::BROADCAST ? expected_broadcast_number : expected_number;
+    uint32_t number = expected_number;
 
     if (message.id.msg_num < number)
     {
@@ -580,18 +549,8 @@ void Connection::receive(Message message)
         return;
     }
 
-    pipeline.notify(DeliverMessage(message));
-
-    if (type == MessageSequenceType::BROADCAST)
-    {
-        expected_broadcast_number++;
-    }
-    else
-    {
-        expected_number++;
-        application_buffer.produce(message);
-    }
-
+    expected_number++;
+    application_buffer.produce(message);
 }
 
 void Connection::transmit(Packet p)

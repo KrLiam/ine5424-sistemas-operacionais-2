@@ -5,3 +5,33 @@ bool MessageIdentity::operator==(const MessageIdentity& other) const {
         && msg_num == other.msg_num
         && sequence_type == other.sequence_type;
 }
+
+Packet create_ack(const Packet& packet)
+{
+    return create_ack(packet, packet.meta.origin);
+}
+Packet create_ack(const Packet& packet, SocketAddress destination)
+{
+    PacketData data;
+    memset(&data, 0, sizeof(PacketData));
+
+    data.header = {
+        id : packet.data.header.id,
+        fragment_num : packet.data.header.fragment_num,
+        checksum : 0,
+        flags : ACK,
+        type : packet.data.header.type
+    };
+    PacketMetadata meta = {
+        transmission_uuid : UUID(""),
+        origin : packet.meta.destination,
+        destination : destination,
+        message_length : 0,
+        expects_ack : 0
+    };
+
+    return {
+        data : data,
+        meta : meta
+    };
+}

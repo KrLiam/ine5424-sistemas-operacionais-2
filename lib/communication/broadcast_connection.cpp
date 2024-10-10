@@ -4,12 +4,14 @@
 RetransmissionEntry::RetransmissionEntry() {}
 
 BroadcastConnection::BroadcastConnection(
+    const NodeMap& nodes,
     const Node& local_node,
     std::map<std::string, Connection>& connections,
     BufferSet<std::string>& connection_update_buffer,
     Buffer<Message>& deliver_buffer,
     Pipeline& pipeline
 ) :
+    nodes(nodes),
     local_node(local_node),
     connections(connections),
     pipeline(pipeline),
@@ -25,21 +27,27 @@ const TransmissionDispatcher& BroadcastConnection::get_dispatcher() const { retu
 void BroadcastConnection::observe_pipeline() {
     obs_connection_established.on(std::bind(&BroadcastConnection::connection_established, this, _1));
     obs_connection_closed.on(std::bind(&BroadcastConnection::connection_closed, this, _1));
-    obs_deliver_message.on(std::bind(&BroadcastConnection::deliver_message, this, _1));
-    obs_fragment_received.on(std::bind(&BroadcastConnection::fragment_received, this, _1));
-    obs_packet_ack_received.on(std::bind(&BroadcastConnection::packet_ack_received, this, _1));
+    obs_packet_received.on(std::bind(&BroadcastConnection::packet_received, this, _1));
+    obs_message_received.on(std::bind(&BroadcastConnection::message_received, this, _1));
     obs_transmission_fail.on(std::bind(&BroadcastConnection::transmission_fail, this, _1));
     obs_transmission_complete.on(std::bind(&BroadcastConnection::transmission_complete, this, _1));
     pipeline.attach(obs_connection_established);
     pipeline.attach(obs_connection_closed);
-    pipeline.attach(obs_deliver_message);
-    pipeline.attach(obs_fragment_received);
-    pipeline.attach(obs_packet_ack_received);
+    pipeline.attach(obs_packet_received);
+    pipeline.attach(obs_message_received);
     pipeline.attach(obs_transmission_complete);
     pipeline.attach(obs_transmission_fail);
 }
 
-void BroadcastConnection::connection_established(const ConnectionEstablished&) {
+void BroadcastConnection::connection_established(const ConnectionEstablished& event) {
+    const std::string& id = event.node.get_id();
+
+    if (!sequence_numbers.contains(id)) sequence_numbers.emplace(id, SequenceNumber());
+    SequenceNumber& number = sequence_numbers.at(id);
+    number.initial_number = event.broadcast_number;
+    number.next_number = event.broadcast_number;
+    log_info("Broadcast sequence with node ", id, " was resync to ", number.initial_number);
+
     request_update();
 }
 
@@ -47,58 +55,75 @@ void BroadcastConnection::connection_closed(const ConnectionClosed&) {
     dispatcher.cancel_all();
 }
 
-void BroadcastConnection::fragment_received(const FragmentReceived &event)
+void BroadcastConnection::packet_received(const PacketReceived &event)
 {
-    const PacketHeader& header = event.packet.data.header;
-    const MessageIdentity& id = header.id;
+    if (!message_type::is_broadcast(event.packet.data.header.type)) return;
 
-    if (id.sequence_type != MessageSequenceType::BROADCAST) return;    
-
-    if (header.type == MessageType::URB) {
-        if (id.origin == local_node.get_address()) return;
-
-        if (!retransmissions.contains(id)) {
-            retransmissions.emplace(id, RetransmissionEntry());
-        }
-        RetransmissionEntry& entry = retransmissions.at(id);
-
-        if (entry.retransmitted_fragments.contains(id.msg_num)) return;
-        entry.retransmitted_fragments.emplace(id.msg_num);
-
-        Packet rt_packet = event.packet;
-
-        log_info("Received URB fragment ", rt_packet.to_string(PacketFormat::RECEIVED), ". Retransmitting back.");
-        rt_packet.meta.transmission_uuid = entry.uuid;
-        rt_packet.meta.destination = {BROADCAST_ADDRESS, 0};
-        rt_packet.meta.expects_ack = true;
-        rt_packet.meta.urb_retransmission = true;
-        pipeline.send(rt_packet);
-    }
-}
-
-void BroadcastConnection::packet_ack_received(const PacketAckReceived &event)
-{
-    if (event.ack_packet.data.header.id.sequence_type != MessageSequenceType::BROADCAST) return;
+    Packet& packet = event.packet;
+    uint32_t message_number = packet.data.header.id.msg_num;
     
-    // aqui devemos guardar acks de outros nós
-    // que chegaram antes do nó local receber o fragmento
-}
+    const Node& origin = nodes.get_node(packet.data.header.id.origin);
+    if (!sequence_numbers.contains(origin.get_id())) return;
+    SequenceNumber& sequence = sequence_numbers.at(origin.get_id());
 
-
-void BroadcastConnection::try_deliver(const MessageIdentity& id) {
-    RetransmissionEntry& entry = retransmissions.at(id);
-
-    if (entry.acks_received && entry.message_received) {
-        deliver_buffer.produce(entry.message);
-        retransmissions.erase(id);
+    if (message_number < sequence.initial_number)
+    {
+        log_debug(
+            "Received ",
+            packet.to_string(PacketFormat::RECEIVED),
+            " which is prior to current connection with initial number ",
+            sequence.initial_number,
+            "; ignoring it."
+        );
+        return;
     }
+    if (message_number > sequence.next_number)
+    {
+        log_debug(
+            "Received ",
+            packet.to_string(PacketFormat::RECEIVED),
+            " that expects confirmation, but message number ",
+            message_number,
+            " is higher than the expected ",
+            sequence.next_number,
+            "; ignoring it."
+        );
+        return;
+    }
+
+    if (packet.data.header.is_ack()) {
+        receive_ack(packet);
+        return;
+    }
+
+    receive_fragment(packet);
 }
 
-void BroadcastConnection::deliver_message(const DeliverMessage &event)
+void BroadcastConnection::message_received(const MessageReceived &event)
 {
-    const MessageIdentity& id = event.message.id;
-    if (id.sequence_type != MessageSequenceType::BROADCAST) return;
+    if (!message_type::is_broadcast(event.message.type)) return;
     
+    const Message& message = event.message;
+    const MessageIdentity& id = message.id;
+    
+    const Node& origin = nodes.get_node(message.id.origin);
+    if (!sequence_numbers.contains(origin.get_id())) return;
+    SequenceNumber& sequence = sequence_numbers.at(origin.get_id());
+
+    if (message.id.msg_num < sequence.next_number)
+    {
+        log_warn("Message ", message.to_string(), " was already received; dropping it.");
+        return;
+    }
+
+    if (message.id.msg_num > sequence.next_number)
+    {
+        log_warn("Message ", message.to_string(), " is unexpected, current number expected is ", sequence.next_number, "; dropping it.");
+        return;
+    }
+
+    sequence.next_number++;
+
     MessageType type = event.message.type;
 
     if (type == MessageType::BEB) {
@@ -113,6 +138,60 @@ void BroadcastConnection::deliver_message(const DeliverMessage &event)
         entry.message_received = true;
 
         try_deliver(id);
+    }
+}
+
+
+void BroadcastConnection::receive_ack(Packet& ack_packet)
+{
+    pipeline.notify(PacketAckReceived(ack_packet));
+}
+
+void BroadcastConnection::receive_fragment(Packet& packet)
+{
+    const PacketHeader& header = packet.data.header;
+    const MessageIdentity& id = header.id;
+
+    SocketAddress ack_destination = packet.meta.origin;
+
+    if (header.type == MessageType::URB) {
+        ack_destination = {BROADCAST_ADDRESS, 0};
+        retransmit_fragment(packet);
+    }
+
+    Packet ack_packet = create_ack(packet, ack_destination);
+    pipeline.send(ack_packet);
+}
+
+void BroadcastConnection::retransmit_fragment(Packet& packet)
+{
+    const MessageIdentity& id = packet.data.header.id; 
+    if (id.origin == local_node.get_address()) return;
+
+    if (!retransmissions.contains(id)) {
+        retransmissions.emplace(id, RetransmissionEntry());
+    }
+    RetransmissionEntry& entry = retransmissions.at(id);
+
+    if (entry.retransmitted_fragments.contains(id.msg_num)) return;
+    entry.retransmitted_fragments.emplace(id.msg_num);
+
+    Packet rt_packet = packet;
+
+    log_info("Received URB fragment ", rt_packet.to_string(PacketFormat::RECEIVED), ". Retransmitting back.");
+    rt_packet.meta.transmission_uuid = entry.uuid;
+    rt_packet.meta.destination = {BROADCAST_ADDRESS, 0};
+    rt_packet.meta.expects_ack = true;
+    rt_packet.meta.urb_retransmission = true;
+    pipeline.send(rt_packet);
+}
+
+void BroadcastConnection::try_deliver(const MessageIdentity& id) {
+    RetransmissionEntry& entry = retransmissions.at(id);
+
+    if (entry.acks_received && entry.message_received) {
+        deliver_buffer.produce(entry.message);
+        retransmissions.erase(id);
     }
 }
 

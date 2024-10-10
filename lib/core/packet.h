@@ -27,6 +27,10 @@ struct PacketHeader
         return (uint32_t)fragment_num;
     }
 
+    bool is_data() const {
+        return message_type::is_application(type) && !is_ack();
+    }
+
     bool is_ack() const
     {
         return flags & ACK;
@@ -100,7 +104,7 @@ struct Packet
         const PacketHeader& header = data.header;
 
         std::string flags;
-        if (message_type::is_application(header.type)) flags += "DATA";
+        if (header.is_data()) flags += "DATA";
         if (header.is_syn()) flags += flags.length() ? "+SYN" : "SYN";
         if (header.is_rst()) flags += flags.length() ? "+RST" : "RST";
         if (header.is_fin()) flags += flags.length() ? "+FIN" : "FIN";
@@ -158,3 +162,7 @@ struct Packet
 struct SynData {
     uint32_t broadcast_number;
 };
+
+
+Packet create_ack(const Packet& packet);
+Packet create_ack(const Packet& packet, SocketAddress destination);

@@ -61,7 +61,6 @@ private:
     uint32_t expected_number = 0;
 
     uint32_t initial_broadcast_number = 0;
-    uint32_t expected_broadcast_number = 0;
 
     Timer timer{};
     int handshake_timer_id = -1;
@@ -106,7 +105,6 @@ private:
     
     void send_flag(uint8_t flags);
     void send_flag(uint8_t flags, MessageData data);
-    void send_ack(Packet packet, bool broadcast = false);
 
     bool close_on_rst(Packet p);
     bool rst_on_syn(Packet p);

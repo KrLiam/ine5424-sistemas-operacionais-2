@@ -2,7 +2,8 @@
 
 Event::Event() {}
 
-ConnectionEstablished::ConnectionEstablished(const Node& node) : node(node) {}
+ConnectionEstablished::ConnectionEstablished(const Node& node, uint32_t broadcast_number)
+    : node(node), broadcast_number(broadcast_number) {}
 
 ConnectionClosed::ConnectionClosed(const Node& node) : node(node) {}
 

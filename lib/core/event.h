@@ -33,8 +33,9 @@ struct ConnectionEstablished : public Event {
     static EventType type() { return EventType::CONNECTION_ESTABLISHED; }
 
     const Node& node;
+    uint32_t broadcast_number;
 
-    ConnectionEstablished(const Node& node);
+    ConnectionEstablished(const Node& node, uint32_t broadcast_number);
 };
 
 struct ConnectionClosed : public Event {
