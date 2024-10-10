@@ -17,7 +17,7 @@ class TransmissionDispatcher {
     std::vector<Transmission*> transmissions;
     Transmission* active_transmission;
     std::mutex mutex_transmissions;
-    uint32_t next_number = 0;
+    uint32_t next_number;
 
     void request_update();
 

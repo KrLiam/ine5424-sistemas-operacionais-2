@@ -9,7 +9,9 @@ TransmissionDispatcher::TransmissionDispatcher(
     id(id),
     update_buffer(update_buffer),
     pipeline(pipeline),
-    max_transmissions(MAX_ENQUEUED_TRANSMISSIONS) {};
+    max_transmissions(MAX_ENQUEUED_TRANSMISSIONS),
+    active_transmission(nullptr),
+    next_number(0) {};
 
 bool TransmissionDispatcher::is_empty() const {
     return transmissions.empty();
