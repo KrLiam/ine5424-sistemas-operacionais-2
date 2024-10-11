@@ -146,6 +146,8 @@ void Connection::closed(Packet p)
         return;
     }
 
+    if (p.data.header.is_rst()) return;
+
     log_trace("closed: unexpected packet; sending RST.");
     reset_message_numbers();
     send_flag(RST);
