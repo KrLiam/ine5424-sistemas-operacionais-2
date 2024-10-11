@@ -46,13 +46,16 @@ void FaultInjectionLayer::receive(Packet packet) {
 
     // lose packet entirely
     if (delay == INT_MAX || (delay == -1 && roll_chance(lose_chance))) {
-        log_warn("Lost ", packet.to_string(PacketFormat::RECEIVED));
+        if (!packet.silent()) {
+            log_warn("Lost ", packet.to_string(PacketFormat::RECEIVED));
+        }
         return;
     };
 
-    int range_length = max_delay - min_delay;
-    if (delay == -1 && range_length) {
-        delay = min_delay + std::rand() % range_length;
+    if (delay == -1) {
+        int range_length = max_delay - min_delay;
+        int offset = range_length ? std::rand() % range_length : 0;
+        delay = min_delay + offset;
         [[maybe_unused]] unsigned int msg_num = packet.data.header.id.msg_num;
         [[maybe_unused]] unsigned int fragment_num = packet.data.header.fragment_num;
         
