@@ -182,6 +182,7 @@ void send_thread(SenderThreadArgs* args) {
             TextCommand* cmd = static_cast<TextCommand*>(command.get());
 
             std::string& text = cmd->text;
+            send_id = cmd->send_id;
 
             success = send_message(
                 comm,
@@ -208,6 +209,7 @@ void send_thread(SenderThreadArgs* args) {
             DummyCommand* cmd = static_cast<DummyCommand*>(command.get());
 
             size_t size = cmd->size;
+            send_id = cmd->send_id;
 
             std::unique_ptr<char[]> data = std::make_unique<char[]>(size);
             create_dummy_data(data.get(), size);
@@ -224,6 +226,7 @@ void send_thread(SenderThreadArgs* args) {
             FileCommand* cmd = static_cast<FileCommand*>(command.get());
 
             std::string& path = cmd->path;
+            send_id = cmd->send_id;
 
             std::ifstream file(path, std::ios::binary | std::ios::ate);
             size_t size = file.tellg();
