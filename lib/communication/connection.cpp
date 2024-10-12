@@ -389,8 +389,8 @@ void Connection::send_flag(uint8_t flags, MessageData message_data)
 {
     MessageIdentity id = {
         origin : local_node.get_address(),
-        msg_num : dispatcher.get_next_number(),
-        sequence_type : MessageSequenceType::UNICAST
+        sequence_type : MessageSequenceType::UNICAST,
+        msg_num : dispatcher.get_next_number()
     };
 
     PacketHeader header;
@@ -579,8 +579,8 @@ void Connection::heartbeat()
     data.header = {
         id : {
             origin : local_node.get_address(),
-            msg_num : 0,
-            sequence_type : MessageSequenceType::UNICAST
+            sequence_type : MessageSequenceType::UNICAST,
+            msg_num : 0
         },
         fragment_num: 0,
         checksum: 0,

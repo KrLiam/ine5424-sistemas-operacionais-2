@@ -64,7 +64,7 @@ const IPv4 BROADCAST_ADDRESS = {255, 255, 255, 255};
 struct SocketAddress
 {
     IPv4 address;
-    int port;
+    uint16_t port;
 
     std::string to_string() const;
 

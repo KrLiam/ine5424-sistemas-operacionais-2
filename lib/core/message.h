@@ -7,7 +7,7 @@
 #include <cstring>
 #include <cstdint>
 
-enum class MessageType
+enum class MessageType : uint8_t
 {
     // Padrão
     // <type0><type1><type2><type3><type4><type5><broadcast><application>
@@ -30,7 +30,7 @@ namespace message_type {
     bool is_broadcast(MessageType type);
 };
 
-enum MessageSequenceType {
+enum MessageSequenceType: uint8_t {
     UNICAST = 0,
     BROADCAST = 1
 };
@@ -38,8 +38,8 @@ enum MessageSequenceType {
 struct MessageIdentity {
     // Endereço do nó original que envia a mensagem.
     SocketAddress origin;
-    uint32_t msg_num;
     MessageSequenceType sequence_type;
+    uint32_t msg_num;
 
     bool operator==(const MessageIdentity& other) const;
 };

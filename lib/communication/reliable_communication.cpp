@@ -150,9 +150,9 @@ Message ReliableCommunication::create_message(SocketAddress receiver_address, co
     Message m = {
         id : {
             origin : local.get_address(),
-            msg_num : 0,
             sequence_type : receiver_address == BROADCAST_ADDRESS ?
-                MessageSequenceType::BROADCAST : MessageSequenceType::UNICAST
+                MessageSequenceType::BROADCAST : MessageSequenceType::UNICAST,
+            msg_num : 0
         },
         transmission_uuid : UUID(""),
         origin : local.get_address(),
