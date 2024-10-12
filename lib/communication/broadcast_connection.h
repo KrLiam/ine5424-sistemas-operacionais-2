@@ -41,12 +41,14 @@ class BroadcastConnection {
     void try_deliver(const MessageIdentity&);
 
     Observer<ConnectionEstablished> obs_connection_established;
+    Observer<ReceiveSynchronization> obs_receive_synchronization;
     Observer<ConnectionClosed> obs_connection_closed;
     Observer<TransmissionComplete> obs_transmission_complete;
     Observer<TransmissionFail> obs_transmission_fail;
     Observer<MessageReceived> obs_message_received;
     Observer<PacketReceived> obs_packet_received;
 
+    void receive_synchronization(const ReceiveSynchronization& event);
     void connection_established(const ConnectionEstablished& event);
     void connection_closed(const ConnectionClosed& event);
     void transmission_complete(const TransmissionComplete& event);

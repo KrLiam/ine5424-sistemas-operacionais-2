@@ -20,6 +20,7 @@ enum EventType {
     NODE_DEATH = 12,
     FRAGMENT_RECEIVED = 13,
     DELIVER_MESSAGE = 14,
+    RECEIVE_SYNCHRONIZATION = 15
 };
     
 struct Event {
@@ -29,13 +30,22 @@ protected:
     Event();
 };
 
+struct ReceiveSynchronization : public Event {
+    static EventType type() { return EventType::RECEIVE_SYNCHRONIZATION; }
+
+    const Node& node;
+    uint32_t expected_number;
+    uint32_t expected_broadcast_number;
+
+    ReceiveSynchronization(const Node& node, uint32_t expected_number, uint32_t expected_broadcast_number);
+};
+
 struct ConnectionEstablished : public Event {
     static EventType type() { return EventType::CONNECTION_ESTABLISHED; }
 
     const Node& node;
-    uint32_t broadcast_number;
 
-    ConnectionEstablished(const Node& node, uint32_t broadcast_number);
+    ConnectionEstablished(const Node& node);
 };
 
 struct ConnectionClosed : public Event {

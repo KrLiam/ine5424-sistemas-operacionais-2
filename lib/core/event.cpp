@@ -2,8 +2,11 @@
 
 Event::Event() {}
 
-ConnectionEstablished::ConnectionEstablished(const Node& node, uint32_t broadcast_number)
-    : node(node), broadcast_number(broadcast_number) {}
+ReceiveSynchronization::ReceiveSynchronization(const Node& node, uint32_t expected_number, uint32_t expected_broadcast_number)
+    : node(node), expected_number(expected_number), expected_broadcast_number(expected_broadcast_number) {}
+
+ConnectionEstablished::ConnectionEstablished(const Node& node)
+    : node(node) {}
 
 ConnectionClosed::ConnectionClosed(const Node& node) : node(node) {}
 

@@ -156,7 +156,7 @@ void Connection::closed(Packet p)
 void Connection::on_established() {
     log_info("Established connection with node ", remote_node.get_id(), " (", remote_node.get_address().to_string(), ").");
 
-    ConnectionEstablished event(remote_node, initial_broadcast_number);
+    ConnectionEstablished event(remote_node);
     pipeline.notify(event);
 }
 
@@ -440,7 +440,7 @@ bool Connection::resync_broadcast_on_syn(Packet p) {
 
     SynData* data = reinterpret_cast<SynData*>(p.data.message_data);
     
-    initial_broadcast_number = data->broadcast_number;
+    pipeline.notify(ReceiveSynchronization(remote_node, expected_number, data->broadcast_number));
 
     return true;
 }

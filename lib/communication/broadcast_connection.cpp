@@ -25,12 +25,14 @@ BroadcastConnection::BroadcastConnection(
 const TransmissionDispatcher& BroadcastConnection::get_dispatcher() const { return dispatcher; }
 
 void BroadcastConnection::observe_pipeline() {
+    obs_receive_synchronization.on(std::bind(&BroadcastConnection::receive_synchronization, this, _1));
     obs_connection_established.on(std::bind(&BroadcastConnection::connection_established, this, _1));
     obs_connection_closed.on(std::bind(&BroadcastConnection::connection_closed, this, _1));
     obs_packet_received.on(std::bind(&BroadcastConnection::packet_received, this, _1));
     obs_message_received.on(std::bind(&BroadcastConnection::message_received, this, _1));
     obs_transmission_fail.on(std::bind(&BroadcastConnection::transmission_fail, this, _1));
     obs_transmission_complete.on(std::bind(&BroadcastConnection::transmission_complete, this, _1));
+    pipeline.attach(obs_receive_synchronization);
     pipeline.attach(obs_connection_established);
     pipeline.attach(obs_connection_closed);
     pipeline.attach(obs_packet_received);
@@ -39,15 +41,16 @@ void BroadcastConnection::observe_pipeline() {
     pipeline.attach(obs_transmission_fail);
 }
 
-void BroadcastConnection::connection_established(const ConnectionEstablished& event) {
+void BroadcastConnection::receive_synchronization(const ReceiveSynchronization& event) {
     const std::string& id = event.node.get_id();
 
     if (!sequence_numbers.contains(id)) sequence_numbers.emplace(id, SequenceNumber());
     SequenceNumber& number = sequence_numbers.at(id);
-    number.initial_number = event.broadcast_number;
-    number.next_number = event.broadcast_number;
+    number.initial_number = event.expected_broadcast_number;
+    number.next_number = event.expected_broadcast_number;
     log_info("Broadcast sequence with node ", id, " was resync to ", number.initial_number);
-
+}
+void BroadcastConnection::connection_established(const ConnectionEstablished& event) {
     request_update();
 }
 
@@ -63,8 +66,12 @@ void BroadcastConnection::packet_received(const PacketReceived &event)
     uint32_t message_number = packet.data.header.id.msg_num;
     
     const Node& origin = nodes.get_node(packet.data.header.id.origin);
-    if (!sequence_numbers.contains(origin.get_id())) return;
+    if (!sequence_numbers.contains(origin.get_id())) {
+        log_warn("Received packet ", packet.to_string(PacketFormat::RECEIVED), ", but sequence number is not synchronized.");
+        return;
+    }
     SequenceNumber& sequence = sequence_numbers.at(origin.get_id());
+
 
     if (message_number < sequence.initial_number)
     {
@@ -107,7 +114,10 @@ void BroadcastConnection::message_received(const MessageReceived &event)
     const MessageIdentity& id = message.id;
     
     const Node& origin = nodes.get_node(message.id.origin);
-    if (!sequence_numbers.contains(origin.get_id())) return;
+    if (!sequence_numbers.contains(origin.get_id())) {
+        log_warn("Received message ", message.to_string(), ", but sequence number is not synchronized.");
+        return;
+    };
     SequenceNumber& sequence = sequence_numbers.at(origin.get_id());
 
     if (message.id.msg_num < sequence.next_number)
@@ -136,6 +146,7 @@ void BroadcastConnection::message_received(const MessageReceived &event)
         RetransmissionEntry& entry = retransmissions.at(id);
         entry.message = event.message;
         entry.message_received = true;
+        log_debug("Message from URB was received.", entry.acks_received ? "" : " Still waiting for all ACKs.");
 
         try_deliver(id);
     }
@@ -187,9 +198,11 @@ void BroadcastConnection::retransmit_fragment(Packet& packet)
 }
 
 void BroadcastConnection::try_deliver(const MessageIdentity& id) {
+    if (!retransmissions.contains(id)) return;
     RetransmissionEntry& entry = retransmissions.at(id);
 
     if (entry.acks_received && entry.message_received) {
+        log_debug("Delivering message ", entry.message.to_string(), ".");
         deliver_buffer.produce(entry.message);
         retransmissions.erase(id);
     }
@@ -201,6 +214,7 @@ void BroadcastConnection::transmission_complete(const TransmissionComplete& even
     if (retransmissions.contains(event.id)) {
         RetransmissionEntry& entry = retransmissions.at(event.id);
         entry.acks_received = true;
+        log_debug("All ACKs from URB retransmission were received.", entry.message_received ? "" : " Still missing message.");
 
         try_deliver(event.id);
     }
