@@ -58,7 +58,7 @@ const Node &NodeMap::get_node(SocketAddress address) const
     throw std::invalid_argument(format("Node with address %s not found.", address.to_string().c_str()));
 }
 
-bool NodeMap::contains(SocketAddress& address) const
+bool NodeMap::contains(const SocketAddress& address) const
 {
     for (auto &[id, node] : nodes)
     {

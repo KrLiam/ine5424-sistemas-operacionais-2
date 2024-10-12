@@ -22,27 +22,70 @@ void TransmissionQueue::send(uint32_t num) {
     Packet& packet = entry.packet;
     const SocketAddress& receiver_address = packet.meta.destination;
 
-    if (!packet.meta.urb_retransmission || entry.tries != 0) {
-        handler.forward_send(packet);
-    }
-    entry.tries++;
-
-    if (receiver_address == BROADCAST_ADDRESS) {
-        for (const auto& [id, node] : nodes) {
-            const SocketAddress& address = node.get_address();
-            if (address == BROADCAST_ADDRESS) continue; // teste
-
-            entry.pending_receivers.emplace(address);
-            // log_info("Added pending ack ", num, " of remote ", address.to_string());
+    if (entry.tries == 0) {
+        if (receiver_address == BROADCAST_ADDRESS) {
+            for (const auto& [_, node] : nodes) {
+                if (node.get_address() == BROADCAST_ADDRESS) continue;
+                entry.pending_receivers.emplace(&node);
+            }
+        }
+        else {
+            if (!nodes.contains(receiver_address)) {
+                log_warn(
+                    "Cannot transmit ",
+                    packet.to_string(PacketFormat::SENT),
+                    " because destination is unknown."
+                );
+                fail();
+                return;
+            } 
+            const Node& receiver = nodes.get_node(receiver_address);
+            entry.pending_receivers.emplace(&receiver);
         }
     }
-    else {
-        entry.pending_receivers.emplace(receiver_address);
+
+    entry.tries++;
+    pending.emplace(num);
+    entry.timeout_id = timer.add(ACK_TIMEOUT, [this, num]() { timeout(num); });
+
+    // não transmite o fragmento na primeira tentativa
+    if (packet.meta.urb_retransmission && entry.tries == 1) return;
+
+    Packet p = packet;
+    for (const Node* receiver : entry.pending_receivers) {
+        p.meta.destination = receiver->get_address();
+        handler.forward_send(p);
+    }
+}
+
+void TransmissionQueue::fail()
+{
+    std::unordered_set<const Packet*> faulty_packets;
+    std::unordered_set<const Node*> faulty_receivers;
+
+    for (auto& [_, entry] : entries) {
+        if (entry.pending_receivers.empty()) continue;
+
+        faulty_packets.emplace(&entry.packet);
+
+        for (const Node* receiver : entry.pending_receivers) {
+            faulty_receivers.emplace(receiver);
+        }
     }
 
-    pending.emplace(num);
+    const QueueEntry& first_entry = entries.at(0);
+    const UUID uuid = first_entry.packet.meta.transmission_uuid;
 
-    entry.timeout_id = timer.add(ACK_TIMEOUT, [this, num]() { timeout(num); });
+    log_error(
+        "Transmission failed with ",
+        faulty_receivers.size(),
+        " faulty node(s) and ",
+        faulty_packets.size(),
+        " unreceived packet(s)."
+    );
+
+    reset();
+    handler.notify(TransmissionFail(uuid, faulty_packets, faulty_receivers));
 }
 
 void TransmissionQueue::timeout(uint32_t num)
@@ -60,13 +103,8 @@ void TransmissionQueue::timeout(uint32_t num)
 
     if (entry.tries > MAX_PACKET_TRIES)
     {
-        log_error("Packet [", packet.to_string(PacketFormat::SENT), "] expired. Transmission failed.");
-
-        handler.notify(TransmissionFail(entry.packet));
-
-        reset();
-
         mutex_timeout.unlock();
+        fail();
         return;
     }
 
@@ -177,7 +215,9 @@ void TransmissionQueue::receive_ack(const Packet& ack_packet)
     if (!entries.contains(frag_num)) return;
     QueueEntry& entry = entries.at(frag_num);
 
-    entry.pending_receivers.erase(receiver_address);
+    if (!nodes.contains(receiver_address)) return;
+    const Node& receiver = nodes.get_node(receiver_address);
+    entry.pending_receivers.erase(&receiver);
     // log_info("Removing pending ack ", frag_num, " of remote ", receiver_address.to_string(), ". over: ", !entry.pending_receivers.size());
     if (entry.pending_receivers.size()) return;
 
@@ -197,7 +237,7 @@ void TransmissionQueue::discard_node(const Node& node) {
     for (auto& [_, entry] : entries) {
         if (!message_type::is_broadcast(entry.packet.data.header.type)) continue;
 
-        entry.pending_receivers.erase(node.get_address());
+        entry.pending_receivers.erase(&node);
         try_complete();
     }
 }

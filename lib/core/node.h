@@ -41,7 +41,7 @@ public:
     const Node &get_node(std::string id) const;
     const Node &get_node(SocketAddress address) const;
 
-    bool contains(SocketAddress& address) const;
+    bool contains(const SocketAddress& address) const;
 
     void add(Node& node);
 

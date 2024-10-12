@@ -154,6 +154,8 @@ public:
 
     void connect();
     bool disconnect();
+    
+    void close();
 
     void send(Packet packet);
 

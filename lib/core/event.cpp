@@ -23,7 +23,12 @@ DeliverMessage::DeliverMessage(Message& message) : message(message) {}
 TransmissionStarted::TransmissionStarted(const Message& message)
     : message(message) {}
 
-TransmissionFail::TransmissionFail(Packet& faulty_packet) : faulty_packet(faulty_packet) {}
+TransmissionFail::TransmissionFail(
+    const UUID& uuid,
+    const std::unordered_set<const Packet*>& faulty_packets,
+    const std::unordered_set<const Node*>& faulty_nodes
+)
+    : uuid(uuid), faulty_packets(faulty_packets), faulty_nodes(faulty_nodes) {}
 
 TransmissionComplete::TransmissionComplete(UUID uuid, const MessageIdentity& id, const SocketAddress& remote_address)
     : uuid(uuid), id(id), remote_address(remote_address) {}

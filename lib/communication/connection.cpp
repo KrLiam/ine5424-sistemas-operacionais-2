@@ -72,10 +72,9 @@ void Connection::transmission_complete(const TransmissionComplete &event)
 
 void Connection::transmission_fail(const TransmissionFail &event)
 {
-    const UUID &uuid = event.faulty_packet.meta.transmission_uuid;
     const Transmission* active = dispatcher.get_active();
 
-    if (active && uuid == active->uuid) dispatcher.complete(false);
+    if (active && event.uuid == active->uuid) dispatcher.complete(false);
 }
 
 void Connection::node_death(const NodeDeath& event)
@@ -99,6 +98,14 @@ void Connection::connect()
     change_state(SYN_SENT);
     send_syn(0);
     set_timeout();
+}
+
+void Connection::close()
+{
+    if (state == CLOSED) return;
+
+    cancel_transmissions();
+    change_state(CLOSED);
 }
 
 void Connection::set_timeout()

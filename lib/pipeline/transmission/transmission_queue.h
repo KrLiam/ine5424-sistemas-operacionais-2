@@ -14,7 +14,7 @@ struct QueueEntry {
     Packet packet;
     int timeout_id = -1;
     int tries = 0;
-    std::unordered_set<SocketAddress> pending_receivers;
+    std::unordered_set<const Node*> pending_receivers;
 
     QueueEntry(const Packet& packet);
 };
@@ -41,6 +41,7 @@ private:
     void timeout(uint32_t num);
 
     bool try_complete();
+    void fail();
 public:
     TransmissionQueue(Timer& timer, PipelineHandler& handler, const NodeMap& nodes);
     ~TransmissionQueue();

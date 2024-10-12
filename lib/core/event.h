@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_set>
+
 #include "core/packet.h"
 #include "core/node.h"
 
@@ -107,9 +109,15 @@ struct TransmissionStarted : public Event {
 struct TransmissionFail : public Event {
     static EventType type() { return EventType::TRANSMISSION_FAIL; }
 
-    Packet& faulty_packet;
+    UUID uuid;
+    std::unordered_set<const Packet*> faulty_packets;
+    std::unordered_set<const Node*> faulty_nodes;
 
-    TransmissionFail(Packet& faulty_packet);
+    TransmissionFail(
+        const UUID& uuid,
+        const std::unordered_set<const Packet*>& faulty_packets,
+        const std::unordered_set<const Node*>& faulty_nodes
+    );
 };
 
 struct TransmissionComplete : public Event {

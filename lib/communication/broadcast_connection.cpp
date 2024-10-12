@@ -225,10 +225,17 @@ void BroadcastConnection::transmission_complete(const TransmissionComplete& even
 }
 
 void BroadcastConnection::transmission_fail(const TransmissionFail& event) {
-    const UUID &uuid = event.faulty_packet.meta.transmission_uuid;
     const Transmission* active = dispatcher.get_active();
+    if (!active) return;
+    if (event.uuid != active->uuid) return;
+    
+    for (const Node* node : event.faulty_nodes) {
+        if (!connections.contains(node->get_id())) continue;
+        Connection& connection = connections.at(node->get_id());
+        connection.close();
+    }
 
-    if (active && uuid == active->uuid) dispatcher.complete(false);
+    dispatcher.complete(false);
 }
 
 void BroadcastConnection::request_update() {
