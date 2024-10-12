@@ -179,7 +179,8 @@ bool TransmissionQueue::try_complete()
 {
     mutex_timeout.lock();
 
-    const QueueEntry& entry = entries.at(0);
+    if (entries.empty()) return false;
+    const QueueEntry& entry = entries.begin()->second;
     const Packet& packet = entry.packet;
 
     bool success = completed();

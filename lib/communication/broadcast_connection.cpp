@@ -176,7 +176,8 @@ void BroadcastConnection::receive_fragment(Packet& packet)
 
 void BroadcastConnection::retransmit_fragment(Packet& packet)
 {
-    const MessageIdentity& id = packet.data.header.id; 
+    const PacketHeader& header = packet.data.header;
+    const MessageIdentity& id = header.id; 
     if (id.origin == local_node.get_address()) return;
 
     if (!retransmissions.contains(id)) {
@@ -184,8 +185,8 @@ void BroadcastConnection::retransmit_fragment(Packet& packet)
     }
     RetransmissionEntry& entry = retransmissions.at(id);
 
-    if (entry.retransmitted_fragments.contains(id.msg_num)) return;
-    entry.retransmitted_fragments.emplace(id.msg_num);
+    if (entry.retransmitted_fragments.contains(header.fragment_num)) return;
+    entry.retransmitted_fragments.emplace(header.fragment_num);
 
     Packet rt_packet = packet;
 
