@@ -19,6 +19,7 @@ struct ThreadArgs {
     ReliableCommunication* communication{};
 };
 
-void server(ThreadArgs* args);
-void client(ThreadArgs* args);
+void server_receive(ThreadArgs* args);
+void server_deliver(ThreadArgs* args);
+void client(ReliableCommunication& comm);
 void run_process(const Arguments& args);

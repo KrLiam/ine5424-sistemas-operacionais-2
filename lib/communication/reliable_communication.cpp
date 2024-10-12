@@ -14,7 +14,8 @@ ReliableCommunication::ReliableCommunication(
 ) :
     connection_update_buffer("connection_update"),
     user_buffer_size(user_buffer_size),
-    application_buffer(INTERMEDIARY_BUFFER_ITEMS)
+    application_buffer(INTERMEDIARY_BUFFER_ITEMS),
+    deliver_buffer(INTERMEDIARY_BUFFER_ITEMS)
 {
     Config config = ConfigReader::parse_file("nodes.conf");
 
@@ -29,7 +30,7 @@ ReliableCommunication::ReliableCommunication(
     gr->establish_connections(
         *pipeline,
         application_buffer,
-        application_buffer, // TODO substutir por deliver_buffer posteriormente, reusando o msm buffer pq dai vai precisar mudar o programa de testes
+        deliver_buffer,
         connection_update_buffer
     );
     failure_detection = std::make_unique<FailureDetection>(gr, event_bus, config.alive);
@@ -46,6 +47,7 @@ ReliableCommunication::~ReliableCommunication()
 
 void ReliableCommunication::shutdown() {
     application_buffer.terminate();
+    deliver_buffer.terminate();
 }
 
 std::shared_ptr<GroupRegistry> ReliableCommunication::get_group_registry()
@@ -53,25 +55,34 @@ std::shared_ptr<GroupRegistry> ReliableCommunication::get_group_registry()
     return gr;
 }
 
-ReceiveResult ReliableCommunication::receive(char *m)
-{
-    Message message = application_buffer.consume();
+ReceiveResult ReliableCommunication::message_to_buffer(Message *message, char *m) {
+    std::size_t len = std::min(message->length, user_buffer_size);
+    memcpy(m, message->data, len);
 
-    std::size_t len = std::min(message.length, user_buffer_size);
-    memcpy(m, message.data, len);
-
-    if (len < message.length)
+    if (len < message->length)
     {
         log_warn("User's buffer is smaller than the message; truncating it.");
     }
 
-    Node node = gr->get_nodes().get_node(message.id.origin);
+    Node node = gr->get_nodes().get_node(message->id.origin);
     return ReceiveResult{
         length : len,
-        truncated_bytes : message.length - len,
-        sender_address : message.id.origin,
+        truncated_bytes : message->length - len,
+        sender_address : message->id.origin,
         sender_id : node.get_id()
     };
+}
+
+ReceiveResult ReliableCommunication::receive(char *m)
+{
+    Message message = application_buffer.consume();
+    return message_to_buffer(&message, m);
+}
+
+ReceiveResult ReliableCommunication::deliver(char *m)
+{
+    Message message = deliver_buffer.consume();
+    return message_to_buffer(&message, m);
 }
 
 bool ReliableCommunication::send(std::string id, MessageData data)

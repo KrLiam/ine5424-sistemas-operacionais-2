@@ -281,7 +281,7 @@ void parallelize(ReliableCommunication& comm, const std::vector<std::shared_ptr<
 }
 
 
-void server(ThreadArgs* args) {
+void server_receive(ThreadArgs* args) {
     ReliableCommunication* comm = args->communication;
     char buffer[BUFFER_SIZE];
     while (true) {
@@ -303,6 +303,38 @@ void server(ThreadArgs* args) {
         }
 
         log_print("Received '", message_data.c_str(), "' (", result.length, " bytes) from ", result.sender_id);
+
+        mkdir("messages", S_IRWXU);
+        std::string output_filename = "messages/" + UUID().as_string();
+        std::ofstream file(output_filename);
+        file.write(buffer, result.length);
+        log_print("Saved message to file [", output_filename, "].");
+
+    }
+}
+
+void server_deliver(ThreadArgs* args) {
+    ReliableCommunication* comm = args->communication;
+    char buffer[BUFFER_SIZE];
+    while (true) {
+        ReceiveResult result;
+        try {
+            result = comm->deliver(buffer);
+        }
+        catch (buffer_termination& err) {
+            return;
+        }
+        
+        if (result.length == 0) break;
+
+        std::string message_data(buffer, result.length);
+
+        if (message_data.length() > 100 )
+        {
+            message_data = message_data.substr(0, 100) + "...";
+        }
+
+        log_print("[Broadcast] Received '", message_data.c_str(), "' (", result.length, " bytes) from ", result.sender_id);
 
         mkdir("messages", S_IRWXU);
         std::string output_filename = "messages/" + UUID().as_string();
@@ -359,12 +391,15 @@ void run_process(const Arguments& args) {
 
     ThreadArgs targs = { &comm };
 
-    std::thread server_thread(server, &targs);
+    std::thread server_receive_thread(server_receive, &targs);
+    std::thread server_deliver_thread(server_deliver, &targs);
 
     parallelize(comm, args.send_commands);
 
     client(comm);
 
     comm.shutdown();
-    server_thread.join();
+
+    server_receive_thread.join();
+    server_deliver_thread.join();
 }

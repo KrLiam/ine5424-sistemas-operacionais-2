@@ -43,6 +43,7 @@ public:
     bool send(std::string id, MessageData data);
     bool broadcast(MessageData data);
     ReceiveResult receive(char *m);
+    ReceiveResult deliver(char *m);
 
     std::shared_ptr<GroupRegistry> get_group_registry();
 
@@ -61,6 +62,8 @@ private:
     std::size_t user_buffer_size;
     Buffer<Message> application_buffer{"application receive"};
     Buffer<Message> deliver_buffer{"deliver receive"};
+
+    ReceiveResult message_to_buffer(Message *message, char *m);
 
     Message create_message(std::string receiver_id, const MessageData& data, MessageType msg_type);
     Message create_message(SocketAddress receiver_address, const MessageData& data, MessageType msg_type);
