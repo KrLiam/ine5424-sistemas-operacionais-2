@@ -101,6 +101,13 @@ void TransmissionQueue::timeout(uint32_t num)
     QueueEntry& entry = entries.at(num);
     Packet& packet = entry.packet;
 
+    if (entry.pending_receivers.empty()) {
+        pending.erase(num);
+        mutex_timeout.unlock();
+        try_complete();
+        return;
+    }
+
     if (entry.tries > MAX_PACKET_TRIES)
     {
         mutex_timeout.unlock();
@@ -239,6 +246,10 @@ void TransmissionQueue::discard_node(const Node& node) {
         if (!message_type::is_broadcast(entry.packet.data.header.type)) continue;
 
         entry.pending_receivers.erase(&node);
-        try_complete();
+
+        if (entry.pending_receivers.empty())
+            pending.erase(entry.packet.data.header.fragment_num);
     }
+    
+    try_complete();
 }
