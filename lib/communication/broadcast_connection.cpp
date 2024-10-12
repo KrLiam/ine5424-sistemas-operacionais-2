@@ -174,11 +174,23 @@ void BroadcastConnection::receive_fragment(Packet& packet)
     pipeline.send(ack_packet);
 }
 
+bool BroadcastConnection::is_delivered(const MessageIdentity& id) {
+    if (!nodes.contains(id.origin)) return false;
+    const Node& origin = nodes.get_node(id.origin);
+
+    if (!sequence_numbers.contains(origin.get_id())) return false;
+    const SequenceNumber& sequence = sequence_numbers.at(origin.get_id());
+
+    return id.msg_num < sequence.next_number && !retransmissions.contains(id);
+}
+
 void BroadcastConnection::retransmit_fragment(Packet& packet)
 {
     const PacketHeader& header = packet.data.header;
     const MessageIdentity& id = header.id; 
     if (id.origin == local_node.get_address()) return;
+
+    if (is_delivered(id)) return;
 
     if (!retransmissions.contains(id)) {
         retransmissions.emplace(id, RetransmissionEntry());
