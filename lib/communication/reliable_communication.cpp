@@ -55,20 +55,20 @@ std::shared_ptr<GroupRegistry> ReliableCommunication::get_group_registry()
     return gr;
 }
 
-ReceiveResult ReliableCommunication::message_to_buffer(Message *message, char *m) {
-    std::size_t len = std::min(message->length, user_buffer_size);
-    memcpy(m, message->data, len);
+ReceiveResult ReliableCommunication::message_to_buffer(Message &message, char *m) {
+    std::size_t len = std::min(message.length, user_buffer_size);
+    memcpy(m, message.data, len);
 
-    if (len < message->length)
+    if (len < message.length)
     {
         log_warn("User's buffer is smaller than the message; truncating it.");
     }
 
-    Node node = gr->get_nodes().get_node(message->id.origin);
+    Node node = gr->get_nodes().get_node(message.id.origin);
     return ReceiveResult{
         length : len,
-        truncated_bytes : message->length - len,
-        sender_address : message->id.origin,
+        truncated_bytes : message.length - len,
+        sender_address : message.id.origin,
         sender_id : node.get_id()
     };
 }
@@ -76,13 +76,13 @@ ReceiveResult ReliableCommunication::message_to_buffer(Message *message, char *m
 ReceiveResult ReliableCommunication::receive(char *m)
 {
     Message message = application_buffer.consume();
-    return message_to_buffer(&message, m);
+    return message_to_buffer(message, m);
 }
 
 ReceiveResult ReliableCommunication::deliver(char *m)
 {
     Message message = deliver_buffer.consume();
-    return message_to_buffer(&message, m);
+    return message_to_buffer(message, m);
 }
 
 bool ReliableCommunication::send(std::string id, MessageData data)
