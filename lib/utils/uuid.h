@@ -4,6 +4,8 @@
 #include <sstream>
 #include <string.h>
 
+#include "utils/random.h"
+
 struct UUID {
     UUID();
 
@@ -27,8 +29,6 @@ std::ostream& operator<<(std::ostream& os, const UUID& uuid);
 
 namespace uuid
 {
-    static std::random_device rd;
-    static std::mt19937_64 gen(rd());
     static std::uniform_int_distribution<> dis(0, 15);
     static std::uniform_int_distribution<> dis2(8, 11);
 

@@ -1,10 +1,9 @@
-#include <random>
-
 #include "pipeline/fault_injection/fault_injection_layer.h"
 #include "utils/log.h"
+#include "utils/random.h"
 
 bool roll_chance(double chance) {
-    double value = ((double) std::rand()) / RAND_MAX;
+    double value = ((double) rc_random::dis(rc_random::gen)) / RAND_MAX;
     return value < chance;
 }
 

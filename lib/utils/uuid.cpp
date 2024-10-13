@@ -25,28 +25,28 @@ std::string generate_uuid_v4()
     ss << std::hex;
     for (i = 0; i < 8; i++)
     {
-        ss << dis(gen);
+        ss << dis(rc_random::gen);
     }
     ss << "-";
     for (i = 0; i < 4; i++)
     {
-        ss << dis(gen);
+        ss << dis(rc_random::gen);
     }
     ss << "-4";
     for (i = 0; i < 3; i++)
     {
-        ss << dis(gen);
+        ss << dis(rc_random::gen);
     }
     ss << "-";
-    ss << dis2(gen);
+    ss << dis2(rc_random::gen);
     for (i = 0; i < 3; i++)
     {
-        ss << dis(gen);
+        ss << dis(rc_random::gen);
     }
     ss << "-";
     for (i = 0; i < 12; i++)
     {
-        ss << dis(gen);
+        ss << dis(rc_random::gen);
     };
     return ss.str();
 }
