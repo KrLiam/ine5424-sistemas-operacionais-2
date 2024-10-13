@@ -52,10 +52,16 @@ void TransmissionQueue::send(uint32_t num) {
     if (packet.meta.urb_retransmission && entry.tries == 1) return;
 
     Packet p = packet;
+
+    // evitar que a receiver thread apague um receiver enquanto a timeout thread tenta enviar para ele
+    mutex_timeout.lock();
+
     for (const Node* receiver : entry.pending_receivers) {
         p.meta.destination = receiver->get_address();
         handler.forward_send(p);
     }
+
+    mutex_timeout.unlock();
 }
 
 void TransmissionQueue::fail()
@@ -187,11 +193,11 @@ bool TransmissionQueue::try_complete()
     mutex_timeout.lock();
 
     if (entries.empty()) return false;
-    const QueueEntry& entry = entries.begin()->second;
-    const Packet& packet = entry.packet;
 
     bool success = completed();
     if (success) {
+        const QueueEntry& entry = entries.begin()->second;
+        const Packet& packet = entry.packet;
         const UUID& uuid = packet.meta.transmission_uuid;
         SocketAddress remote_address = packet.meta.destination;
         uint32_t msg_num = packet.data.header.get_message_number();
@@ -225,7 +231,12 @@ void TransmissionQueue::receive_ack(const Packet& ack_packet)
 
     if (!nodes.contains(receiver_address)) return;
     const Node& receiver = nodes.get_node(receiver_address);
+
+    // evitar que a receiver thread apague um receiver enquanto a timeout thread tenta enviar para ele
+    mutex_timeout.lock();
     entry.pending_receivers.erase(&receiver);
+    mutex_timeout.unlock();
+
     // log_info("Removing pending ack ", frag_num, " of remote ", receiver_address.to_string(), ". over: ", !entry.pending_receivers.size());
     if (entry.pending_receivers.size()) return;
 
