@@ -146,7 +146,7 @@ void BroadcastConnection::message_received(const MessageReceived &event)
         RetransmissionEntry& entry = retransmissions.at(id);
         entry.message = event.message;
         entry.message_received = true;
-        log_debug("Message from URB was received.", entry.acks_received ? "" : " Still waiting for all ACKs.");
+        log_debug("Message from URB was received.", entry.received_all_acks ? "" : " Still waiting for all ACKs.");
 
         try_deliver(id);
     }
@@ -155,13 +155,31 @@ void BroadcastConnection::message_received(const MessageReceived &event)
 
 void BroadcastConnection::receive_ack(Packet& ack_packet)
 {
+    const PacketHeader& header = ack_packet.data.header;
+    const MessageIdentity& id = header.id;
+    uint32_t frag_num = header.fragment_num;
+
     pipeline.notify(PacketAckReceived(ack_packet));
+
+    if (header.type == MessageType::URB) {
+        if (is_delivered(id)) return;
+
+        if (!retransmissions.contains(id)) retransmissions.emplace(id, RetransmissionEntry());
+        RetransmissionEntry& entry = retransmissions.at(id);
+        
+        if (entry.retransmitted_fragments.contains(frag_num)) return;
+
+        if (!entry.received_acks.contains(frag_num))
+            entry.received_acks.emplace(frag_num, std::unordered_set<SocketAddress>());
+
+        std::unordered_set<SocketAddress>& origins = entry.received_acks.at(frag_num);
+        origins.emplace(ack_packet.meta.origin);
+    }
 }
 
 void BroadcastConnection::receive_fragment(Packet& packet)
 {
     const PacketHeader& header = packet.data.header;
-    const MessageIdentity& id = header.id;
 
     SocketAddress ack_destination = packet.meta.origin;
 
@@ -208,13 +226,27 @@ void BroadcastConnection::retransmit_fragment(Packet& packet)
     rt_packet.meta.expects_ack = true;
     rt_packet.meta.urb_retransmission = true;
     pipeline.send(rt_packet);
+
+    if (entry.received_acks.contains(header.fragment_num)) {
+        const std::unordered_set<SocketAddress>& origins = entry.received_acks.at(header.fragment_num);
+
+        Packet ack_packet = packet;
+        ack_packet.data.header.flags = ACK;
+
+        for (const SocketAddress origin : origins) {
+            ack_packet.meta.origin = origin;
+            pipeline.notify(PacketAckReceived(ack_packet));
+        }
+
+        entry.received_acks.erase(header.fragment_num);
+    }
 }
 
 void BroadcastConnection::try_deliver(const MessageIdentity& id) {
     if (!retransmissions.contains(id)) return;
     RetransmissionEntry& entry = retransmissions.at(id);
 
-    if (entry.acks_received && entry.message_received) {
+    if (entry.received_all_acks && entry.message_received) {
         log_debug("Delivering message ", entry.message.to_string(), ".");
         deliver_buffer.produce(entry.message);
         retransmissions.erase(id);
@@ -226,7 +258,7 @@ void BroadcastConnection::transmission_complete(const TransmissionComplete& even
 
     if (retransmissions.contains(event.id)) {
         RetransmissionEntry& entry = retransmissions.at(event.id);
-        entry.acks_received = true;
+        entry.received_all_acks = true;
         log_debug("All ACKs from URB retransmission were received.", entry.message_received ? "" : " Still missing message.");
 
         try_deliver(event.id);

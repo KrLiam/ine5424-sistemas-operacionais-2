@@ -8,8 +8,9 @@ struct RetransmissionEntry {
     UUID uuid;
     Message message;
     std::unordered_set<uint32_t> retransmitted_fragments;
+    std::unordered_map<uint32_t, std::unordered_set<SocketAddress>> received_acks;
     bool message_received = false;
-    bool acks_received = false;
+    bool received_all_acks = false;
 
     RetransmissionEntry();
 };
