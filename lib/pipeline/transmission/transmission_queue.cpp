@@ -79,7 +79,7 @@ void TransmissionQueue::fail()
         }
     }
 
-    const QueueEntry& first_entry = entries.at(0);
+    const QueueEntry& first_entry = entries.begin()->second;
     const UUID uuid = first_entry.packet.meta.transmission_uuid;
 
     log_error(
