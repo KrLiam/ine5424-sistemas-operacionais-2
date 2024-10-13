@@ -32,6 +32,11 @@ void FaultInjectionLayer::enqueue_fault(const std::vector<int>& faults) {
 }
 
 void FaultInjectionLayer::receive(Packet packet) {
+    if (packet.data.header.type == MessageType::HEARTBEAT) {
+        handler.forward_receive(packet);
+        return;
+    }
+    
     int delay = -1;
 
     if (fault_queue.size()) {
