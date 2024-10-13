@@ -57,7 +57,7 @@ SocketAddress SocketAddress::from(sockaddr_in& address)
     char remote_address[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &address.sin_addr, remote_address, INET_ADDRSTRLEN);
     int remote_port = ntohs(address.sin_port);
-    return SocketAddress{IPv4::parse(remote_address), remote_port};
+    return SocketAddress{IPv4::parse(remote_address), (uint16_t)remote_port};
 }
 
 std::string NodeConfig::to_string() const
@@ -109,7 +109,7 @@ SocketAddress ConfigReader::parse_socket_address()
     expect(':');
     int port = read_int();
 
-    return SocketAddress{ip, port};
+    return SocketAddress{ip, (uint16_t)port};
 }
 
 std::vector<NodeConfig> ConfigReader::parse_nodes()

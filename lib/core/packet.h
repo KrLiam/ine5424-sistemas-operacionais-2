@@ -114,7 +114,7 @@ struct Packet
         std::string origin = meta.origin.to_string();
         std::string destination = meta.destination.to_string();
 
-        char sequence_type = header.id.sequence_type == MessageSequenceType::BROADCAST ? 'b' : 'u';
+        char sequence_type = message_type::is_broadcast(header.get_message_type()) ? 'b' : 'u';
 
         if (type == PacketFormat::RECEIVED) {
             return format(

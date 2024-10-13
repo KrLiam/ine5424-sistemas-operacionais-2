@@ -294,7 +294,6 @@ void Connection::established(Packet p)
     }
 
     uint32_t message_number = p.data.header.get_message_number();
-    MessageSequenceType type = p.data.header.id.sequence_type;
 
     uint32_t number = expected_number;
     uint32_t initial_number = 0;
@@ -389,7 +388,6 @@ void Connection::send_flag(uint8_t flags, MessageData message_data)
 {
     MessageIdentity id = {
         origin : local_node.get_address(),
-        sequence_type : MessageSequenceType::UNICAST,
         msg_num : dispatcher.get_next_number()
     };
 
@@ -543,7 +541,6 @@ void Connection::receive(Message message)
         return;
     }
 
-    MessageSequenceType type = message.id.sequence_type;
     uint32_t number = expected_number;
 
     if (message.id.msg_num < number)
@@ -579,7 +576,6 @@ void Connection::heartbeat()
     data.header = {
         id : {
             origin : local_node.get_address(),
-            sequence_type : MessageSequenceType::UNICAST,
             msg_num : 0
         },
         fragment_num: 0,

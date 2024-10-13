@@ -30,15 +30,9 @@ namespace message_type {
     bool is_broadcast(MessageType type);
 };
 
-enum MessageSequenceType: uint8_t {
-    UNICAST = 0,
-    BROADCAST = 1
-};
-
 struct MessageIdentity {
     // Endereço do nó original que envia a mensagem.
     SocketAddress origin;
-    MessageSequenceType sequence_type;
     uint32_t msg_num;
 
     bool operator==(const MessageIdentity& other) const;
@@ -47,8 +41,7 @@ struct MessageIdentity {
 template<> struct std::hash<MessageIdentity> {
     std::size_t operator()(const MessageIdentity& id) const {
         return std::hash<SocketAddress>()(id.origin)
-            ^ std::hash<uint32_t>()(id.msg_num)
-            ^ std::hash<uint32_t>()(id.sequence_type);
+            ^ std::hash<uint32_t>()(id.msg_num);
     }
 };
 

@@ -2,8 +2,7 @@
 
 bool MessageIdentity::operator==(const MessageIdentity& other) const {
     return origin == other.origin
-        && msg_num == other.msg_num
-        && sequence_type == other.sequence_type;
+        && msg_num == other.msg_num;
 }
 
 Packet create_ack(const Packet& packet)
