@@ -55,7 +55,7 @@ void BroadcastConnection::connection_established(const ConnectionEstablished& ev
 }
 
 void BroadcastConnection::connection_closed(const ConnectionClosed&) {
-    dispatcher.cancel_all();
+    if (!dispatcher.is_active()) dispatcher.cancel_all();
 }
 
 void BroadcastConnection::packet_received(const PacketReceived &event)
@@ -310,7 +310,7 @@ void BroadcastConnection::update() {
 
     for (auto& [node_id, connection] : connections) {
         const Node& node = nodes.get_node(node_id);
-        if (!node.is_alive()) continue;
+        // if (!node.is_alive()) continue;
 
         ConnectionState state = connection.get_state();
 
