@@ -50,7 +50,7 @@ void BroadcastConnection::receive_synchronization(const ReceiveSynchronization& 
     number.next_number = event.expected_broadcast_number;
     log_info("Broadcast sequence with node ", id, " was resync to ", number.initial_number);
 }
-void BroadcastConnection::connection_established(const ConnectionEstablished& event) {
+void BroadcastConnection::connection_established(const ConnectionEstablished&) {
     request_update();
 }
 
@@ -309,7 +309,7 @@ void BroadcastConnection::update() {
     bool established = true;
 
     for (auto& [node_id, connection] : connections) {
-        const Node& node = nodes.get_node(node_id);
+        // const Node& node = nodes.get_node(node_id);
         // if (!node.is_alive()) continue;
 
         ConnectionState state = connection.get_state();
