@@ -27,8 +27,13 @@ void FailureDetection::connection_closed(const ConnectionClosed &event)
 
 void FailureDetection::heartbeat_received(const HeartbeatReceived &event)
 {
-    log_trace("Received heartbeat from ", event.remote_node.get_address().to_string(), ".");
-    last_alive[event.remote_node.get_id()] = DateUtils::now();
+    Node& node = event.remote_node;
+
+    log_trace("Received heartbeat from ", node.get_address().to_string(), ".");
+    last_alive[node.get_id()] = DateUtils::now();
+    node.set_alive(true);
+
+    // TODO: dá pra lançar um evento NodeAlive aqui caso seja necessário futuramente
 }
 
 void FailureDetection::failure_detection_routine()
@@ -40,21 +45,18 @@ void FailureDetection::failure_detection_routine()
 
         for (auto &[id, node] : gr->get_nodes())
         {
-            Connection &conn = gr->get_connection(node);
-            if (conn.get_state() != ConnectionState::ESTABLISHED)
-                continue;
-
-            if (now - last_alive[node.get_id()] > keep_alive)
+            if (node.is_alive() && now - last_alive[node.get_id()] > keep_alive)
             {
                 log_warn("No heartbeat from ",
                          node.get_address().to_string(),
                          " in the last ",
                          keep_alive,
                          " milliseconds; marking node as dead.");
+                node.set_alive(false);
                 event_bus.notify(NodeDeath(node));
-                continue;
             }
 
+            Connection &conn = gr->get_connection(node);
             conn.heartbeat();
         }
 

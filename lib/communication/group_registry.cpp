@@ -10,12 +10,12 @@ GroupRegistry::~GroupRegistry()
 {
 }
 
-const NodeMap& GroupRegistry::get_nodes()
+NodeMap& GroupRegistry::get_nodes()
 {
     return nodes;
 }
 
-const Node &GroupRegistry::get_local_node()
+Node &GroupRegistry::get_local_node()
 {
     return nodes.get_node(local_id);
 }
@@ -57,7 +57,7 @@ void GroupRegistry::establish_connections(
     Buffer<Message> &deliver_buffer,
     BufferSet<std::string> &connection_update_buffer
 ) {
-    const Node& local_node = get_local_node();
+    Node& local_node = get_local_node();
 
     broadcast_connection =  std::make_unique<BroadcastConnection>(
         nodes, local_node, connections, connection_update_buffer, deliver_buffer, pipeline

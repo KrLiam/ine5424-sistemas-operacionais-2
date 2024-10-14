@@ -22,8 +22,8 @@ struct SequenceNumber {
 
 
 class BroadcastConnection {
-    const NodeMap& nodes; 
-    const Node& local_node; 
+    NodeMap& nodes;
+    const Node& local_node;
     std::map<std::string, Connection>& connections;
     Pipeline& pipeline;
 
@@ -60,7 +60,7 @@ class BroadcastConnection {
 
 public:
     BroadcastConnection(
-        const NodeMap& nodes,
+        NodeMap& nodes,
         const Node& local_node,
         std::map<std::string, Connection>& connections,
         BufferSet<std::string>& connection_update_buffer,
