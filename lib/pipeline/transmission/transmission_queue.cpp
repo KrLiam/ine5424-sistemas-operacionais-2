@@ -265,7 +265,9 @@ void TransmissionQueue::discard_node(const Node& node) {
     for (auto& [_, entry] : entries) {
         if (!message_type::is_broadcast(entry.packet.data.header.type)) continue;
 
+        mutex_timeout.lock();
         entry.pending_receivers.erase(&node);
+        mutex_timeout.unlock();
 
         if (entry.pending_receivers.empty())
             pending.erase(entry.packet.data.header.fragment_num);
