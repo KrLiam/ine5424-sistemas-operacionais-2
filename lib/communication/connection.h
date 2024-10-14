@@ -44,8 +44,8 @@ private:
     Buffer<Message> &application_buffer;
     const TransmissionDispatcher& broadcast_dispatcher;
 
-    Node& local_node;
-    Node& remote_node;
+    Node local_node;
+    Node remote_node;
 
     ConnectionState state = CLOSED;
     std::condition_variable state_change;
@@ -136,8 +136,8 @@ private:
 
 public:
     Connection(
-        Node& local_node,
-        Node& remote_node,
+        Node local_node,
+        Node remote_node,
         Pipeline &pipeline,
         Buffer<Message> &application_buffer,
         BufferSet<std::string>& connection_update_buffer,

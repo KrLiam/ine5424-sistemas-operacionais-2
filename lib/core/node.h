@@ -18,7 +18,6 @@ private:
     std::string id;
     SocketAddress address;
     bool remote;
-    bool alive;
 
 public:
     Node(std::string id, SocketAddress address, bool _remote);
@@ -27,15 +26,6 @@ public:
     const std::string &get_id() const;
     const SocketAddress &get_address() const;
     bool is_remote() const;
-
-    bool is_alive() const
-    {
-        return alive;
-    };
-    void set_alive(bool alive)
-    {
-        this->alive = alive;
-    }
 
     std::string to_string() const;
 
@@ -48,8 +38,8 @@ public:
     NodeMap();
     NodeMap(std::map<std::string, Node> nodes);
 
-    Node &get_node(std::string id);
-    Node &get_node(SocketAddress address);
+    const Node &get_node(std::string id) const;
+    const Node &get_node(SocketAddress address) const;
 
     bool contains(const SocketAddress& address) const;
 

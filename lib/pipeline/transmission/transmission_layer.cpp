@@ -8,7 +8,7 @@ bool TransmissionKey::operator==(const TransmissionKey& other) const {
         && msg_num == other.msg_num;
 }
 
-TransmissionLayer::TransmissionLayer(PipelineHandler handler, NodeMap &nodes)
+TransmissionLayer::TransmissionLayer(PipelineHandler handler, const NodeMap &nodes)
     : PipelineStep(handler), nodes(nodes)
 {
 }

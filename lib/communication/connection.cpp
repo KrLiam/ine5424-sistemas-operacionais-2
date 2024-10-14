@@ -3,8 +3,8 @@
 #include "utils/uuid.h"
 
 Connection::Connection(
-    Node& local_node,
-    Node& remote_node,
+    Node local_node,
+    Node remote_node,
     Pipeline &pipeline,
     Buffer<Message> &application_buffer,
     BufferSet<std::string> &connection_update_buffer,
@@ -287,6 +287,12 @@ void Connection::established(Packet p)
         return;
     }
 
+    if (p.data.header.get_message_type() == MessageType::HEARTBEAT)
+    {
+        pipeline.notify(HeartbeatReceived(remote_node)); // TODO: arrumar o lugar disso. o heartbeatreceived não tem nada a ver com o pipeline
+        return;
+    }
+
     uint32_t message_number = p.data.header.get_message_number();
 
     uint32_t number = expected_number;
@@ -525,12 +531,6 @@ void Connection::send(Packet packet)
 
 void Connection::receive(Packet packet)
 {
-    if (packet.data.header.get_message_type() == MessageType::HEARTBEAT)
-    {
-        pipeline.notify(HeartbeatReceived(remote_node)); // TODO: arrumar o lugar disso. o heartbeatreceived não tem nada a ver com o pipeline
-        return;
-    }
-
     packet_receive_handlers.at(state)(packet);
 }
 void Connection::receive(Message message)
