@@ -155,8 +155,8 @@ bool send_message(
     ReliableCommunication* comm,
     std::string node_id,
     MessageData data,
-    std::string cmd_name,
-    std::string data_description
+    [[maybe_unused]] std::string cmd_name,
+    [[maybe_unused]] std::string data_description
 ) {
     if (node_id == BROADCAST_ID) {
         log_info(

@@ -114,7 +114,7 @@ void TransmissionQueue::timeout(uint32_t num)
     };
 
     QueueEntry& entry = entries.at(num);
-    Packet& packet = entry.packet;
+    [[maybe_unused]] Packet& packet = entry.packet;
 
     if (entry.pending_receivers.empty()) {
         pending.erase(num);
@@ -213,7 +213,7 @@ bool TransmissionQueue::try_complete()
         const Packet& packet = entry.packet;
         const UUID& uuid = packet.meta.transmission_uuid;
         SocketAddress remote_address = packet.meta.destination;
-        uint32_t msg_num = packet.data.header.get_message_number();
+        [[maybe_unused]] uint32_t msg_num = packet.data.header.get_message_number();
         TransmissionComplete event(uuid, packet.data.header.id, remote_address);
 
         log_info(
