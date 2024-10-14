@@ -32,7 +32,11 @@ void FaultInjectionLayer::enqueue_fault(const std::vector<int>& faults) {
 }
 
 void FaultInjectionLayer::receive(Packet packet) {
-    if (packet.data.header.type == MessageType::HEARTBEAT) {
+    // TODO temporário até termos retransmissão de pacotes de controle
+    if (
+        packet.data.header.type == MessageType::HEARTBEAT
+        || packet.data.header.type == MessageType::CONTROL
+    ) {
         handler.forward_receive(packet);
         return;
     }
