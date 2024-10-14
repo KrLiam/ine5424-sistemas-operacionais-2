@@ -30,10 +30,23 @@ void FailureDetection::heartbeat_received(const HeartbeatReceived &event)
     Node& node = event.remote_node;
 
     log_trace("Received heartbeat from ", node.get_address().to_string(), ".");
-    last_alive[node.get_id()] = DateUtils::now();
-    node.set_alive(true);
 
-    // TODO: dá pra lançar um evento NodeAlive aqui caso seja necessário futuramente
+    last_alive[node.get_id()] = DateUtils::now();
+
+    if (!node.is_alive())
+    {
+        node.set_alive(true);
+
+        log_info(
+            "Received heartbeat from node '",
+            node.get_id(),
+            "' (",
+            node.get_address().to_string(),
+            "); marking it as alive."
+        );
+        // TODO: dá pra lançar um evento NodeAlive aqui caso seja necessário futuramente
+    }
+
 }
 
 void FailureDetection::failure_detection_routine()
@@ -47,12 +60,17 @@ void FailureDetection::failure_detection_routine()
         {
             if (node.is_alive() && now - last_alive[node.get_id()] > keep_alive)
             {
-                log_warn("No heartbeat from ",
-                         node.get_address().to_string(),
-                         " in the last ",
-                         keep_alive,
-                         " milliseconds; marking node as dead.");
                 node.set_alive(false);
+                
+                log_warn(
+                    "No heartbeat from node '",
+                    node.get_id(),
+                    "' (",
+                    node.get_address().to_string(),
+                    ") in the last ",
+                    keep_alive,
+                    " milliseconds; marking it as dead."
+                );
                 event_bus.notify(NodeDeath(node));
             }
 
