@@ -67,7 +67,8 @@ void BroadcastConnection::packet_received(const PacketReceived &event)
     
     const Node& origin = nodes.get_node(packet.data.header.id.origin);
     if (!sequence_numbers.contains(origin.get_id())) {
-        log_warn("Received packet ", packet.to_string(PacketFormat::RECEIVED), ", but sequence number is not synchronized.");
+        log_warn("Received packet ", packet.to_string(PacketFormat::RECEIVED), ", but sequence number is not synchronized; sending RST.");
+        send_rst(packet);
         return;
     }
     SequenceNumber& sequence = sequence_numbers.at(origin.get_id());
@@ -95,6 +96,16 @@ void BroadcastConnection::packet_received(const PacketReceived &event)
             sequence.next_number,
             "; ignoring it."
         );
+        return;
+    }
+
+    if (packet.data.header.is_rst()) {
+        Node& node = nodes.get_node(packet.meta.origin);
+        log_info(
+            "Received RST from ",
+            node.to_string(),
+            "; considering it as dead for the current broadcast.");
+        pipeline.notify(NodeDeath(node));
         return;
     }
 
@@ -315,4 +326,21 @@ void BroadcastConnection::update() {
     if (!established) return;
 
     dispatcher.update();
+}
+
+void BroadcastConnection::send_rst(Packet& packet)
+{
+    PacketHeader header = packet.data.header;
+    header.flags = RST;
+
+    PacketData data;
+    memset(&data, 0, sizeof(PacketData));
+    data.header = header;
+
+    Packet rst_packet;
+    rst_packet.meta.destination = packet.meta.origin;
+    rst_packet.meta.message_length = 0;
+    rst_packet.data = data;
+
+    pipeline.send(rst_packet);
 }

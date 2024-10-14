@@ -58,6 +58,8 @@ class BroadcastConnection {
     void message_received(const MessageReceived &event);
     void packet_received(const PacketReceived &event);
 
+    void send_rst(Packet&);
+
 public:
     BroadcastConnection(
         NodeMap& nodes,
