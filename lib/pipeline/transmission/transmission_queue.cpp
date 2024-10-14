@@ -201,7 +201,11 @@ bool TransmissionQueue::try_complete()
 {
     mutex_timeout.lock();
 
-    if (entries.empty()) return false;
+    if (entries.empty())
+    {
+        mutex_timeout.unlock();
+        return false;
+    }
 
     bool success = completed();
     if (success) {
