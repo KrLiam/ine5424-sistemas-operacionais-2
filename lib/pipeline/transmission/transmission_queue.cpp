@@ -6,7 +6,7 @@
 QueueEntry::QueueEntry(const Packet& packet) : packet(packet) {}
 
 
-TransmissionQueue::TransmissionQueue(Timer& timer, PipelineHandler& handler, const NodeMap& nodes)
+TransmissionQueue::TransmissionQueue(Timer& timer, PipelineHandler& handler, NodeMap& nodes)
     : timer(timer), handler(handler), nodes(nodes)
 {
 }
@@ -26,6 +26,7 @@ void TransmissionQueue::send(uint32_t num) {
         if (receiver_address == BROADCAST_ADDRESS) {
             for (const auto& [_, node] : nodes) {
                 if (node.get_address() == BROADCAST_ADDRESS) continue;
+                if (!node.is_alive()) continue;
                 entry.pending_receivers.emplace(&node);
             }
         }
@@ -40,6 +41,14 @@ void TransmissionQueue::send(uint32_t num) {
                 return;
             } 
             const Node& receiver = nodes.get_node(receiver_address);
+            if (!receiver.is_alive())
+            {
+                log_warn("Cannot transmit ",
+                    packet.to_string(PacketFormat::SENT),
+                    " because destination is dead.");
+                fail();
+                return;
+            }
             entry.pending_receivers.emplace(&receiver);
         }
     }

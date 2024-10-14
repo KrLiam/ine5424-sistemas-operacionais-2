@@ -18,8 +18,8 @@ public:
     GroupRegistry(std::string local_id, Config config);
     ~GroupRegistry();
 
-    const NodeMap &get_nodes();
-    const Node &get_local_node();
+    NodeMap &get_nodes();
+    Node &get_local_node();
 
     bool has_connection(std::string id) {
         return connections.contains(id);

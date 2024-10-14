@@ -1,7 +1,7 @@
 #include "core/node.h"
 
 Node::Node(std::string id, SocketAddress address, bool remote)
-    : id(id), address(address), remote(remote) {};
+    : id(id), address(address), remote(remote), alive(false) {};
 
 Node::~Node()
 {
@@ -36,7 +36,7 @@ NodeMap::NodeMap() : nodes() {}
 
 NodeMap::NodeMap(std::map<std::string, Node> nodes) : nodes(nodes) {}
 
-const Node &NodeMap::get_node(std::string id) const
+Node &NodeMap::get_node(std::string id)
 {
     auto iterator = nodes.find(id);
     if (iterator != nodes.end())
@@ -46,7 +46,7 @@ const Node &NodeMap::get_node(std::string id) const
     throw std::invalid_argument(format("Node %s not found.", id.c_str()));
 }
 
-const Node &NodeMap::get_node(SocketAddress address) const
+Node &NodeMap::get_node(SocketAddress address)
 {
     for (auto &[id, node] : nodes)
     {

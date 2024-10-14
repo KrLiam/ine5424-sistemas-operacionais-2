@@ -4,7 +4,7 @@
 RetransmissionEntry::RetransmissionEntry() {}
 
 BroadcastConnection::BroadcastConnection(
-    const NodeMap& nodes,
+    NodeMap& nodes,
     const Node& local_node,
     std::map<std::string, Connection>& connections,
     BufferSet<std::string>& connection_update_buffer,
@@ -298,6 +298,9 @@ void BroadcastConnection::update() {
     bool established = true;
 
     for (auto& [node_id, connection] : connections) {
+        const Node& node = nodes.get_node(node_id);
+        if (!node.is_alive()) continue;
+
         ConnectionState state = connection.get_state();
 
         if (state != ConnectionState::ESTABLISHED) {

@@ -25,7 +25,7 @@ class TransmissionQueue
 private:
     Timer& timer;
     PipelineHandler& handler;
-    const NodeMap& nodes;
+    NodeMap& nodes;
 
     std::map<uint32_t, QueueEntry> entries;
     std::unordered_set<uint32_t> pending;
@@ -43,7 +43,7 @@ private:
     bool try_complete();
     void fail();
 public:
-    TransmissionQueue(Timer& timer, PipelineHandler& handler, const NodeMap& nodes);
+    TransmissionQueue(Timer& timer, PipelineHandler& handler, NodeMap& nodes);
     ~TransmissionQueue();
 
     uint32_t get_total_bytes();
