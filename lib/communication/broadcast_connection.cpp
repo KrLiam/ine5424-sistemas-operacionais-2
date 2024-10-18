@@ -309,8 +309,8 @@ void BroadcastConnection::update() {
     bool established = true;
 
     for (auto& [node_id, connection] : connections) {
-        // const Node& node = nodes.get_node(node_id);
-        // if (!node.is_alive()) continue;
+        const Node& node = nodes.get_node(node_id);
+        if (!node.is_alive()) continue;
 
         ConnectionState state = connection.get_state();
 
