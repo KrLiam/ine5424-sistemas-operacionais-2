@@ -114,7 +114,7 @@ void TransmissionQueue::timeout(uint32_t num)
     };
 
     QueueEntry& entry = entries.at(num);
-    [[maybe_unused]] Packet& packet = entry.packet;
+    const Packet& packet = entry.packet;
 
     if (entry.pending_receivers.empty()) {
         pending.erase(num);
@@ -123,7 +123,7 @@ void TransmissionQueue::timeout(uint32_t num)
         return;
     }
 
-    if (entry.tries > MAX_PACKET_TRIES)
+    if (packet_can_timeout(packet) && entry.tries > MAX_PACKET_TRIES)
     {
         mutex_timeout.unlock();
         fail();
@@ -278,4 +278,9 @@ void TransmissionQueue::discard_node(const Node& node) {
     }
     
     try_complete();
+}
+
+bool TransmissionQueue::packet_can_timeout(const Packet& packet)
+{
+    return packet.data.header.get_message_type() != MessageType::URB;
 }

@@ -42,6 +42,8 @@ private:
 
     bool try_complete();
     void fail();
+
+    bool packet_can_timeout(const Packet&);
 public:
     TransmissionQueue(Timer& timer, PipelineHandler& handler, NodeMap& nodes);
     ~TransmissionQueue();
