@@ -25,8 +25,10 @@ std::string get_available_flags(const char* program_name) {
     result += YELLOW "  text " H_BLACK "<" WHITE "message" H_BLACK ">" COLOR_RESET " -> " H_BLACK "<" WHITE "id" H_BLACK ">" COLOR_RESET ": Send a message to the node with id <id>.\n";
     result += YELLOW "  file " H_BLACK "<" WHITE "path" H_BLACK ">" COLOR_RESET " -> " H_BLACK "<" WHITE "id" H_BLACK ">" COLOR_RESET ": Send a file to the node with id <id>.\n";
     result += YELLOW "  dummy " H_BLACK "<" WHITE "size" H_BLACK ">" COLOR_RESET " -> " H_BLACK "<" WHITE "id" H_BLACK ">" COLOR_RESET ": Send a dummy message of size <size> to the node with id <id>.\n";
+    result += YELLOW "  kill: " COLOR_RESET "Kills the local node.\n";
+    result += YELLOW "  init: " COLOR_RESET "Initializes the local node.\n";
     result += YELLOW "  help: " COLOR_RESET "Show the help message.\n";
-    result += YELLOW "  exit: " COLOR_RESET "Terminates the process.\n";
+    result += YELLOW "  exit: " COLOR_RESET "Exits session.\n";
 
     result += BOLD_CYAN "\nAvailable flags:\n" COLOR_RESET;
     result += YELLOW "  -s " H_BLACK "'" WHITE "<commands>" H_BLACK "'" COLOR_RESET ": Executes commands at process start.\n";
@@ -146,33 +148,59 @@ void create_dummy_data(char* data, size_t size) {
 } 
 
 struct SenderThreadArgs {
-    ReliableCommunication* comm;
+    Process* proc;
     std::shared_ptr<Command> command;
 };
 
 
 bool send_message(
-    ReliableCommunication* comm,
+    Process* proc,
     std::string node_id,
     MessageData data,
     [[maybe_unused]] std::string cmd_name,
     [[maybe_unused]] std::string data_description
 ) {
+    if (!proc->initialized()) {
+        log_print("Could not execute '", cmd_name, "', node is dead.");
+        return false;
+    }
+
+    ReliableCommunication* comm = proc->comm.get();
+
+    bool success = false;
     if (node_id == BROADCAST_ID) {
         log_info(
             "Executing command '", cmd_name, "', broadcasting ", data_description, "."
         );
-        return comm->broadcast(data);
+        success = comm->broadcast(data);
+    }
+    else {
+        log_info(
+            "Executing command '", cmd_name, "', sending ", data_description, " to node ", node_id, "."
+        );
+        success = comm->send(node_id, data);
     }
 
-    log_info(
-        "Executing command '", cmd_name, "', sending ", data_description, " to node ", node_id, "."
-    );
-    return comm->send(node_id, data);
+    bool broadcast = node_id == BROADCAST_ID;
+
+    if (success && !broadcast) {
+        log_print("Successfuly sent message to node ", node_id, ".");
+    }
+    else if (success && broadcast) {
+        log_print("Successfuly broadcasted message.");
+    }
+    else if (!success && broadcast) {
+        log_print("Could not broadcast message.");
+    }
+    else {
+        log_error("Could not send message to node ", node_id, ".");
+    }
+
+    return success;
 }
 void send_thread(SenderThreadArgs* args) {
     std::shared_ptr<Command> command = args->command;
-    ReliableCommunication* comm = args->comm;
+    Process* proc = args->proc;
 
     try {
         bool success = false;
@@ -185,7 +213,7 @@ void send_thread(SenderThreadArgs* args) {
             send_id = cmd->send_id;
 
             success = send_message(
-                comm,
+                proc,
                 cmd->send_id,
                 {text.c_str(), text.length()},
                 cmd->name(),
@@ -198,7 +226,7 @@ void send_thread(SenderThreadArgs* args) {
             std::string& text = cmd->text;
 
             success = send_message(
-                comm,
+                proc,
                 BROADCAST_ID,
                 {text.c_str(), text.length()},
                 cmd->name(),
@@ -215,7 +243,7 @@ void send_thread(SenderThreadArgs* args) {
             create_dummy_data(data.get(), size);
 
             success = send_message(
-                comm,
+                proc,
                 cmd->send_id,
                 {data.get(), size},
                 cmd->name(),
@@ -236,7 +264,7 @@ void send_thread(SenderThreadArgs* args) {
             if (file.read(buffer, size))
             {
                 success = send_message(
-                    comm,
+                    proc,
                     cmd->send_id,
                     {buffer, size},
                     cmd->name(),
@@ -244,20 +272,21 @@ void send_thread(SenderThreadArgs* args) {
                 );
             }
         }
-
-        bool broadcast = send_id == BROADCAST_ID;
-
-        if (success && !broadcast) {
-            log_print("Successfuly sent message to node ", send_id, ".");
+        else if (command->type == CommandType::kill) {
+            if (!proc->initialized()) {
+                log_print("Node is already dead.");
+                return;
+            }
+            log_print("Killing node.");
+            proc->kill();
         }
-        else if (success && broadcast) {
-            log_print("Successfuly broadcasted message.");
-        }
-        else if (!success && broadcast) {
-            log_print("Could not broadcast message.");
-        }
-        else {
-            log_error("Could not send message to node ", send_id, ".");
+        else if (command->type == CommandType::init) {
+            if (proc->initialized()) {
+                log_print("Node is already initialized.");
+                return;
+            }
+            log_print("Initializing node.");
+            proc->init();
         }
     }
     catch (std::invalid_argument& err) {
@@ -265,13 +294,13 @@ void send_thread(SenderThreadArgs* args) {
     }
 }
 
-void parallelize(ReliableCommunication& comm, const std::vector<std::shared_ptr<Command>>& commands) {
+void parallelize(Process& proc, const std::vector<std::shared_ptr<Command>>& commands) {
     int thread_num = commands.size();
     std::vector<std::unique_ptr<std::thread>> threads;
     auto thread_args = std::make_unique<SenderThreadArgs[]>(thread_num);
 
     for (int i=0; i < thread_num; i++) {
-        thread_args[i] = {&comm, commands[i]};
+        thread_args[i] = {&proc, commands[i]};
         threads.push_back(std::make_unique<std::thread>(send_thread, &thread_args[i]));
     }
     
@@ -290,7 +319,7 @@ void server_receive(ThreadArgs* args) {
             result = comm->receive(buffer);
         }
         catch (buffer_termination& err) {
-            return;
+            break;
         }
         
         if (result.length == 0) break;
@@ -309,8 +338,9 @@ void server_receive(ThreadArgs* args) {
         std::ofstream file(output_filename);
         file.write(buffer, result.length);
         log_print("Saved message to file [", output_filename, "].");
-
     }
+
+    log_info("Closed application receiver thread.");
 }
 
 void server_deliver(ThreadArgs* args) {
@@ -322,7 +352,7 @@ void server_deliver(ThreadArgs* args) {
             result = comm->deliver(buffer);
         }
         catch (buffer_termination& err) {
-            return;
+            break;
         }
         
         if (result.length == 0) break;
@@ -341,11 +371,12 @@ void server_deliver(ThreadArgs* args) {
         std::ofstream file(output_filename);
         file.write(buffer, result.length);
         log_print("Saved message to file [", output_filename, "].");
-
     }
+
+    log_info("Closed application deliver thread.");
 }
 
-void client(ReliableCommunication& comm) {
+void client(Process& proc) {
     while (true) {
         std::string input;
 
@@ -372,7 +403,7 @@ void client(ReliableCommunication& comm) {
             log_print(err.what());
         }
 
-        parallelize(comm, commands);
+        parallelize(proc, commands);
     }
 
     log_info("Exited client.");
@@ -380,26 +411,24 @@ void client(ReliableCommunication& comm) {
 
 void run_process(const Arguments& args) {
     FaultConfig fault = { faults : args.faults };
-    ReliableCommunication comm(args.node_id, BUFFER_SIZE, fault);
+    Process proc(
+        [&args, &fault]() {
+            return std::make_unique<ReliableCommunication>(args.node_id, BUFFER_SIZE, fault);
+        },
+        server_receive,
+        server_deliver
+    );
+
+    proc.init();
 
     try {
-        Node local_node = comm.get_group_registry()->get_local_node();
+        Node local_node = proc.comm->get_group_registry()->get_local_node();
         log_info("Local node endpoint is ", local_node.get_address().to_string(), ".");
     } catch (const std::exception& e) {
         throw std::invalid_argument("Nodo não encontrado no registro.");
     }
 
-    ThreadArgs targs = { &comm };
+    parallelize(proc, args.send_commands);
 
-    std::thread server_receive_thread(server_receive, &targs);
-    std::thread server_deliver_thread(server_deliver, &targs);
-
-    parallelize(comm, args.send_commands);
-
-    client(comm);
-
-    comm.shutdown();
-
-    server_receive_thread.join();
-    server_deliver_thread.join();
+    client(proc);
 }

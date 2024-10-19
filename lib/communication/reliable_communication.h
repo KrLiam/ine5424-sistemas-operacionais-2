@@ -38,8 +38,6 @@ public:
     );
     ~ReliableCommunication();
 
-    void shutdown();
-
     bool send(std::string id, MessageData data);
     bool broadcast(MessageData data);
     ReceiveResult receive(char *m);
@@ -48,7 +46,7 @@ public:
     std::shared_ptr<GroupRegistry> get_group_registry();
 
 private:
-    Pipeline *pipeline;
+    std::unique_ptr<Pipeline> pipeline;
     std::shared_ptr<GroupRegistry> gr;
     std::unique_ptr<FailureDetection> failure_detection;
     

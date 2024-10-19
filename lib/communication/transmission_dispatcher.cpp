@@ -13,6 +13,10 @@ TransmissionDispatcher::TransmissionDispatcher(
     active_transmission(nullptr),
     next_number(0) {};
 
+TransmissionDispatcher::~TransmissionDispatcher() {
+    cancel_all();
+}
+
 bool TransmissionDispatcher::is_empty() const {
     return transmissions.empty();
 }

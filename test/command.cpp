@@ -29,6 +29,14 @@ FileCommand::FileCommand(std::string path, std::string send_id)
 
 std::string FileCommand::name() { return "file"; }
 
+KillCommand::KillCommand() : Command(CommandType::kill) {}
+
+std::string KillCommand::name() { return "kill"; }
+
+InitCommand::InitCommand() : Command(CommandType::init) {}
+
+std::string InitCommand::name() { return "init"; }
+
 
 std::string parse_string(Reader& reader) {
     reader.expect('"');
@@ -106,6 +114,12 @@ std::shared_ptr<Command> parse_command(Reader& reader) {
     if (keyword == "broadcast") {
         std::string text = parse_string(reader);
         return std::make_shared<BroadcastCommand>(text);
+    }
+    if (keyword == "kill") {
+        return std::make_shared<KillCommand>();
+    }
+    if (keyword == "init") {
+        return std::make_shared<InitCommand>();
     }
 
     if (keyword.length()) {

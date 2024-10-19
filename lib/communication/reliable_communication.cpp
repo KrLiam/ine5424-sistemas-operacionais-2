@@ -22,7 +22,7 @@ ReliableCommunication::ReliableCommunication(
     broadcast_type = config.broadcast;
 
     gr = std::make_shared<GroupRegistry>(local_id, config);
-    pipeline = new Pipeline(gr, event_bus, fault_config);
+    pipeline = std::make_unique<Pipeline>(gr, event_bus, fault_config);
 
     sender_thread = std::thread([this]()
                                 { send_routine(); });
@@ -38,16 +38,12 @@ ReliableCommunication::ReliableCommunication(
 
 ReliableCommunication::~ReliableCommunication()
 {
+    application_buffer.terminate();
+    deliver_buffer.terminate();
+
     connection_update_buffer.terminate();
     if (sender_thread.joinable())
         sender_thread.join();
-
-    delete pipeline;
-}
-
-void ReliableCommunication::shutdown() {
-    application_buffer.terminate();
-    deliver_buffer.terminate();
 }
 
 std::shared_ptr<GroupRegistry> ReliableCommunication::get_group_registry()
@@ -189,7 +185,7 @@ void ReliableCommunication::send_routine()
         {
             id = connection_update_buffer.consume();
         }
-        catch (const std::runtime_error &e)
+        catch (const buffer_termination &e)
         {
             return;
         }

@@ -5,6 +5,7 @@
 #include <memory>
 #include "communication/reliable_communication.h"
 
+#include "process.h"
 #include "command.h"
 
 struct Arguments {
@@ -15,11 +16,7 @@ struct Arguments {
 
 Arguments parse_arguments(int argc, char* argv[]);
 
-struct ThreadArgs {
-    ReliableCommunication* communication{};
-};
-
 void server_receive(ThreadArgs* args);
 void server_deliver(ThreadArgs* args);
-void client(ReliableCommunication& comm);
+void client(Process& proc);
 void run_process(const Arguments& args);

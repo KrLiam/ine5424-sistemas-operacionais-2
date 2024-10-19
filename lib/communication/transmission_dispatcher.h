@@ -29,6 +29,8 @@ public:
         Pipeline& pipeline
     );
 
+    ~TransmissionDispatcher();
+
     bool is_empty() const;
     bool is_active() const;
 

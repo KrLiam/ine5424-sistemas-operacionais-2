@@ -7,7 +7,9 @@ enum CommandType {
     text = 0,
     file = 1,
     dummy = 2,
-    broadcast = 3
+    broadcast = 3,
+    kill = 4,
+    init = 5
 };
 
 struct Command {
@@ -49,6 +51,18 @@ struct FileCommand : public Command {
     std::string send_id;
 
     FileCommand(std::string path, std::string send_id);
+
+    virtual std::string name();
+};
+
+struct KillCommand : public Command {
+    KillCommand();
+
+    virtual std::string name();
+};
+
+struct InitCommand : public Command {
+    InitCommand();
 
     virtual std::string name();
 };
