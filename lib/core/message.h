@@ -18,6 +18,7 @@ enum class MessageType : uint8_t
     // Mensagens da lib
     CONTROL   = 0b00000000,
     HEARTBEAT = 0b00000100,
+    RAFT      = 0b00000110,
     // Mensagens da aplicação
     SEND      = 0b00000001,
     BEB       = 0b00000011,

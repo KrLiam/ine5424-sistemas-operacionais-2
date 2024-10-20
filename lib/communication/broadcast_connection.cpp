@@ -61,6 +61,7 @@ void BroadcastConnection::connection_closed(const ConnectionClosed&) {
 void BroadcastConnection::packet_received(const PacketReceived &event)
 {
     if (!message_type::is_broadcast(event.packet.data.header.type)) return;
+    if (event.packet.data.header.get_message_type() == MessageType::RAFT) return;
 
     Packet& packet = event.packet;
     uint32_t message_number = packet.data.header.id.msg_num;
@@ -313,7 +314,7 @@ void BroadcastConnection::update() {
         if (!node.is_alive()) continue;
 
         ConnectionState state = connection.get_state();
-
+ 
         if (state != ConnectionState::ESTABLISHED) {
             established = false;
         }

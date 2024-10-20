@@ -19,6 +19,7 @@ private:
     SocketAddress address;
     bool remote;
     bool alive;
+    bool leader;
 
 public:
     Node(std::string id, SocketAddress address, bool _remote);
@@ -37,9 +38,24 @@ public:
         this->alive = alive;
     }
 
+    bool is_leader() const
+    {
+        return leader;
+    }
+    void set_leader(bool leader)
+    {
+        this->leader = leader;
+    }
+
     std::string to_string() const;
 
     bool operator==(const Node& other) const;
+};
+
+template<> struct std::hash<Node&> {
+    std::size_t operator()(const Node& node) const {
+        return std::hash<SocketAddress>()(node.get_address());
+    }
 };
 
 class NodeMap {

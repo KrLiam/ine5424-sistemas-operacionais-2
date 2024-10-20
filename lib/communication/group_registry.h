@@ -9,6 +9,7 @@
 #include "core/message.h"
 #include "core/packet.h"
 #include "core/buffer.h"
+#include "raft/raft.h"
 
 class Pipeline;
 
@@ -55,6 +56,7 @@ private:
     NodeMap nodes;
     std::map<std::string, Connection> connections;
     std::unique_ptr<BroadcastConnection> broadcast_connection;
+    std::unique_ptr<RaftManager> raft;
 
     void read_nodes_from_configuration(std::string local_id, Config config);
 };

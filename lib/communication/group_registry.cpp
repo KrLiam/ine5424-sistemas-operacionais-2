@@ -76,4 +76,8 @@ void GroupRegistry::establish_connections(
                 broadcast_connection->get_dispatcher()
             )
         );
+    
+    raft = std::make_unique<RaftManager>(
+        connections, nodes, local_node, pipeline
+    );
 }

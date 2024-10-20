@@ -8,6 +8,8 @@ const uint8_t RST = 0b01000000;
 const uint8_t SYN = 0b00100000;
 const uint8_t FIN = 0b00010000;
 const uint8_t END = 0b00001000;
+const uint8_t RVO = 0b00000100;
+const uint8_t LDR = 0b00000010;
 
 struct PacketHeader
 {
@@ -54,6 +56,16 @@ struct PacketHeader
     bool is_fin() const
     {
         return flags & FIN;
+    }
+
+    bool is_rvo() const
+    {
+        return flags & RVO;
+    }
+
+    bool is_ldr() const
+    {
+        return flags & LDR;
     }
 
     MessageType get_message_type() const
@@ -109,7 +121,9 @@ struct Packet
         if (header.is_rst()) flags += flags.length() ? "+RST" : "RST";
         if (header.is_fin()) flags += flags.length() ? "+FIN" : "FIN";
         if (header.is_ack()) flags += flags.length() ? "+ACK" : "ACK";
-        if (header.is_end()) flags += flags.length() ? "+END" : "SYN";
+        if (header.is_end()) flags += flags.length() ? "+END" : "END";
+        if (header.is_rvo()) flags += flags.length() ? "+RVO" : "RVO";
+        if (header.is_ldr()) flags += flags.length() ? "+LDR" : "LDR";
 
         std::string origin = meta.origin.to_string();
         std::string destination = meta.destination.to_string();
@@ -161,6 +175,11 @@ struct Packet
 
 struct SynData {
     uint32_t broadcast_number;
+};
+
+struct RaftRPCData {
+    uint32_t term;
+    bool success;
 };
 
 

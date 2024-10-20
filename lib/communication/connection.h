@@ -87,8 +87,6 @@ private:
         {FIN_WAIT, "fin_wait"},
         {LAST_ACK, "last_ack"}};
 
-    void transmit(Packet);
-
     void closed(Packet p);
     void syn_sent(Packet p);
     void syn_received(Packet p);
@@ -161,6 +159,8 @@ public:
 
     void receive(Packet packet);
     void receive(Message message);
+
+    void transmit(Packet);
 
     void heartbeat();
 };

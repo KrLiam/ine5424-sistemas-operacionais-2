@@ -40,6 +40,7 @@ void Connection::observe_pipeline()
 void Connection::packet_received(const PacketReceived &event)
 {
     if (event.packet.meta.origin != remote_node.get_address()) return;
+    if (event.packet.data.header.get_message_type() == MessageType::RAFT) return;
     if (message_type::is_broadcast(event.packet.data.header.type)) return;
 
     receive(event.packet);
@@ -571,6 +572,8 @@ void Connection::heartbeat()
 {
     log_trace("Heartbeating to ", remote_node.get_address().to_string(), ".");
 
+    uint8_t flags = local_node.is_leader() ? LDR : 0;
+
     PacketData data;
     memset(&data, 0, sizeof(PacketData));
     data.header = {
@@ -580,7 +583,7 @@ void Connection::heartbeat()
         },
         fragment_num: 0,
         checksum: 0,
-        flags: 0,
+        flags: flags,
         type : MessageType::HEARTBEAT
     };
 
