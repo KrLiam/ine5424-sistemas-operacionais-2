@@ -110,12 +110,21 @@ class RaftManager
         
         if (packet.data.header.is_rvo())
         {
-            if (packet.data.header.is_ack()) return;
+            if (packet.data.header.is_ack())
+            {
+                log_debug("Received a vote, but we are not a candidate; ignoring.");
+                return;
+            }
+
+            if (leader != nullptr)
+            {
+                log_debug("Received a vote request, but we already have a leader; ignoring.");
+                return;
+            }
 
             if (data.voted_for != nullptr)
             {
                 log_debug("Received vote request, but we already voted for someone.");
-                // send_vote(packet, false);
                 return;
             }
 
@@ -300,7 +309,6 @@ class RaftManager
             if (data.voted_for != nullptr)
             {
                 log_debug("Received vote request, but we already voted for someone.");
-                // send_vote(packet, false);
                 return;
             }
 
