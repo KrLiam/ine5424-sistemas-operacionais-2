@@ -271,6 +271,7 @@ void Connection::established(Packet p)
         send_syn(ACK);
         change_state(SYN_RECEIVED);
         set_timeout();
+        return;
     }
 
     if (p.data.header.is_fin())
