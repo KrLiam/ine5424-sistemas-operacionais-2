@@ -331,13 +331,16 @@ void server_receive(ThreadArgs* args) {
             message_data = message_data.substr(0, 100) + "...";
         }
 
-        log_print("Received '", message_data.c_str(), "' (", result.length, " bytes) from ", result.sender_id);
-
         mkdir("messages", S_IRWXU);
         std::string output_filename = "messages/" + UUID().as_string();
         std::ofstream file(output_filename);
         file.write(buffer, result.length);
-        log_print("Saved message to file [", output_filename, "].");
+        log_print(
+            "Received '",
+            message_data.c_str(),
+            "' (", result.length, " bytes) from ",
+            result.sender_id,
+            ".\nSaved message to file [", output_filename, "].");
     }
 
     log_info("Closed application receiver thread.");
