@@ -22,8 +22,6 @@ enum RaftState
 
 struct RaftPersistentData
 {
-    uint32_t current_term;
-
     RaftState state;
 
     Node* voted_for;
@@ -112,8 +110,6 @@ class RaftManager
         
         if (packet.data.header.is_rvo())
         {
-            if (reply_false_on_lower_term(packet)) return;
-
             if (packet.data.header.is_ack()) return;
 
             if (data.voted_for != nullptr)
@@ -126,7 +122,6 @@ class RaftManager
             RaftRPCData* rvo_data = reinterpret_cast<RaftRPCData*>(packet.data.message_data);
 
             data.voted_for = &nodes.get_node(packet.meta.origin);
-            data.current_term = rvo_data->term;
             save_data();
 
             if (should_grant_vote(packet.meta.origin))
@@ -147,14 +142,13 @@ class RaftManager
 
     void send_vote(Packet packet)
     {
-        log_debug(
+        log_info(
             "Voting for ",
             packet.meta.origin.to_string(),
             ".");
 
         RaftRPCData reply_data = 
         {
-            term : data.current_term,
             success : true
         };
 
@@ -191,13 +185,11 @@ class RaftManager
     {
         log_info("Candidate timed out; starting new election.");
         data.voted_for = nullptr;
-        data.current_term++;
         save_data();
         
         leader = nullptr;
 
         received_votes.clear();
-        // received_votes.emplace(local_node.get_address());
 
         set_election_timer();
         send_request_vote();
@@ -220,7 +212,6 @@ class RaftManager
     { 
         RaftRPCData rvo_data = 
         {
-            term : data.current_term,
             success : 0
         };
 
@@ -291,8 +282,6 @@ class RaftManager
 
         if (packet.data.header.is_rvo())
         {
-            if (reply_false_on_lower_term(packet)) return;
-
             if (packet.data.header.is_ack())
             {
                 RaftRPCData* rvo_data = reinterpret_cast<RaftRPCData*>(packet.data.message_data);
@@ -321,15 +310,6 @@ class RaftManager
                 set_election_timer();
             }
         }
-    }
-
-    bool reply_false_on_lower_term(Packet packet)
-    {
-        RaftRPCData* rvo_data = reinterpret_cast<RaftRPCData*>(packet.data.message_data);
-        if (rvo_data->term >= data.current_term) return false;
-
-        // send_vote(packet, false);
-        return true;
     }
 
     void on_leader()
@@ -383,21 +363,23 @@ class RaftManager
         packet_receive_handlers.at(data.state)(packet);
     }
 
-    bool should_grant_vote(SocketAddress &address)
+    bool should_grant_vote(SocketAddress address)
     {
-        SocketAddress& lowest = address;
-
         for (auto &[id, node] : nodes)
         {
             if (!node.is_alive()) continue;
-            if (strcmp(node.get_address().to_string().c_str(), lowest.to_string().c_str()) < 0) lowest = node.get_address();
+            if (strcmp(node.get_address().to_string().c_str(), address.to_string().c_str()) < 0)
+            {
+                log_debug("Not granting vote to ", address.to_string(), "; ", node.get_address().to_string()," has a higher priority.");
+                return false;
+            }
         }
 
-        return lowest == address;
+        return true;
     }
 
 public:
-    RaftManager(std::map<std::string, Connection>& connections, NodeMap& nodes, Node& local_node, Pipeline& pipeline) : connections(connections), nodes(nodes), local_node(local_node), pipeline(pipeline), timer_id(0), election_time_dis(6000, 7000), leader(nullptr), data_filename(format("%s.raft", local_node.get_id().c_str())) {
+    RaftManager(std::map<std::string, Connection>& connections, NodeMap& nodes, Node& local_node, Pipeline& pipeline) : connections(connections), nodes(nodes), local_node(local_node), pipeline(pipeline), timer_id(0), election_time_dis(3000, 4000), leader(nullptr), data_filename(format("%s.raft", local_node.get_id().c_str())) {
         // TODO: o election_timeout_dis tem que ser definido com base no `alive`
         
         read_data();
@@ -405,6 +387,7 @@ public:
         obs_packet_received.on(std::bind(&RaftManager::packet_received, this, _1));        
         pipeline.attach(obs_packet_received);
 
+        post_transition_handlers.at(data.state)();
         set_election_timer();
     }
 };

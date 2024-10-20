@@ -178,7 +178,6 @@ struct SynData {
 };
 
 struct RaftRPCData {
-    uint32_t term;
     bool success;
 };
 
