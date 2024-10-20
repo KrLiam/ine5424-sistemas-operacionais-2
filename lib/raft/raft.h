@@ -119,7 +119,7 @@ class RaftManager
             if (data.voted_for != nullptr)
             {
                 log_debug("Received vote request, but we already voted for someone.");
-                send_vote(packet, false);
+                // send_vote(packet, false);
                 return;
             }
 
@@ -129,8 +129,11 @@ class RaftManager
             data.current_term = rvo_data->term;
             save_data();
 
-            send_vote(packet, should_grant_vote(packet.meta.origin));
-            set_election_timer();
+            if (should_grant_vote(packet.meta.origin))
+            {
+                send_vote(packet);
+                set_election_timer();
+            }
         }
     }
 
@@ -142,12 +145,17 @@ class RaftManager
         set_election_timer();
     }
 
-    void send_vote(Packet packet, bool vote_granted)
+    void send_vote(Packet packet)
     {
+        log_debug(
+            "Voting for ",
+            packet.meta.origin.to_string(),
+            ".");
+
         RaftRPCData reply_data = 
         {
             term : data.current_term,
-            success : vote_granted
+            success : true
         };
 
         PacketData data = packet.data;
@@ -290,6 +298,10 @@ class RaftManager
                 RaftRPCData* rvo_data = reinterpret_cast<RaftRPCData*>(packet.data.message_data);
                 if (rvo_data->success)
                 {
+                    log_debug(
+                        "Received vote from ",
+                        packet.meta.origin.to_string(),
+                        ".");
                     received_votes.emplace(packet.meta.origin);
                     check_if_won_election();
                 }
@@ -299,11 +311,15 @@ class RaftManager
             if (data.voted_for != nullptr)
             {
                 log_debug("Received vote request, but we already voted for someone.");
-                send_vote(packet, false);
+                // send_vote(packet, false);
                 return;
             }
 
-            send_vote(packet, should_grant_vote(packet.meta.origin));
+            if (should_grant_vote(packet.meta.origin))
+            {
+                send_vote(packet);
+                set_election_timer();
+            }
         }
     }
 
@@ -312,7 +328,7 @@ class RaftManager
         RaftRPCData* rvo_data = reinterpret_cast<RaftRPCData*>(packet.data.message_data);
         if (rvo_data->term >= data.current_term) return false;
 
-        send_vote(packet, false);
+        // send_vote(packet, false);
         return true;
     }
 
