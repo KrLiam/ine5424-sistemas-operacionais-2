@@ -397,7 +397,9 @@ class RaftManager
     }
 
 public:
-    RaftManager(std::map<std::string, Connection>& connections, NodeMap& nodes, Node& local_node, Pipeline& pipeline) : connections(connections), nodes(nodes), local_node(local_node), pipeline(pipeline), timer_id(0), election_time_dis(750, 1000), leader(nullptr), data_filename(format("%s.raft", local_node.get_id().c_str())) {
+    RaftManager(std::map<std::string, Connection>& connections, NodeMap& nodes, Node& local_node, Pipeline& pipeline) : connections(connections), nodes(nodes), local_node(local_node), pipeline(pipeline), timer_id(0), election_time_dis(6000, 7000), leader(nullptr), data_filename(format("%s.raft", local_node.get_id().c_str())) {
+        // TODO: o election_timeout_dis tem que ser definido com base no `alive`
+        
         read_data();
 
         obs_packet_received.on(std::bind(&RaftManager::packet_received, this, _1));        
