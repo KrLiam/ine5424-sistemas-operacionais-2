@@ -22,8 +22,6 @@ enum RaftState
 
 struct RaftPersistentData
 {
-    RaftState state;
-
     Node* voted_for;
 };
 
@@ -32,6 +30,8 @@ class RaftManager
     std::string data_filename;
 
     RaftPersistentData data;
+
+    RaftState state;
 
     std::map<std::string, Connection>& connections;
     // BroadcastConnection& broadcast_connection;
@@ -85,13 +85,13 @@ class RaftManager
 
     void change_state(RaftState new_state)
     {
-        if (data.state == new_state) return;
+        if (state == new_state) return;
 
-        data.state = new_state;
+        state = new_state;
 
         cancel_election_timer();
 
-        if (post_transition_handlers.contains(data.state)) post_transition_handlers.at(data.state)();
+        if (post_transition_handlers.contains(state)) post_transition_handlers.at(state)();
     }
 
     void follower_timeout()
@@ -209,7 +209,7 @@ class RaftManager
     {
         cancel_election_timer();
         int election_time = election_time_dis(rc_random::gen);
-        timer_id = timer.add(election_time, election_timeout_handlers.at(data.state));
+        timer_id = timer.add(election_time, election_timeout_handlers.at(state));
     }
 
     void cancel_election_timer()
@@ -368,7 +368,7 @@ class RaftManager
 
         // if (packet.data.header.is_ack()) pipeline.notify(PacketAckReceived(packet));
 
-        packet_receive_handlers.at(data.state)(packet);
+        packet_receive_handlers.at(state)(packet);
     }
 
     bool should_grant_vote(SocketAddress address)
@@ -387,7 +387,7 @@ class RaftManager
     }
 
 public:
-    RaftManager(std::map<std::string, Connection>& connections, NodeMap& nodes, Node& local_node, Pipeline& pipeline) : connections(connections), nodes(nodes), local_node(local_node), pipeline(pipeline), timer_id(0), election_time_dis(3000, 4000), leader(nullptr), data_filename(format("%s.raft", local_node.get_id().c_str())) {
+    RaftManager(std::map<std::string, Connection>& connections, NodeMap& nodes, Node& local_node, Pipeline& pipeline) : connections(connections), nodes(nodes), local_node(local_node), pipeline(pipeline), timer_id(0), election_time_dis(3000, 4000), leader(nullptr), data_filename(format("%s.raft", local_node.get_id().c_str())), state(FOLLOWER) {
         // TODO: o election_timeout_dis tem que ser definido com base no `alive`
         
         read_data();
@@ -395,7 +395,6 @@ public:
         obs_packet_received.on(std::bind(&RaftManager::packet_received, this, _1));        
         pipeline.attach(obs_packet_received);
 
-        post_transition_handlers.at(data.state)();
         set_election_timer();
     }
 };
