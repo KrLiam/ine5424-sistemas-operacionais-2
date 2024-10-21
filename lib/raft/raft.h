@@ -128,13 +128,10 @@ class RaftManager
                 return;
             }
 
-            RaftRPCData* rvo_data = reinterpret_cast<RaftRPCData*>(packet.data.message_data);
-
-            data.voted_for = &nodes.get_node(packet.meta.origin);
-            save_data();
-
             if (should_grant_vote(packet.meta.origin))
             {
+                data.voted_for = &nodes.get_node(packet.meta.origin);
+                save_data();
                 send_vote(packet);
                 set_election_timer();
             }
@@ -314,6 +311,8 @@ class RaftManager
 
             if (should_grant_vote(packet.meta.origin))
             {
+                data.voted_for = &nodes.get_node(packet.meta.origin);
+                save_data();
                 send_vote(packet);
                 set_election_timer();
             }
