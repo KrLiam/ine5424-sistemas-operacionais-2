@@ -29,6 +29,14 @@ uint32_t TransmissionDispatcher::get_next_number() const { return next_number; }
 
 const Transmission* TransmissionDispatcher::get_active() const { return active_transmission; }
 
+Transmission* TransmissionDispatcher::get_next() {
+    for (Transmission *transmission : transmissions) {
+        if (!transmission->active) return transmission;
+    }
+
+    return nullptr;
+}
+
 bool TransmissionDispatcher::enqueue(Transmission& transmission) {
     mutex_transmissions.lock();
 
@@ -59,7 +67,7 @@ void TransmissionDispatcher::update() {
     if (active_transmission) return;
     if (is_empty()) return;
 
-    active_transmission = transmissions.at(0);
+    active_transmission = get_next();
     activate(active_transmission);
 }
 void TransmissionDispatcher::activate(Transmission* transmission) {

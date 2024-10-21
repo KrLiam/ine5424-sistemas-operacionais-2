@@ -72,9 +72,13 @@ void TransmissionLayer::ack_received(const PacketAckReceived& event) {
     Packet& packet = event.ack_packet;
 
     const MessageIdentity& id = packet.data.header.id;
+    MessageType type = packet.data.header.get_message_type();
     TransmissionKey key {
         id.origin,
-        message_type::is_broadcast(packet.data.header.get_message_type()) ? SocketAddress{BROADCAST_ADDRESS, 0} : packet.meta.origin,
+        // TODO isso ta ruim
+        message_type::is_broadcast(type) && type != MessageType::AB ?
+            SocketAddress{BROADCAST_ADDRESS, 0} :
+            packet.meta.origin,
         id.msg_num
     };
 

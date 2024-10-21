@@ -36,6 +36,7 @@ public:
 
     uint32_t get_next_number() const;
     const Transmission* get_active() const;
+    Transmission* get_next();
 
     bool enqueue(Transmission& transmission);
 

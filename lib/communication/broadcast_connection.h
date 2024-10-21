@@ -41,6 +41,7 @@ class BroadcastConnection {
     void retransmit_fragment(Packet& packet);
     void try_deliver(const MessageIdentity&);
     bool is_delivered(const MessageIdentity&);
+    bool establish_all_connections();
 
     Observer<ConnectionEstablished> obs_connection_established;
     Observer<ReceiveSynchronization> obs_receive_synchronization;

@@ -67,6 +67,8 @@ public:
     Node &get_node(std::string id);
     Node &get_node(SocketAddress address);
 
+    Node *get_leader();
+
     bool contains(const SocketAddress& address) const;
 
     void add(Node& node);

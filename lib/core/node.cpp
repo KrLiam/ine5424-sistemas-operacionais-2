@@ -58,6 +58,15 @@ Node &NodeMap::get_node(SocketAddress address)
     throw std::invalid_argument(format("Node with address %s not found.", address.to_string().c_str()));
 }
 
+Node *NodeMap::get_leader() {
+    for (auto &[id, node] : nodes)
+    {
+        if (node.is_leader()) return &node;
+    }
+    
+    return nullptr;
+}
+
 bool NodeMap::contains(const SocketAddress& address) const
 {
     for (auto &[id, node] : nodes)

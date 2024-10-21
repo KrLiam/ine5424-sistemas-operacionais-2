@@ -162,6 +162,27 @@ void BroadcastConnection::message_received(const MessageReceived &event)
 
         try_deliver(id);
     }
+    else if (type == MessageType::AB) {
+        // desconsiderar recebimento desta mensagem
+        sequence.next_number--;
+
+        if (!local_node.is_leader()) {
+            log_warn("Received AB message from ", message.origin.to_string(), ", but local node is not the leader; ignoring it.");
+            return;
+        }
+
+        log_info("Received AB message from ", message.origin.to_string(), ", retransmitting it.");
+        // TODO provavelmente colocar a mensagem numa fila de transmissoes do AB, se não multiplos ABs acontecerão simultaneamente.
+        // talvez dê pra manter um TransmissionDispatcher separado pra isso, mas daí essa instância não pode mudar o numero
+        // da mensagem (na função activate), dá pra fazer o dispatcher receber uma flag no construtor de 'enumerate_messages' pra
+        // desativar essa funcionalidade. daí o BroadcastConnection::update sempre dá update neste dispatcher.
+        Message rt_message = message;
+        rt_message.transmission_uuid = UUID();
+        rt_message.origin = local_node.get_address();
+        rt_message.destination = {BROADCAST_ADDRESS, 0};
+        rt_message.type = MessageType::URB;
+        pipeline.send(rt_message);
+    }
 }
 
 
@@ -303,10 +324,7 @@ bool BroadcastConnection::enqueue(Transmission& transmission) {
     return dispatcher.enqueue(transmission);
 }
 
-void BroadcastConnection::update() {
-    if (dispatcher.is_empty()) return;
-    if (dispatcher.is_active()) return;
-
+bool BroadcastConnection::establish_all_connections() {
     bool established = true;
 
     for (auto& [node_id, connection] : connections) {
@@ -324,7 +342,31 @@ void BroadcastConnection::update() {
         }
     }
 
+    return established;
+}
+
+void BroadcastConnection::update() {
+    if (dispatcher.is_active()) return;
+
+    Transmission* next_transmission = dispatcher.get_next();
+    if (!next_transmission) return;
+
+    bool established = establish_all_connections();
     if (!established) return;
+ 
+    Message& message = next_transmission->message;
+    if (message.type == MessageType::AB) {
+        Node* leader = nodes.get_leader();
+
+        if (!leader) {
+            // TODO acho que nesse caso o RaftManager deve emitir um evento LeaderElected
+            // em que o BroadcastConnection ouve e dá request_update.
+            log_warn("No leader is elected right now. Atomic broadcast will hang.");
+            return;
+        }
+
+        message.destination = leader->get_address();
+    }
 
     dispatcher.update();
 }
