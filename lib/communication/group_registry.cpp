@@ -78,6 +78,6 @@ void GroupRegistry::establish_connections(
         );
     
     raft = std::make_unique<RaftManager>(
-        connections, nodes, local_node, pipeline
+        *broadcast_connection, connections, nodes, local_node, pipeline
     );
 }

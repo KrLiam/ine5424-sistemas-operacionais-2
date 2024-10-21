@@ -326,7 +326,7 @@ void Connection::established(Packet p)
     }
 
     log_debug("Received ", p.to_string(PacketFormat::RECEIVED), " that expects confirmation.");
-    transmit(create_ack(p));
+    dispatch_to_sender(create_ack(p));
 }
 
 void Connection::fin_wait(Packet p)
@@ -408,7 +408,7 @@ void Connection::send_flag(uint8_t flags, MessageData message_data)
     packet.meta.message_length = message_data.size;
     packet.data = data;
 
-    transmit(packet);
+    dispatch_to_sender(packet);
 }
 
 bool Connection::close_on_rst(Packet p)
@@ -494,20 +494,16 @@ void Connection::cancel_transmissions()
 {
     dispatcher.cancel_all();
 
-    mutex_packets.lock();
-    packets_to_send.clear();
-    mutex_packets.unlock();
+    mutex_dispatched_packets.lock();
+    dispatched_packets.clear();
+    mutex_dispatched_packets.unlock();
 }
 
 void Connection::update()
 {
     // log_trace("Updating connection with node ", remote_node.get_id());
 
-    mutex_packets.lock();
-    for (Packet p : packets_to_send)
-        send(p);
-    packets_to_send.clear();
-    mutex_packets.unlock();
+    send_dispatched_packets();
 
     if (dispatcher.is_empty()) return;
 
@@ -561,11 +557,12 @@ void Connection::receive(Message message)
     application_buffer.produce(message);
 }
 
-void Connection::transmit(Packet p)
+void Connection::dispatch_to_sender(Packet p)
 {
-    mutex_packets.lock();
-    packets_to_send.push_back(p);
-    mutex_packets.unlock();
+    mutex_dispatched_packets.lock();
+    dispatched_packets.push_back(p);
+    mutex_dispatched_packets.unlock();
+
     request_update();
 }
 
@@ -602,5 +599,15 @@ void Connection::heartbeat()
         meta : meta
     };
 
-    transmit(heartbeat_packet);
+    dispatch_to_sender(heartbeat_packet);
+}
+
+void Connection::send_dispatched_packets()
+{
+    mutex_dispatched_packets.lock();
+
+    for (Packet p : dispatched_packets) send(p);
+    dispatched_packets.clear();
+
+    mutex_dispatched_packets.unlock();
 }

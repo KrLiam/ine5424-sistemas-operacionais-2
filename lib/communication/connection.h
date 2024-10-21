@@ -54,7 +54,7 @@ private:
     // aguardar o envio seja possível para os pacotes da lib
     // Para isso, vai ser necessário adaptar para ter um TransmissionQueue por ato de send
     // ou um TransmissionQueue só suportar mensagem + pacotes não relacionados
-    std::vector<Packet> packets_to_send;
+    std::vector<Packet> dispatched_packets;
     BufferSet<std::string>& connection_update_buffer;
     TransmissionDispatcher dispatcher;
 
@@ -64,7 +64,7 @@ private:
     int handshake_timer_id = -1;
 
     std::mutex mutex;
-    std::mutex mutex_packets;
+    std::mutex mutex_dispatched_packets;
 
     const std::map<ConnectionState, std::function<void(Packet)>> packet_receive_handlers = {
         {ESTABLISHED, std::bind(&Connection::established, this, _1)},
@@ -101,6 +101,8 @@ private:
     
     void send_flag(uint8_t flags);
     void send_flag(uint8_t flags, MessageData data);
+
+    void send_dispatched_packets();
 
     bool close_on_rst(Packet p);
     bool rst_on_syn(Packet p);
@@ -160,7 +162,7 @@ public:
     void receive(Packet packet);
     void receive(Message message);
 
-    void transmit(Packet);
+    void dispatch_to_sender(Packet);
 
     void heartbeat();
 };

@@ -362,6 +362,8 @@ bool BroadcastConnection::establish_all_connections() {
 }
 
 void BroadcastConnection::update() {
+    send_dispatched_packets();
+
     ab_dispatcher.update();
 
     if (dispatcher.is_active()) return;
@@ -404,4 +406,23 @@ void BroadcastConnection::send_rst(Packet& packet)
     rst_packet.data = data;
 
     pipeline.send(rst_packet);
+}
+
+void BroadcastConnection::dispatch_to_sender(Packet packet)
+{
+    mutex_dispatched_packets.lock();
+    dispatched_packets.push_back(packet);
+    mutex_dispatched_packets.unlock();
+
+    request_update();
+}
+
+void BroadcastConnection::send_dispatched_packets()
+{
+    mutex_dispatched_packets.lock();
+
+    for (Packet p : dispatched_packets) pipeline.send(p);
+    dispatched_packets.clear();
+
+    mutex_dispatched_packets.unlock();
 }

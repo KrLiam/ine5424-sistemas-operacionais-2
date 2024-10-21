@@ -34,7 +34,7 @@ class RaftManager
     RaftState state;
 
     std::map<std::string, Connection> &connections;
-    // BroadcastConnection& broadcast_connection;
+    BroadcastConnection& broadcast_connection;
 
     NodeMap &nodes;
     Node &local_node;
@@ -95,5 +95,5 @@ class RaftManager
     unsigned int get_quota();
 
 public:
-    RaftManager(std::map<std::string, Connection> &connections, NodeMap &nodes, Node &local_node, Pipeline &pipeline);
+    RaftManager(BroadcastConnection& broadcast_connection, std::map<std::string, Connection> &connections, NodeMap &nodes, Node &local_node, Pipeline &pipeline);
 };

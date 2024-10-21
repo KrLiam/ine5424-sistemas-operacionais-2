@@ -1,11 +1,13 @@
 #include "raft/raft.h"
 
 RaftManager::RaftManager(
+    BroadcastConnection& broadcast_connection,
     std::map<std::string, Connection> &connections,
     NodeMap &nodes,
     Node &local_node,
     Pipeline &pipeline) : data_filename(format("%s.raft", local_node.get_id().c_str())),
                           state(FOLLOWER),
+                          broadcast_connection(broadcast_connection),
                           connections(connections),
                           nodes(nodes),
                           local_node(local_node),
@@ -91,7 +93,7 @@ void RaftManager::send_vote(Packet packet)
 
     Node &destination = nodes.get_node(p.meta.destination);
     Connection &connection = connections.at(destination.get_id());
-    connection.transmit(p);
+    connection.dispatch_to_sender(p);
 }
 
 void RaftManager::send_request_vote()
@@ -129,13 +131,7 @@ void RaftManager::send_request_vote()
         meta : meta
     };
 
-    // broadcast_connection.transmit(p, BroadcastType::BEB);
-    // TODO: usar o broadcast connection aqui pra fazer um beb
-    for (auto &[id, conn] : connections)
-    {
-        p.meta.destination = nodes.get_node(id).get_address();
-        conn.transmit(p);
-    }
+    broadcast_connection.dispatch_to_sender(p);;
 }
 
 void RaftManager::packet_received(const PacketReceived &event)

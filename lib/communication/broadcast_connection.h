@@ -36,6 +36,9 @@ class BroadcastConnection {
     BufferSet<std::string>& connection_update_buffer;
     Buffer<Message>& deliver_buffer;
 
+    std::vector<Packet> dispatched_packets;
+    std::mutex mutex_dispatched_packets;
+
     void observe_pipeline();
 
     void receive_ack(Packet& ack_packet);
@@ -64,6 +67,8 @@ class BroadcastConnection {
 
     void send_rst(Packet&);
 
+    void send_dispatched_packets();
+
 public:
     BroadcastConnection(
         NodeMap& nodes,
@@ -80,4 +85,6 @@ public:
 
     void request_update();
     void update();
+
+    void dispatch_to_sender(Packet);
 };
