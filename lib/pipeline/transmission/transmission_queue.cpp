@@ -90,6 +90,7 @@ void TransmissionQueue::fail()
 
     const QueueEntry& first_entry = entries.begin()->second;
     const UUID uuid = first_entry.packet.meta.transmission_uuid;
+    const MessageIdentity id = first_entry.packet.data.header.id;
 
     log_error(
         "Transmission failed with ",
@@ -100,7 +101,7 @@ void TransmissionQueue::fail()
     );
 
     reset();
-    handler.notify(TransmissionFail(uuid, faulty_packets, faulty_receivers));
+    handler.notify(TransmissionFail(uuid, id, faulty_packets, faulty_receivers));
 }
 
 void TransmissionQueue::timeout(uint32_t num)

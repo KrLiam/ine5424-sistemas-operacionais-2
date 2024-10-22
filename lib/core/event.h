@@ -110,11 +110,13 @@ struct TransmissionFail : public Event {
     static EventType type() { return EventType::TRANSMISSION_FAIL; }
 
     UUID uuid;
+    MessageIdentity id;
     std::unordered_set<const Packet*> faulty_packets;
     std::unordered_set<const Node*> faulty_nodes;
 
     TransmissionFail(
         const UUID& uuid,
+        const MessageIdentity& id,
         const std::unordered_set<const Packet*>& faulty_packets,
         const std::unordered_set<const Node*>& faulty_nodes
     );

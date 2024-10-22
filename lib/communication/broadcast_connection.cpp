@@ -15,6 +15,7 @@ BroadcastConnection::BroadcastConnection(
     local_node(local_node),
     connections(connections),
     pipeline(pipeline),
+    ab_dispatcher(BROADCAST_ID, connection_update_buffer, pipeline, false),
     dispatcher(BROADCAST_ID, connection_update_buffer, pipeline),
     connection_update_buffer(connection_update_buffer),
     deliver_buffer(deliver_buffer)
@@ -54,7 +55,12 @@ void BroadcastConnection::connection_established(const ConnectionEstablished&) {
     request_update();
 }
 
-void BroadcastConnection::connection_closed(const ConnectionClosed&) {
+void BroadcastConnection::connection_closed(const ConnectionClosed& event) {
+    ab_dispatcher.cancel_all(); // TODO apenas cancelar as transmissoes do nó que morreu
+    for (auto& [id, t] : ab_transmissions) {
+        if (id.origin == event.node.get_address()) ab_transmissions.erase(id);
+    }
+
     if (!dispatcher.is_active()) dispatcher.cancel_all();
 }
 
@@ -171,17 +177,18 @@ void BroadcastConnection::message_received(const MessageReceived &event)
             return;
         }
 
+        if (ab_transmissions.contains(message.id)) return;
+
         log_info("Received AB message from ", message.origin.to_string(), ", retransmitting it.");
-        // TODO provavelmente colocar a mensagem numa fila de transmissoes do AB, se não multiplos ABs acontecerão simultaneamente.
-        // talvez dê pra manter um TransmissionDispatcher separado pra isso, mas daí essa instância não pode mudar o numero
-        // da mensagem (na função activate), dá pra fazer o dispatcher receber uma flag no construtor de 'enumerate_messages' pra
-        // desativar essa funcionalidade. daí o BroadcastConnection::update sempre dá update neste dispatcher.
-        Message rt_message = message;
-        rt_message.transmission_uuid = UUID();
-        rt_message.origin = local_node.get_address();
-        rt_message.destination = {BROADCAST_ADDRESS, 0};
-        rt_message.type = MessageType::URB;
-        pipeline.send(rt_message);
+
+        ab_transmissions.emplace(message.id, std::make_shared<Transmission>(message, BROADCAST_ID));
+        Transmission& t = *ab_transmissions.at(message.id);
+
+        t.message.origin = local_node.get_address();
+        t.message.destination = {BROADCAST_ADDRESS, 0};
+        t.message.type = MessageType::URB;
+
+        ab_dispatcher.enqueue(t);
     }
 }
 
@@ -238,8 +245,9 @@ bool BroadcastConnection::is_delivered(const MessageIdentity& id) {
 void BroadcastConnection::retransmit_fragment(Packet& packet)
 {
     const PacketHeader& header = packet.data.header;
-    const MessageIdentity& id = header.id; 
-    if (id.origin == local_node.get_address()) return;
+    const MessageIdentity& id = header.id;
+    // TODO isso da problema no AB
+    // if (id.origin == local_node.get_address()) return;
 
     if (is_delivered(id)) return;
 
@@ -288,6 +296,11 @@ void BroadcastConnection::try_deliver(const MessageIdentity& id) {
 
 void BroadcastConnection::transmission_complete(const TransmissionComplete& event) {
     const UUID &uuid = event.uuid;
+    const MessageIdentity& id = event.id;
+
+    const Transmission* ab_active = ab_dispatcher.get_active();
+    if (ab_active && uuid == ab_active->uuid) ab_dispatcher.complete(true);
+    if (ab_transmissions.contains(id)) ab_transmissions.erase(id);
 
     if (retransmissions.contains(event.id)) {
         RetransmissionEntry& entry = retransmissions.at(event.id);
@@ -298,11 +311,14 @@ void BroadcastConnection::transmission_complete(const TransmissionComplete& even
     }
 
     const Transmission* active = dispatcher.get_active();
-
     if (active && uuid == active->uuid) dispatcher.complete(true);
 }
 
 void BroadcastConnection::transmission_fail(const TransmissionFail& event) {
+    const Transmission* ab_active = ab_dispatcher.get_active();
+    if (ab_active && event.uuid == ab_active->uuid) ab_dispatcher.complete(false);
+    if (ab_transmissions.contains(event.id)) ab_transmissions.erase(event.id);
+
     const Transmission* active = dispatcher.get_active();
     if (!active) return;
     if (event.uuid != active->uuid) return;
@@ -346,6 +362,8 @@ bool BroadcastConnection::establish_all_connections() {
 }
 
 void BroadcastConnection::update() {
+    ab_dispatcher.update();
+
     if (dispatcher.is_active()) return;
 
     Transmission* next_transmission = dispatcher.get_next();

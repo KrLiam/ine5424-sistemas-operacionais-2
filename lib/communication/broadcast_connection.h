@@ -27,6 +27,9 @@ class BroadcastConnection {
     std::map<std::string, Connection>& connections;
     Pipeline& pipeline;
 
+    std::unordered_map<MessageIdentity, std::shared_ptr<Transmission>> ab_transmissions;
+    TransmissionDispatcher ab_dispatcher;
+
     TransmissionDispatcher dispatcher;
     std::unordered_map<std::string, SequenceNumber> sequence_numbers;
     std::unordered_map<MessageIdentity, RetransmissionEntry> retransmissions;

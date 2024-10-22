@@ -13,6 +13,7 @@ class TransmissionDispatcher {
     BufferSet<std::string>& update_buffer;
     Pipeline& pipeline;
     uint32_t max_transmissions;
+    bool enumerate_messages;
 
     std::vector<Transmission*> transmissions;
     Transmission* active_transmission;
@@ -27,6 +28,12 @@ public:
         std::string id,
         BufferSet<std::string>& update_buffer,
         Pipeline& pipeline
+    );
+    TransmissionDispatcher(
+        std::string id,
+        BufferSet<std::string>& update_buffer,
+        Pipeline& pipeline,
+        bool enumerate_messages
     );
 
     ~TransmissionDispatcher();
