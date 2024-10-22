@@ -283,5 +283,5 @@ void TransmissionQueue::discard_node(const Node& node) {
 
 bool TransmissionQueue::packet_can_timeout(const Packet& packet)
 {
-    return packet.data.header.get_message_type() != MessageType::URB;
+    return !message_type::is_urb(packet.data.header.type);
 }

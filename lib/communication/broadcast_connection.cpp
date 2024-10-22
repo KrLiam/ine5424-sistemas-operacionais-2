@@ -157,7 +157,7 @@ void BroadcastConnection::message_received(const MessageReceived &event)
     if (type == MessageType::BEB) {
         deliver_buffer.produce(event.message);
     }
-    else if (type == MessageType::URB) {
+    else if (message_type::is_urb(type)) {
         if (!retransmissions.contains(id)) {
             retransmissions.emplace(id, RetransmissionEntry());
         }
@@ -168,7 +168,7 @@ void BroadcastConnection::message_received(const MessageReceived &event)
 
         try_deliver(id);
     }
-    else if (type == MessageType::AB) {
+    else if (type == MessageType::AB_REQUEST) {
         // desconsiderar recebimento desta mensagem
         sequence.next_number--;
 
@@ -186,7 +186,7 @@ void BroadcastConnection::message_received(const MessageReceived &event)
 
         t.message.origin = local_node.get_address();
         t.message.destination = {BROADCAST_ADDRESS, 0};
-        t.message.type = MessageType::URB;
+        t.message.type = MessageType::AB_URB;
 
         ab_dispatcher.enqueue(t);
     }
@@ -201,7 +201,7 @@ void BroadcastConnection::receive_ack(Packet& ack_packet)
 
     pipeline.notify(PacketAckReceived(ack_packet));
 
-    if (header.type == MessageType::URB) {
+    if (message_type::is_urb(header.type)) {
         if (is_delivered(id)) return;
 
         if (!retransmissions.contains(id)) retransmissions.emplace(id, RetransmissionEntry());
@@ -223,7 +223,7 @@ void BroadcastConnection::receive_fragment(Packet& packet)
 
     SocketAddress ack_destination = packet.meta.origin;
 
-    if (header.type == MessageType::URB) {
+    if (message_type::is_urb(header.type)) {
         ack_destination = {BROADCAST_ADDRESS, 0};
         retransmit_fragment(packet);
     }
@@ -375,7 +375,7 @@ void BroadcastConnection::update() {
     if (!established) return;
  
     Message& message = next_transmission->message;
-    if (message.type == MessageType::AB) {
+    if (message.type == MessageType::AB_REQUEST) {
         Node* leader = nodes.get_leader();
 
         if (!leader) {

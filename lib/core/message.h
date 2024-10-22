@@ -16,19 +16,21 @@ enum class MessageType : uint8_t
     // application: se a mensagem é da aplicação.
 
     // Mensagens da lib
-    CONTROL   = 0b00000000,
-    HEARTBEAT = 0b00000100,
-    RAFT      = 0b00000110,
+    CONTROL    = 0b00000000,
+    HEARTBEAT  = 0b00000100,
+    RAFT       = 0b00000110,
     // Mensagens da aplicação
-    SEND      = 0b00000001,
-    BEB       = 0b00000011,
-    URB       = 0b00000111,
-    AB        = 0b00001011
+    SEND       = 0b00000001,
+    BEB        = 0b00000011,
+    URB        = 0b00000111,
+    AB_REQUEST = 0b00001011,
+    AB_URB     = 0b00001111,
 };
 // queria tanto que enums pudessem ter métodos :(
 namespace message_type {
     bool is_application(MessageType type);
     bool is_broadcast(MessageType type);
+    bool is_urb(MessageType type);
 };
 
 struct MessageIdentity {
