@@ -5,7 +5,7 @@ UUID::UUID() : uuid(uuid::generate_uuid_v4()) {}
 UUID::UUID(std::string uuid) : uuid(uuid) {}
 
 bool UUID::operator==(const UUID& other) const {
-    return uuid.compare(other.as_string()) == 0;
+    return uuid == other.uuid;
 }
 
 std::string UUID::as_string() const {
