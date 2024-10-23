@@ -38,8 +38,9 @@ struct ReceiveSynchronization : public Event {
     const Node& node;
     uint32_t expected_number;
     uint32_t expected_broadcast_number;
+    uint32_t expected_ab_number;
 
-    ReceiveSynchronization(const Node& node, uint32_t expected_number, uint32_t expected_broadcast_number);
+    ReceiveSynchronization(const Node& node, uint32_t expected_number, uint32_t expected_broadcast_number, uint32_t expected_ab_number);
 };
 
 struct ConnectionEstablished : public Event {

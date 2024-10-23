@@ -175,6 +175,7 @@ struct Packet
 
 struct SynData {
     uint32_t broadcast_number;
+    uint32_t ab_number;
 };
 
 struct RaftRPCData {

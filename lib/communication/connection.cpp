@@ -8,15 +8,17 @@ Connection::Connection(
     Pipeline &pipeline,
     Buffer<Message> &application_buffer,
     BufferSet<std::string> &connection_update_buffer,
-    const TransmissionDispatcher& broadcast_dispatcher
+    const TransmissionDispatcher& broadcast_dispatcher,
+    const TransmissionDispatcher& ab_dispatcher
 ) :
     pipeline(pipeline),
     application_buffer(application_buffer),
     broadcast_dispatcher(broadcast_dispatcher),
+    ab_dispatcher(ab_dispatcher),
     local_node(local_node),
     remote_node(remote_node),
     connection_update_buffer(connection_update_buffer),
-    dispatcher(remote_node.get_id(), connection_update_buffer, pipeline)                                          
+    dispatcher(remote_node.get_id(), connection_update_buffer, pipeline)
 {
     observe_pipeline();
 }
@@ -371,7 +373,8 @@ void Connection::last_ack(Packet p)
 void Connection::send_syn(uint8_t extra_flags)
 {
     SynData data = {
-        broadcast_number : broadcast_dispatcher.get_next_number()
+        broadcast_number : broadcast_dispatcher.get_next_number(),
+        ab_number : ab_dispatcher.get_next_number()
     };
 
     send_flag(SYN | extra_flags, MessageData::from(data));
@@ -441,7 +444,7 @@ bool Connection::resync_broadcast_on_syn(Packet p) {
 
     SynData* data = reinterpret_cast<SynData*>(p.data.message_data);
     
-    pipeline.notify(ReceiveSynchronization(remote_node, expected_number, data->broadcast_number));
+    pipeline.notify(ReceiveSynchronization(remote_node, expected_number, data->broadcast_number, data->ab_number));
 
     return true;
 }

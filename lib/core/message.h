@@ -31,6 +31,7 @@ namespace message_type {
     bool is_application(MessageType type);
     bool is_broadcast(MessageType type);
     bool is_urb(MessageType type);
+    bool is_atomic(MessageType type);
 };
 
 struct MessageIdentity {

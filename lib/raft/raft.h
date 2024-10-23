@@ -92,7 +92,7 @@ class RaftManager
     bool should_grant_vote(SocketAddress address);
 
     void check_if_won_election();
-    unsigned int get_quota();
+    unsigned int get_quorum();
 
 public:
     RaftManager(BroadcastConnection& broadcast_connection, std::map<std::string, Connection> &connections, NodeMap &nodes, Node &local_node, Pipeline &pipeline);

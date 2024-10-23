@@ -10,3 +10,6 @@ bool message_type::is_broadcast(MessageType type) {
 bool message_type::is_urb(MessageType type) {
     return type == MessageType::URB || type == MessageType::AB_URB;
 }
+bool message_type::is_atomic(MessageType type) {
+    return type == MessageType::AB_URB;
+}

@@ -5,19 +5,11 @@ TransmissionDispatcher::TransmissionDispatcher(
     std::string id,
     BufferSet<std::string>& update_buffer,
     Pipeline& pipeline
-) : TransmissionDispatcher(id, update_buffer, pipeline, true) {}
-
-TransmissionDispatcher::TransmissionDispatcher(
-    std::string id,
-    BufferSet<std::string>& update_buffer,
-    Pipeline& pipeline,
-    bool enumerate_messages
 ) :
     id(id),
     update_buffer(update_buffer),
     pipeline(pipeline),
     max_transmissions(MAX_ENQUEUED_TRANSMISSIONS),
-    enumerate_messages(enumerate_messages),
     active_transmission(nullptr),
     next_number(0)
 {};
@@ -86,9 +78,7 @@ void TransmissionDispatcher::activate(Transmission* transmission) {
 
     Message& message = transmission->message;
 
-    if (enumerate_messages) {
-        message.id.msg_num = next_number++;
-    }
+    message.id.msg_num = next_number++;
 
     pipeline.notify(TransmissionStarted(message));
     pipeline.send(message);

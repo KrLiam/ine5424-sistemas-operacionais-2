@@ -73,7 +73,8 @@ void GroupRegistry::establish_connections(
                 pipeline,
                 application_buffer,
                 connection_update_buffer,
-                broadcast_connection->get_dispatcher()
+                broadcast_connection->get_dispatcher(),
+                broadcast_connection->get_ab_dispatcher()
             )
         );
     

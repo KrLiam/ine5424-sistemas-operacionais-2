@@ -29,6 +29,7 @@ class BroadcastConnection {
 
     std::unordered_map<MessageIdentity, std::shared_ptr<Transmission>> ab_transmissions;
     TransmissionDispatcher ab_dispatcher;
+    SequenceNumber ab_sequence_number;
 
     TransmissionDispatcher dispatcher;
     std::unordered_map<std::string, SequenceNumber> sequence_numbers;
@@ -46,7 +47,7 @@ class BroadcastConnection {
 
     void retransmit_fragment(Packet& packet);
     void try_deliver(const MessageIdentity&);
-    bool is_delivered(const MessageIdentity&);
+    bool is_delivered(const MessageIdentity& id, bool is_atomic);
     bool establish_all_connections();
 
     Observer<ConnectionEstablished> obs_connection_established;
@@ -80,6 +81,7 @@ public:
     );
 
     const TransmissionDispatcher& get_dispatcher() const;
+    const TransmissionDispatcher& get_ab_dispatcher() const;
 
     bool enqueue(Transmission& transmission);
 

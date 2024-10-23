@@ -43,6 +43,7 @@ private:
     Pipeline &pipeline;
     Buffer<Message> &application_buffer;
     const TransmissionDispatcher& broadcast_dispatcher;
+    const TransmissionDispatcher& ab_dispatcher;
 
     Node& local_node;
     Node& remote_node;
@@ -141,7 +142,8 @@ public:
         Pipeline &pipeline,
         Buffer<Message> &application_buffer,
         BufferSet<std::string>& connection_update_buffer,
-        const TransmissionDispatcher& broadcast_dispatcher
+        const TransmissionDispatcher& broadcast_dispatcher,
+        const TransmissionDispatcher& ab_dispatcher
     );
 
     ConnectionState get_state() const;

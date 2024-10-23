@@ -329,16 +329,16 @@ bool RaftManager::should_grant_vote(SocketAddress address)
 
 void RaftManager::check_if_won_election()
 {
-    unsigned int quota = get_quota();
-    if (received_votes.size() >= quota)
+    unsigned int quorum = get_quorum();
+    if (received_votes.size() >= quorum)
     {
-        log_info("Received quota, we are now the leader.");
+        log_info("Received quorum of votes, we are now the leader.");
         cancel_election_timer();
         change_state(LEADER);
     }
 }
 
-unsigned int RaftManager::get_quota()
+unsigned int RaftManager::get_quorum()
 {
     unsigned int alive = 0;
     for (auto &[_, node] : nodes)
