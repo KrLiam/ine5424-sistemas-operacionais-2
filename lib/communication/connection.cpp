@@ -385,10 +385,11 @@ void Connection::send_flag(uint8_t flags) {
 }
 void Connection::send_flag(uint8_t flags, MessageData message_data)
 {
-    MessageIdentity id = {
-        origin : local_node.get_address(),
-        msg_num : dispatcher.get_next_number()
-    };
+    MessageIdentity id;
+    memset(&id, 0, sizeof(MessageIdentity));
+
+    id.origin = local_node.get_address(),
+    id.msg_num = dispatcher.get_next_number();
 
     PacketHeader header;
     memset(&header, 0, sizeof(PacketHeader));
