@@ -175,6 +175,7 @@ void BroadcastConnection::message_received(const MessageReceived &event)
     }
 
     sequence.next_number++;
+    if (message_type::is_atomic(message.type)) ab_dispatcher.reset_number(sequence.next_number);
 
     MessageType type = event.message.type;
 
