@@ -9,14 +9,22 @@
 
 class EventBus {
     std::unordered_map<EventType, Subject<Event>> subjects;
+    bool destroyed = false;
 
 public:
     void clear() {
         subjects.clear();
     }
 
+    ~EventBus() {
+        destroyed = true;
+        clear();
+    }
+
     template <typename T>
     void attach(Observer<T>& observer) {
+        if (destroyed) return;
+
         EventType type = T::type();
 
         if (!subjects.contains(type)) {
@@ -29,6 +37,8 @@ public:
 
     template <typename T>
     void notify(const T& event) {
+        if (destroyed) return;
+
         EventType type = event.type();
 
         if (!subjects.contains(type)) return;
