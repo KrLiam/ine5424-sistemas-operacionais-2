@@ -309,6 +309,7 @@ void RaftManager::follow(Node &node)
     leader->set_leader(true);
     cancel_election_timer();
     change_state(FOLLOWER);
+    pipeline.notify(LeaderElected());
 }
 
 bool RaftManager::should_grant_vote(SocketAddress address)
@@ -335,6 +336,7 @@ void RaftManager::check_if_won_election()
         log_info("Received quorum of votes, we are now the leader.");
         cancel_election_timer();
         change_state(LEADER);
+        pipeline.notify(LeaderElected());
     }
 }
 

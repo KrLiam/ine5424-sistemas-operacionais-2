@@ -22,7 +22,8 @@ enum EventType {
     NODE_DEATH = 12,
     FRAGMENT_RECEIVED = 13,
     DELIVER_MESSAGE = 14,
-    RECEIVE_SYNCHRONIZATION = 15
+    RECEIVE_SYNCHRONIZATION = 15,
+    LEADER_ELECTED = 16
 };
     
 struct Event {
@@ -171,4 +172,10 @@ struct NodeDeath: public Event {
     const Node& remote_node;
 
     NodeDeath(const Node& remote_node);
+};
+
+struct LeaderElected: public Event {
+    static EventType type() { return EventType::LEADER_ELECTED; }
+
+    LeaderElected();
 };

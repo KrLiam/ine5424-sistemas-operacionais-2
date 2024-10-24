@@ -43,3 +43,5 @@ PipelineCleanup::PipelineCleanup(Message& message) : message(message) {}
 HeartbeatReceived::HeartbeatReceived(Node& remote_node) : remote_node(remote_node) {}
 
 NodeDeath::NodeDeath(const Node& remote_node) : remote_node(remote_node) {}
+
+LeaderElected::LeaderElected() {}

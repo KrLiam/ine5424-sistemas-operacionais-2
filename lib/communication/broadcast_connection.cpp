@@ -36,6 +36,7 @@ void BroadcastConnection::observe_pipeline() {
     obs_message_received.on(std::bind(&BroadcastConnection::message_received, this, _1));
     obs_transmission_fail.on(std::bind(&BroadcastConnection::transmission_fail, this, _1));
     obs_transmission_complete.on(std::bind(&BroadcastConnection::transmission_complete, this, _1));
+    obs_leader_elected.on(std::bind(&BroadcastConnection::leader_elected, this, _1));
     pipeline.attach(obs_receive_synchronization);
     pipeline.attach(obs_connection_established);
     pipeline.attach(obs_connection_closed);
@@ -43,6 +44,7 @@ void BroadcastConnection::observe_pipeline() {
     pipeline.attach(obs_message_received);
     pipeline.attach(obs_transmission_complete);
     pipeline.attach(obs_transmission_fail);
+    pipeline.attach(obs_leader_elected);
 }
 
 void BroadcastConnection::receive_synchronization(const ReceiveSynchronization& event) {
@@ -61,6 +63,10 @@ void BroadcastConnection::receive_synchronization(const ReceiveSynchronization& 
     log_info("Atomic broadcast number synchronized to ", ab_sequence_number.initial_number, ".");
 }
 void BroadcastConnection::connection_established(const ConnectionEstablished&) {
+    request_update();
+}
+
+void BroadcastConnection::leader_elected(const LeaderElected&) {
     request_update();
 }
 
@@ -404,8 +410,6 @@ void BroadcastConnection::update() {
         Node* leader = nodes.get_leader();
 
         if (!leader) {
-            // TODO acho que nesse caso o RaftManager deve emitir um evento LeaderElected
-            // em que o BroadcastConnection ouve e dá request_update.
             log_warn("No leader is elected right now. Atomic broadcast will hang.");
             return;
         }

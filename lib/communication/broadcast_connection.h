@@ -57,6 +57,7 @@ class BroadcastConnection {
     Observer<TransmissionFail> obs_transmission_fail;
     Observer<MessageReceived> obs_message_received;
     Observer<PacketReceived> obs_packet_received;
+    Observer<LeaderElected> obs_leader_elected;
 
     void receive_synchronization(const ReceiveSynchronization& event);
     void connection_established(const ConnectionEstablished& event);
@@ -65,6 +66,7 @@ class BroadcastConnection {
     void transmission_fail(const TransmissionFail& event);
     void message_received(const MessageReceived &event);
     void packet_received(const PacketReceived &event);
+    void leader_elected(const LeaderElected &event);
 
     void send_rst(Packet&);
 
