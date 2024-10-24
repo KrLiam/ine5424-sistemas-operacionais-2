@@ -320,8 +320,11 @@ void BroadcastConnection::transmission_complete(const TransmissionComplete& even
     const MessageIdentity& id = event.id;
 
     const Transmission* ab_active = ab_dispatcher.get_active();
-    if (ab_active && uuid == ab_active->uuid) ab_dispatcher.complete(true);
-    if (ab_transmissions.contains(id)) ab_transmissions.erase(id);
+    if (ab_active && uuid == ab_active->uuid)
+    {
+        ab_dispatcher.complete(true);
+        if (ab_transmissions.contains(id)) ab_transmissions.erase(id);
+    }
 
     if (retransmissions.contains(event.id)) {
         RetransmissionEntry& entry = retransmissions.at(event.id);
