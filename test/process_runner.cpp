@@ -184,10 +184,10 @@ bool send_message(
     bool broadcast = node_id == BROADCAST_ID;
 
     if (success && !broadcast) {
-        log_print("Successfuly sent message to node ", node_id, ".");
+        log_print("Successfully sent message to node ", node_id, ".");
     }
     else if (success && broadcast) {
-        log_print("Successfuly broadcasted message.");
+        log_print("Successfully broadcasted message.");
     }
     else if (!success && broadcast) {
         log_print("Could not broadcast message.");
