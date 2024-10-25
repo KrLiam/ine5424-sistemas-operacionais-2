@@ -146,12 +146,12 @@ Message ReliableCommunication::create_message(SocketAddress receiver_address, co
     Message m = {
         id : {
             origin : local.get_address(),
-            msg_num : 0
+            msg_num : 0,
+            msg_type : msg_type,
         },
         transmission_uuid : UUID(""),
         origin : local.get_address(),
         destination : receiver_address,
-        type : msg_type,
         data : {0},
         length : data.size,
     };

@@ -108,12 +108,12 @@ void RaftManager::send_request_vote()
     data.header = {
         id : {
             origin : local_node.get_address(),
-            msg_num : 0
+            msg_num : 0,
+            msg_type : MessageType::RAFT
         },
         fragment_num : 0,
         checksum : 0,
-        flags : RVO,
-        type : MessageType::RAFT
+        flags : RVO
     };
     memcpy(data.message_data, &rvo_data, sizeof(rvo_data));
 

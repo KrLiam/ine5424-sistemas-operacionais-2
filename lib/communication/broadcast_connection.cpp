@@ -81,7 +81,7 @@ void BroadcastConnection::connection_closed(const ConnectionClosed& event) {
 
 void BroadcastConnection::packet_received(const PacketReceived &event)
 {
-    if (!message_type::is_broadcast(event.packet.data.header.type)) return;
+    if (!message_type::is_broadcast(event.packet.data.header.get_message_type())) return;
     if (event.packet.data.header.get_message_type() == MessageType::RAFT) return;
 
     Packet& packet = event.packet;
@@ -155,7 +155,7 @@ void BroadcastConnection::packet_received(const PacketReceived &event)
 
 void BroadcastConnection::message_received(const MessageReceived &event)
 {
-    if (!message_type::is_broadcast(event.message.type)) return;
+    if (!message_type::is_broadcast(event.message.id.msg_type)) return;
     
     const Message& message = event.message;
     const MessageIdentity& id = message.id;
@@ -166,7 +166,7 @@ void BroadcastConnection::message_received(const MessageReceived &event)
         return;
     };
 
-    SequenceNumber& sequence = message_type::is_atomic(message.type) ? ab_sequence_number : sequence_numbers.at(origin.get_id());
+    SequenceNumber& sequence = message_type::is_atomic(message.id.msg_type) ? ab_sequence_number : sequence_numbers.at(origin.get_id());
 
     if (message.id.msg_num < sequence.next_number)
     {
@@ -181,9 +181,9 @@ void BroadcastConnection::message_received(const MessageReceived &event)
     }
 
     sequence.next_number++;
-    if (message_type::is_atomic(message.type)) ab_dispatcher.reset_number(sequence.next_number);
+    if (message_type::is_atomic(message.id.msg_type)) ab_dispatcher.reset_number(sequence.next_number);
 
-    MessageType type = event.message.type;
+    MessageType type = event.message.id.msg_type;
 
     if (type == MessageType::BEB) {
         deliver_buffer.produce(event.message);
@@ -214,7 +214,7 @@ void BroadcastConnection::message_received(const MessageReceived &event)
 
         t.message.origin = local_node.get_address();
         t.message.destination = {BROADCAST_ADDRESS, 0};
-        t.message.type = MessageType::AB_URB;
+        t.message.id.msg_type = MessageType::AB_URB;
 
         ab_dispatcher.enqueue(t);
     }
@@ -229,7 +229,7 @@ void BroadcastConnection::receive_ack(Packet& ack_packet)
 
     pipeline.notify(PacketAckReceived(ack_packet));
 
-    if (message_type::is_urb(header.type)) {
+    if (message_type::is_urb(header.get_message_type())) {
         if (is_delivered(id, message_type::is_atomic(ack_packet.data.header.get_message_type()))) return;
 
         if (!retransmissions.contains(id)) retransmissions.emplace(id, RetransmissionEntry());
@@ -251,7 +251,7 @@ void BroadcastConnection::receive_fragment(Packet& packet)
 
     SocketAddress ack_destination = packet.meta.origin;
 
-    if (message_type::is_urb(header.type)) {
+    if (message_type::is_urb(header.get_message_type())) {
         ack_destination = {BROADCAST_ADDRESS, 0};
         retransmit_fragment(packet);
     }
@@ -406,7 +406,7 @@ void BroadcastConnection::update() {
     if (!established) return;
  
     Message& message = next_transmission->message;
-    if (message.type == MessageType::AB_REQUEST) {
+    if (message.id.msg_type == MessageType::AB_REQUEST) {
         Node* leader = nodes.get_leader();
 
         if (!leader) {

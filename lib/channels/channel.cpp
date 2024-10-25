@@ -105,7 +105,7 @@ Packet Channel::receive()
     packet.meta.origin = SocketAddress::from(in_address);
     packet.meta.destination = address;
     packet.meta.message_length = bytes_received - sizeof(PacketHeader);
-    packet.meta.silent = packet.data.header.type == MessageType::HEARTBEAT;
+    packet.meta.silent = packet.data.header.get_message_type() == MessageType::HEARTBEAT;
 
     return packet;
 }

@@ -17,7 +17,6 @@ struct PacketHeader
     uint32_t fragment_num;
     uint16_t checksum;
     uint8_t flags;
-    MessageType type;
 
     uint32_t get_message_number() const
     {
@@ -30,7 +29,7 @@ struct PacketHeader
     }
 
     bool is_data() const {
-        return message_type::is_application(type) && !is_ack();
+        return message_type::is_application(id.msg_type) && !is_ack();
     }
 
     bool is_ack() const
@@ -70,7 +69,7 @@ struct PacketHeader
 
     MessageType get_message_type() const
     {
-        return static_cast<MessageType>(type);
+        return static_cast<MessageType>(id.msg_type);
     }
 };
 

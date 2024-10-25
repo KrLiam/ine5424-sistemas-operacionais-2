@@ -38,6 +38,7 @@ struct MessageIdentity {
     // Endereço do nó original que envia a mensagem.
     SocketAddress origin;
     uint32_t msg_num;
+    MessageType msg_type;
 
     bool operator==(const MessageIdentity& other) const;
 };
@@ -45,7 +46,8 @@ struct MessageIdentity {
 template<> struct std::hash<MessageIdentity> {
     std::size_t operator()(const MessageIdentity& id) const {
         return std::hash<SocketAddress>()(id.origin)
-            ^ std::hash<uint32_t>()(id.msg_num);
+            ^ std::hash<uint32_t>()(id.msg_num)
+            ^ std::hash<MessageType>()(id.msg_type);
     }
 };
 
@@ -76,7 +78,6 @@ struct Message
     SocketAddress origin;
     // Endereço do processo que recebe a mensagem.
     SocketAddress destination;
-    MessageType type;
 
     char data[MAX_SIZE];
     std::size_t length;

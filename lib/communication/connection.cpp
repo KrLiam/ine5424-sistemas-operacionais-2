@@ -43,7 +43,7 @@ void Connection::packet_received(const PacketReceived &event)
 {
     if (event.packet.meta.origin != remote_node.get_address()) return;
     if (event.packet.data.header.get_message_type() == MessageType::RAFT) return;
-    if (message_type::is_broadcast(event.packet.data.header.type)) return;
+    if (message_type::is_broadcast(event.packet.data.header.get_message_type())) return;
 
     receive(event.packet);
 }
@@ -51,7 +51,7 @@ void Connection::packet_received(const PacketReceived &event)
 void Connection::message_received(const MessageReceived &event)
 {
     if (event.message.origin != remote_node.get_address()) return;
-    if (message_type::is_broadcast(event.message.type)) return;
+    if (message_type::is_broadcast(event.message.id.msg_type)) return;
     receive(event.message);
 }
 
@@ -390,12 +390,12 @@ void Connection::send_flag(uint8_t flags, MessageData message_data)
 
     id.origin = local_node.get_address(),
     id.msg_num = dispatcher.get_next_number();
+    id.msg_type = MessageType::CONTROL;
 
     PacketHeader header;
     memset(&header, 0, sizeof(PacketHeader));
 
     header.id = id;
-    header.type = MessageType::CONTROL;
     header.flags = flags;
 
     PacketData data;
@@ -581,12 +581,12 @@ void Connection::heartbeat()
     data.header = {
         id : {
             origin : local_node.get_address(),
-            msg_num : 0
+            msg_num : 0,
+            msg_type : MessageType::HEARTBEAT
         },
         fragment_num: 0,
         checksum: 0,
-        flags: flags,
-        type : MessageType::HEARTBEAT
+        flags: flags
     };
 
     PacketMetadata meta = {

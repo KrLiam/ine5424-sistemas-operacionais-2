@@ -2,7 +2,8 @@
 
 bool MessageIdentity::operator==(const MessageIdentity& other) const {
     return origin == other.origin
-        && msg_num == other.msg_num;
+        && msg_num == other.msg_num
+        && msg_type == other.msg_type;
 }
 
 Packet create_ack(const Packet& packet)
@@ -19,7 +20,6 @@ Packet create_ack(const Packet& packet, SocketAddress destination)
         fragment_num : packet.data.header.fragment_num,
         checksum : 0,
         flags : ACK,
-        type : packet.data.header.type
     };
     PacketMetadata meta = {
         transmission_uuid : UUID(""),

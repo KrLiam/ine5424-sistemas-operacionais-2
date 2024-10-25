@@ -268,7 +268,7 @@ void TransmissionQueue::receive_ack(const Packet& ack_packet)
 
 void TransmissionQueue::discard_node(const Node& node) {
     for (auto& [_, entry] : entries) {
-        if (!message_type::is_broadcast(entry.packet.data.header.type)) continue;
+        if (!message_type::is_broadcast(entry.packet.data.header.get_message_type())) continue;
 
         mutex_timeout.lock();
         entry.pending_receivers.erase(&node);
@@ -283,5 +283,5 @@ void TransmissionQueue::discard_node(const Node& node) {
 
 bool TransmissionQueue::packet_can_timeout(const Packet& packet)
 {
-    return !message_type::is_urb(packet.data.header.type);
+    return !message_type::is_urb(packet.data.header.get_message_type());
 }
