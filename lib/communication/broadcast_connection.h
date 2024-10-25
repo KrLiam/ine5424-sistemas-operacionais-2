@@ -30,6 +30,7 @@ class BroadcastConnection {
     std::unordered_map<MessageIdentity, std::shared_ptr<Transmission>> ab_transmissions;
     TransmissionDispatcher ab_dispatcher;
     SequenceNumber ab_sequence_number;
+    uint32_t ab_next_deliver;
 
     TransmissionDispatcher dispatcher;
     std::unordered_map<std::string, SequenceNumber> sequence_numbers;
@@ -47,6 +48,7 @@ class BroadcastConnection {
 
     void retransmit_fragment(Packet& packet);
     void try_deliver(const MessageIdentity&);
+    void try_deliver_next_atomic();
     bool is_delivered(const MessageIdentity& id, bool is_atomic);
     bool establish_all_connections();
 

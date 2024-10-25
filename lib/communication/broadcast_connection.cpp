@@ -19,7 +19,8 @@ BroadcastConnection::BroadcastConnection(
     dispatcher(BROADCAST_ID, connection_update_buffer, pipeline),
     connection_update_buffer(connection_update_buffer),
     deliver_buffer(deliver_buffer),
-    ab_sequence_number({0, 0})
+    ab_sequence_number({0, 0}),
+    ab_next_deliver(0)
 {
     observe_pipeline();
 }
@@ -59,6 +60,7 @@ void BroadcastConnection::receive_synchronization(const ReceiveSynchronization& 
     if (ab_sequence_number.next_number >= event.expected_ab_number) return;
     ab_sequence_number.initial_number = event.expected_ab_number;
     ab_sequence_number.next_number = event.expected_ab_number;
+    ab_next_deliver = ab_sequence_number.initial_number;
     ab_dispatcher.reset_number(ab_sequence_number.initial_number);
     log_info("Atomic broadcast number synchronized to ", ab_sequence_number.initial_number, ".");
 }
@@ -313,12 +315,31 @@ void BroadcastConnection::retransmit_fragment(Packet& packet)
 
 void BroadcastConnection::try_deliver(const MessageIdentity& id) {
     if (!retransmissions.contains(id)) return;
-    RetransmissionEntry& entry = retransmissions.at(id);
 
-    if (entry.received_all_acks && entry.message_received) {
-        log_debug("Delivering message ", entry.message.to_string(), ".");
-        deliver_buffer.produce(entry.message);
-        retransmissions.erase(id);
+    bool is_atomic = message_type::is_atomic(id.msg_type);
+    if (is_atomic && id.msg_num != ab_next_deliver) return;
+
+    RetransmissionEntry& entry = retransmissions.at(id);
+    if (!entry.received_all_acks || !entry.message_received) return;
+
+    log_debug("Delivering message ", entry.message.to_string(), ".");
+    deliver_buffer.produce(entry.message);
+    retransmissions.erase(id);
+
+    if (is_atomic)
+    {
+        ab_next_deliver++;
+        try_deliver_next_atomic();
+    }
+}
+
+void BroadcastConnection::try_deliver_next_atomic()
+{
+    for (auto& [_, entry] : retransmissions)
+    {
+        if (ab_next_deliver != entry.message.id.msg_num || !message_type::is_atomic(entry.message.id.msg_type)) continue;
+        try_deliver(entry.message.id);
+        break;
     }
 }
 
