@@ -323,8 +323,10 @@ void BroadcastConnection::try_deliver(const MessageIdentity& id) {
 }
 
 void BroadcastConnection::transmission_complete(const TransmissionComplete& event) {
-    const UUID &uuid = event.uuid;
+    if (!message_type::is_broadcast(event.id.msg_type)) return;
+
     const MessageIdentity& id = event.id;
+    const UUID &uuid = event.uuid;
 
     const Transmission* ab_active = ab_dispatcher.get_active();
     if (ab_active && uuid == ab_active->uuid)
@@ -333,12 +335,12 @@ void BroadcastConnection::transmission_complete(const TransmissionComplete& even
         if (ab_transmissions.contains(id)) ab_transmissions.erase(id);
     }
 
-    if (retransmissions.contains(event.id)) {
-        RetransmissionEntry& entry = retransmissions.at(event.id);
+    if (retransmissions.contains(id)) {
+        RetransmissionEntry& entry = retransmissions.at(id);
         entry.received_all_acks = true;
         log_debug("All ACKs from URB retransmission were received.", entry.message_received ? "" : " Still missing message.");
 
-        try_deliver(event.id);
+        try_deliver(id);
     }
 
     const Transmission* active = dispatcher.get_active();

@@ -67,6 +67,8 @@ void Connection::message_defragmentation_is_complete(const MessageDefragmentatio
 
 void Connection::transmission_complete(const TransmissionComplete &event)
 {
+    if (message_type::is_broadcast(event.id.msg_type)) return;
+
     const UUID &uuid = event.uuid;
     const Transmission* active = dispatcher.get_active();
 
