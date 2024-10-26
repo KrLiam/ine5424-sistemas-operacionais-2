@@ -20,7 +20,8 @@ BroadcastConnection::BroadcastConnection(
     connection_update_buffer(connection_update_buffer),
     deliver_buffer(deliver_buffer),
     ab_sequence_number({0, 0}),
-    ab_next_deliver(0)
+    ab_next_deliver(0),
+    delayed_ab_number(0)
 {
     observe_pipeline();
 }
