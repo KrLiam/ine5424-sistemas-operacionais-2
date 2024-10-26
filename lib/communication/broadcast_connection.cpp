@@ -86,8 +86,13 @@ void BroadcastConnection::connection_established(const ConnectionEstablished&) {
 
 void BroadcastConnection::connection_closed(const ConnectionClosed& event) {
     ab_dispatcher.cancel_all(); // TODO apenas cancelar as transmissoes do nó que morreu
+
+    std::unordered_set<MessageIdentity> remove;
     for (auto& [id, t] : ab_transmissions) {
-        if (id.origin == event.node.get_address()) ab_transmissions.erase(id);
+        if (id.origin == event.node.get_address()) remove.emplace(id);
+    }
+    for (const MessageIdentity& id : remove) {
+        ab_transmissions.erase(id);
     }
 
     if (!dispatcher.is_active()) dispatcher.cancel_all();
