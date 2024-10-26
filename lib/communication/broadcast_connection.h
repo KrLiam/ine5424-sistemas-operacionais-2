@@ -78,6 +78,7 @@ class BroadcastConnection {
     void send_dispatched_packets();
 
     void synchronize_ab_number(uint32_t number);
+    bool has_pending_ab_delivery();
 
 public:
     BroadcastConnection(

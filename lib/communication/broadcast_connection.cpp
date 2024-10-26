@@ -168,6 +168,7 @@ void BroadcastConnection::packet_received(const PacketReceived &event)
             "."
         );
         sequence->next_number = message_number;
+        if (!has_pending_ab_delivery()) ab_next_deliver = message_number;  // Se tem uma entrega AB pendente, o ab_next_deliver vai pular no try_deliver_next_atomic()
     }
 
     receive_fragment(packet);
@@ -352,20 +353,23 @@ void BroadcastConnection::try_deliver(const MessageIdentity& id) {
     }
     retransmissions.erase(id);
 
-    if (is_atomic)
-    {
-        ab_next_deliver++;
-        try_deliver_next_atomic();
-    }
+    if (is_atomic) try_deliver_next_atomic();
 }
 
 void BroadcastConnection::try_deliver_next_atomic()
 {
+    MessageIdentity* next_atomic = nullptr;
+
     for (auto& [_, entry] : retransmissions)
     {
-        if (ab_next_deliver != entry.message.id.msg_num || !message_type::is_atomic(entry.message.id.msg_type)) continue;
-        try_deliver(entry.message.id);
-        break;
+        if (!message_type::is_atomic(entry.message.id.msg_type)) continue;
+        if (!next_atomic || next_atomic->msg_num > entry.message.id.msg_num) next_atomic = &entry.message.id;
+    }
+
+    if (next_atomic)
+    {
+        ab_next_deliver = next_atomic->msg_num;
+        try_deliver(*next_atomic);
     }
 }
 
@@ -498,4 +502,13 @@ void BroadcastConnection::synchronize_ab_number(uint32_t number)
     ab_next_deliver = number;
     ab_dispatcher.reset_number(number);
     log_info("Atomic broadcast number synchronized to ", number, ".");
+}
+
+bool BroadcastConnection::has_pending_ab_delivery()
+{
+    for (auto& [_, entry] : retransmissions)
+    {
+        if (!message_type::is_atomic(entry.message.id.msg_type)) return true;
+    }
+    return false;
 }
