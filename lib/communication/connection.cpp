@@ -376,7 +376,7 @@ void Connection::send_syn(uint8_t extra_flags)
 {
     SynData data = {
         broadcast_number : broadcast_dispatcher.get_next_number(),
-        ab_number : ab_dispatcher.get_next_number()
+        ab_number : ab_dispatcher.get_next_number() + local_node.is_receiving_ab_broadcast()
     };
 
     send_flag(SYN | extra_flags, MessageData::from(data));

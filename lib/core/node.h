@@ -21,6 +21,9 @@ private:
     bool alive;
     bool leader;
 
+    // Indica se está atualmente recebendo pacotes AB. Somente para o nodo local.
+    bool receiving_ab_broadcast;
+
 public:
     Node(std::string id, SocketAddress address, bool _remote);
     ~Node();
@@ -45,6 +48,15 @@ public:
     void set_leader(bool leader)
     {
         this->leader = leader;
+    }
+
+    bool is_receiving_ab_broadcast() const
+    {
+        return receiving_ab_broadcast;
+    }
+    void set_receiving_ab_broadcast(bool receiving_ab_broadcast)
+    {
+        this->receiving_ab_broadcast = receiving_ab_broadcast;
     }
 
     std::string to_string() const;

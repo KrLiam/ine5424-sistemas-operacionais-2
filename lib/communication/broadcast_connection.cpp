@@ -5,7 +5,7 @@ RetransmissionEntry::RetransmissionEntry() {}
 
 BroadcastConnection::BroadcastConnection(
     NodeMap& nodes,
-    const Node& local_node,
+    Node& local_node,
     std::map<std::string, Connection>& connections,
     BufferSet<std::string>& connection_update_buffer,
     Buffer<Message>& deliver_buffer,
@@ -200,7 +200,12 @@ void BroadcastConnection::message_received(const MessageReceived &event)
     }
 
     sequence->next_number++;
-    if (message_type::is_atomic(message.id.msg_type)) ab_dispatcher.reset_number(sequence->next_number);
+    if (message_type::is_atomic(message.id.msg_type))
+    {
+        ab_dispatcher.reset_number(sequence->next_number);
+        local_node.set_receiving_ab_broadcast(false);
+    }
+    
 
     MessageType type = event.message.id.msg_type;
 
@@ -274,6 +279,8 @@ void BroadcastConnection::receive_ack(Packet& ack_packet)
 void BroadcastConnection::receive_fragment(Packet& packet)
 {
     const PacketHeader& header = packet.data.header;
+
+    if (message_type::is_atomic(header.get_message_type()) && header.id.msg_num == ab_sequence_number.next_number) local_node.set_receiving_ab_broadcast(true);
 
     SocketAddress ack_destination = packet.meta.origin;
 
