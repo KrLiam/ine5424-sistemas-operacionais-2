@@ -16,6 +16,10 @@ bool Transmission::is_broadcast() const {
     return receiver_id == BROADCAST_ID;
 }
 
+bool Transmission::to_leader() const {
+    return receiver_id == LEADER_ID;
+}
+
 void Transmission::set_result(bool success) {
     result.success = success;
 }

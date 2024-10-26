@@ -21,7 +21,7 @@ ReliableCommunication::ReliableCommunication(
 
     broadcast_type = config.broadcast;
 
-    gr = std::make_shared<GroupRegistry>(local_id, config);
+    gr = std::make_shared<GroupRegistry>(local_id, config, event_bus);
     pipeline = std::make_unique<Pipeline>(gr, event_bus, fault_config);
 
     sender_thread = std::thread([this]()
@@ -125,8 +125,9 @@ bool ReliableCommunication::broadcast(MessageData data) {
         return false;
     }
 
-    MessageType message_type = MessageType(0b11 | (static_cast<int>(broadcast_type) << 2));
-    Transmission transmission = create_transmission(BROADCAST_ID, data, message_type);
+    MessageType message_type = message_type::from_broadcast_type(broadcast_type);
+    std::string receiver_id = message_type == MessageType::AB_REQUEST ? LEADER_ID : BROADCAST_ID;
+    Transmission transmission = create_transmission(receiver_id, data, message_type);
     gr->enqueue(transmission);
     
     TransmissionResult result = transmission.wait_result();
@@ -166,7 +167,7 @@ Transmission ReliableCommunication::create_transmission(
 {
     Message message;
     
-    if (receiver_id == BROADCAST_ID) {
+    if (receiver_id == BROADCAST_ID || receiver_id == LEADER_ID) {
         message = create_message({BROADCAST_ADDRESS, 0}, data, msg_type);
     }
     else {

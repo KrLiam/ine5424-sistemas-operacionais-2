@@ -28,8 +28,8 @@ struct PacketHeader
         return (uint32_t)fragment_num;
     }
 
-    bool is_data() const {
-        return message_type::is_application(id.msg_type) && !is_ack();
+    bool is_fragment() const {
+        return message_type::is_data(id.msg_type) && !is_ack();
     }
 
     bool is_ack() const
@@ -115,7 +115,7 @@ struct Packet
         const PacketHeader& header = data.header;
 
         std::string flags;
-        if (header.is_data()) flags += "DATA";
+        if (header.is_fragment()) flags += "DATA";
         if (header.is_syn()) flags += flags.length() ? "+SYN" : "SYN";
         if (header.is_rst()) flags += flags.length() ? "+RST" : "RST";
         if (header.is_fin()) flags += flags.length() ? "+FIN" : "FIN";

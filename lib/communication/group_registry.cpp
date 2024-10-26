@@ -1,13 +1,21 @@
 #include "communication/group_registry.h"
 #include "pipeline/pipeline.h"
 
-GroupRegistry::GroupRegistry(std::string local_id, Config config) : local_id(local_id)
+GroupRegistry::GroupRegistry(std::string local_id, Config config, EventBus& event_bus)
+    : event_bus(event_bus), local_id(local_id)
 {
+    attach_observers();
     read_nodes_from_configuration(local_id, config);
 }
 
 GroupRegistry::~GroupRegistry()
 {
+}
+
+
+void GroupRegistry::attach_observers() {
+    obs_leader_elected.on(std::bind(&GroupRegistry::leader_elected, this, _1));
+    event_bus.attach(obs_leader_elected);
 }
 
 NodeMap& GroupRegistry::get_nodes()
@@ -31,7 +39,42 @@ void GroupRegistry::read_nodes_from_configuration(std::string local_id, Config c
     }
 }
 
+void GroupRegistry::leader_elected(const LeaderElected&) {
+    update_leader_queue();
+}
+
+void GroupRegistry::update_leader_queue() {
+    Node* leader = nodes.get_leader();
+
+    if (!leader) {
+        log_warn("No leader is elected right now. Transmission will hang.");
+        return;
+    }
+
+    while (!leader_transmissions.empty()) {
+        Transmission* next = leader_transmissions.front();
+        leader_transmissions.pop();
+
+        Message& message = next->message;
+        message.destination = leader->get_address();
+        next->receiver_id = leader->get_id();
+
+        Connection& conn = connections.at(leader->get_id());
+        bool enqueued = conn.enqueue(*next);
+        if (!enqueued) {
+            next->set_result(false);
+            next->release();
+        }
+    }
+}
+
 bool GroupRegistry::enqueue(Transmission& transmission) {
+    if (transmission.to_leader()) {
+        leader_transmissions.push(&transmission);
+        update_leader_queue();
+        return true;
+    }
+
     if (transmission.is_broadcast()) {
         return broadcast_connection->enqueue(transmission);
     }

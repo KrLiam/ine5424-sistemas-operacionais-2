@@ -10,25 +10,30 @@
 enum class MessageType : uint8_t
 {
     // Padrão
-    // <type0><type1><type2><type3><type4><type5><broadcast><application>
-    // type: tipo da mensagem.
-    // broadcast: se a mensagem é broadcast.
-    // application: se a mensagem é da aplicação.
+    // <type0><type1><type2><type3><type4><broadcast><data><application>
+    // type: Tipo da mensagem.
+    // broadcast: Se a mensagem é broadcast.
+    // application: Se a mensagem deve ser entregue à aplicação.
+    // data: Se a mensagem/pacote contém dados que devem sofrer desfragmentação. Ou seja,
+    //       ao receber pacotes com esta flag ativada, a camada de fragmentação
+    //       irá desfragmentar e produzir uma mensagem.
 
     // Mensagens da lib
     CONTROL    = 0b00000000,
-    HEARTBEAT  = 0b00000100,
-    RAFT       = 0b00000110,
+    HEARTBEAT  = 0b00001000,
+    RAFT       = 0b00000100,
+    AB_REQUEST = 0b00000010,
     // Mensagens da aplicação
-    SEND       = 0b00000001,
-    BEB        = 0b00000011,
-    URB        = 0b00000111,
-    AB_REQUEST = 0b00001011,
-    AB_URB     = 0b00001111,
+    SEND       = 0b00000011,
+    BEB        = 0b00000111,
+    URB        = 0b00001111,
+    AB_URB     = 0b00010111,
 };
 // queria tanto que enums pudessem ter métodos :(
 namespace message_type {
+    MessageType from_broadcast_type(BroadcastType type);
     bool is_application(MessageType type);
+    bool is_data(MessageType type);
     bool is_broadcast(MessageType type);
     bool is_urb(MessageType type);
     bool is_atomic(MessageType type);
@@ -81,6 +86,10 @@ struct Message
 
     char data[MAX_SIZE];
     std::size_t length;
+
+    bool is_application() {
+        return message_type::is_application(id.msg_type);
+    }
 
     std::string to_string() const
     {

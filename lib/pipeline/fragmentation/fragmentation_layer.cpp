@@ -40,7 +40,7 @@ void FragmentationLayer::receive(Packet packet)
     }
     handler.forward_receive(packet);
 
-    if (!packet.data.header.is_data())
+    if (!packet.data.header.is_fragment())
         return;
 
     std::string message_id = get_message_identifier(packet);

@@ -560,7 +560,13 @@ void Connection::receive(Message message)
     }
 
     expected_number++;
-    application_buffer.produce(message);
+    
+    pipeline.notify(UnicastMessageReceived(message));
+
+    if (message.is_application())
+    {
+        application_buffer.produce(message);
+    }
 }
 
 void Connection::dispatch_to_sender(Packet p)

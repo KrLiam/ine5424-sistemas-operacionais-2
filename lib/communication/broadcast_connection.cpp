@@ -36,17 +36,27 @@ void BroadcastConnection::observe_pipeline() {
     obs_connection_closed.on(std::bind(&BroadcastConnection::connection_closed, this, _1));
     obs_packet_received.on(std::bind(&BroadcastConnection::packet_received, this, _1));
     obs_message_received.on(std::bind(&BroadcastConnection::message_received, this, _1));
+    obs_unicast_message_received.on(std::bind(&BroadcastConnection::unicast_message_received, this, _1));
     obs_transmission_fail.on(std::bind(&BroadcastConnection::transmission_fail, this, _1));
     obs_transmission_complete.on(std::bind(&BroadcastConnection::transmission_complete, this, _1));
-    obs_leader_elected.on(std::bind(&BroadcastConnection::leader_elected, this, _1));
     pipeline.attach(obs_receive_synchronization);
     pipeline.attach(obs_connection_established);
     pipeline.attach(obs_connection_closed);
     pipeline.attach(obs_packet_received);
     pipeline.attach(obs_message_received);
+    pipeline.attach(obs_unicast_message_received);
     pipeline.attach(obs_transmission_complete);
     pipeline.attach(obs_transmission_fail);
-    pipeline.attach(obs_leader_elected);
+}
+
+SequenceNumber* BroadcastConnection::get_sequence(const MessageIdentity& id) {
+    if (message_type::is_atomic(id.msg_type)) return &ab_sequence_number;
+
+    if (!nodes.contains(id.origin)) return nullptr;
+    const Node& origin = nodes.get_node(id.origin);
+
+    if (!sequence_numbers.contains(origin.get_id())) return nullptr;
+    return &sequence_numbers.at(origin.get_id());
 }
 
 void BroadcastConnection::receive_synchronization(const ReceiveSynchronization& event) {
@@ -71,10 +81,6 @@ void BroadcastConnection::receive_synchronization(const ReceiveSynchronization& 
     synchronize_ab_number(event.expected_ab_number);
 }
 void BroadcastConnection::connection_established(const ConnectionEstablished&) {
-    request_update();
-}
-
-void BroadcastConnection::leader_elected(const LeaderElected&) {
     request_update();
 }
 
@@ -113,27 +119,26 @@ void BroadcastConnection::packet_received(const PacketReceived &event)
     uint32_t message_number = packet.data.header.id.msg_num;
     bool is_atomic = message_type::is_atomic(packet.data.header.get_message_type());
 
-    const Node& origin = nodes.get_node(packet.data.header.id.origin);
-    if (!sequence_numbers.contains(origin.get_id())) {
+    SequenceNumber* sequence = get_sequence(packet.data.header.id);
+    if (!sequence) {
         log_warn("Received packet ", packet.to_string(PacketFormat::RECEIVED), ", but sequence number is not synchronized; sending RST.");
         send_rst(packet);
         return;
     }
-    SequenceNumber& sequence = is_atomic ? ab_sequence_number : sequence_numbers.at(origin.get_id());
 
-    if (message_number < sequence.initial_number)
+    if (message_number < sequence->initial_number)
     {
         log_debug(
             "Received ",
             packet.to_string(PacketFormat::RECEIVED),
             " which is prior to current connection with initial number ",
-            sequence.initial_number,
+            sequence->initial_number,
             "; ignoring it."
         );
         send_rst(packet);
         return;
     }
-    if (message_number > sequence.next_number)
+    if (message_number > sequence->next_number)
     {
         if (!is_atomic)
         {
@@ -143,7 +148,7 @@ void BroadcastConnection::packet_received(const PacketReceived &event)
             " that expects confirmation, but message number ",
             message_number,
             " is higher than the expected ",
-            sequence.next_number,
+            sequence->next_number,
             "; ignoring it."
             );
             return;
@@ -151,13 +156,13 @@ void BroadcastConnection::packet_received(const PacketReceived &event)
         // TODO: testar isso, acho que o único jeito seria definindo manualmente no código os valores iniciais
         log_debug(
             "Received atomic broadcast with sequence number higher than the current one [",
-            sequence.next_number,
+            sequence->next_number,
             "]; ",
             "jumping atomic sequence number to ",
             message_number,
             "."
         );
-        sequence.next_number = message_number;
+        sequence->next_number = message_number;
     }
 
     receive_fragment(packet);
@@ -170,33 +175,31 @@ void BroadcastConnection::message_received(const MessageReceived &event)
     const Message& message = event.message;
     const MessageIdentity& id = message.id;
 
-    const Node& origin = nodes.get_node(message.id.origin);
-    if (!sequence_numbers.contains(origin.get_id())) {
+    SequenceNumber* sequence = get_sequence(message.id);
+    if (!sequence) {
         log_warn("Received message ", message.to_string(), ", but sequence number is not synchronized.");
         return;
     };
 
-    SequenceNumber& sequence = message_type::is_atomic(message.id.msg_type) ? ab_sequence_number : sequence_numbers.at(origin.get_id());
-
-    if (message.id.msg_num < sequence.next_number)
+    if (message.id.msg_num < sequence->next_number)
     {
         log_warn("Message ", message.to_string(), " was already received; dropping it.");
         return;
     }
 
-    if (message.id.msg_num > sequence.next_number)
+    if (message.id.msg_num > sequence->next_number)
     {
-        log_warn("Message ", message.to_string(), " is unexpected, current number expected is ", sequence.next_number, "; dropping it.");
+        log_warn("Message ", message.to_string(), " is unexpected, current number expected is ", sequence->next_number, "; dropping it.");
         return;
     }
 
-    sequence.next_number++;
-    if (message_type::is_atomic(message.id.msg_type)) ab_dispatcher.reset_number(sequence.next_number);
+    sequence->next_number++;
+    if (message_type::is_atomic(message.id.msg_type)) ab_dispatcher.reset_number(sequence->next_number);
 
     MessageType type = event.message.id.msg_type;
 
     if (type == MessageType::BEB) {
-        deliver_buffer.produce(event.message);
+        if (event.message.is_application()) deliver_buffer.produce(event.message);
     }
     else if (message_type::is_urb(type)) {
         if (!retransmissions.contains(id)) {
@@ -209,7 +212,14 @@ void BroadcastConnection::message_received(const MessageReceived &event)
 
         try_deliver(id);
     }
-    else if (type == MessageType::AB_REQUEST) {
+}
+
+void BroadcastConnection::unicast_message_received(const UnicastMessageReceived &event)
+{
+    const Message& message = event.message;
+    MessageType type = message.id.msg_type;
+
+    if (type == MessageType::AB_REQUEST) {
         if (!local_node.is_leader()) {
             log_warn("Received AB message from ", message.origin.to_string(), ", but local node is not the leader; ignoring it.");
             return;
@@ -218,7 +228,7 @@ void BroadcastConnection::message_received(const MessageReceived &event)
         if (ab_transmissions.contains(message.id)) return;
 
         log_info("Received AB message from ", message.origin.to_string(), ", retransmitting it.");
-
+    
         ab_transmissions.emplace(message.id, std::make_shared<Transmission>(message, BROADCAST_ID));
         Transmission& t = *ab_transmissions.at(message.id);
 
@@ -330,8 +340,11 @@ void BroadcastConnection::try_deliver(const MessageIdentity& id) {
     RetransmissionEntry& entry = retransmissions.at(id);
     if (!entry.received_all_acks || !entry.message_received) return;
 
-    log_debug("Delivering message ", entry.message.to_string(), ".");
-    deliver_buffer.produce(entry.message);
+    if (entry.message.is_application())
+    {
+        log_debug("Delivering message ", entry.message.to_string(), ".");
+        deliver_buffer.produce(entry.message);
+    }
     retransmissions.erase(id);
 
     if (is_atomic)
@@ -427,28 +440,13 @@ bool BroadcastConnection::establish_all_connections() {
 void BroadcastConnection::update() {
     send_dispatched_packets();
 
-    ab_dispatcher.update();
-
-    if (dispatcher.is_active()) return;
-
-    Transmission* next_transmission = dispatcher.get_next();
-    if (!next_transmission) return;
+    if (ab_dispatcher.is_empty() && dispatcher.is_empty()) return;
+    if (ab_dispatcher.is_active() && dispatcher.is_active()) return;
 
     bool established = establish_all_connections();
     if (!established) return;
- 
-    Message& message = next_transmission->message;
-    if (message.id.msg_type == MessageType::AB_REQUEST) {
-        Node* leader = nodes.get_leader();
 
-        if (!leader) {
-            log_warn("No leader is elected right now. Atomic broadcast will hang.");
-            return;
-        }
-
-        message.destination = leader->get_address();
-    }
-
+    ab_dispatcher.update();
     dispatcher.update();
 }
 

@@ -21,7 +21,7 @@ enum EventType {
     HEARTBEAT_RECEIVED = 11,
     NODE_DEATH = 12,
     FRAGMENT_RECEIVED = 13,
-    DELIVER_MESSAGE = 14,
+    UNICAST_MESSAGE_RECEIVED = 14,
     RECEIVE_SYNCHRONIZATION = 15,
     LEADER_ELECTED = 16
 };
@@ -92,12 +92,12 @@ struct MessageReceived : public Event {
     MessageReceived(Message& message);
 };
 
-struct DeliverMessage : public Event {
-    static EventType type() { return EventType::DELIVER_MESSAGE; }
+struct UnicastMessageReceived : public Event {
+    static EventType type() { return EventType::UNICAST_MESSAGE_RECEIVED; }
 
     Message& message;
 
-    DeliverMessage(Message& message);
+    UnicastMessageReceived(Message& message);
 };
 
 struct TransmissionStarted : public Event {

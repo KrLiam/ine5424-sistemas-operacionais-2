@@ -9,14 +9,25 @@
 #include "core/message.h"
 #include "core/packet.h"
 #include "core/buffer.h"
+#include "core/event.h"
 #include "raft/raft.h"
+#include "utils/observer.h"
 
 class Pipeline;
 
 class GroupRegistry
 {
+    EventBus& event_bus;
+    
+    Observer<LeaderElected> obs_leader_elected;
+    
+    void leader_elected(const LeaderElected&);
+
+    void update_leader_queue();
+
+    void attach_observers();
 public:
-    GroupRegistry(std::string local_id, Config config);
+    GroupRegistry(std::string local_id, Config config, EventBus& event_bus);
     ~GroupRegistry();
 
     NodeMap &get_nodes();
@@ -57,6 +68,8 @@ private:
     std::map<std::string, Connection> connections;
     std::unique_ptr<BroadcastConnection> broadcast_connection;
     std::unique_ptr<RaftManager> raft;
+
+    std::queue<Transmission*> leader_transmissions;
 
     void read_nodes_from_configuration(std::string local_id, Config config);
 };

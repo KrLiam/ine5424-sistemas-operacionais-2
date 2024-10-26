@@ -7,6 +7,7 @@
 
 
 const std::string BROADCAST_ID = "";
+const std::string LEADER_ID = "#leader";
 
 
 struct TransmissionResult {
@@ -36,6 +37,7 @@ public:
     Transmission(Message message, std::string receiver_id);
 
     bool is_broadcast() const;
+    bool to_leader() const;
 
     void set_result(bool success);
 
