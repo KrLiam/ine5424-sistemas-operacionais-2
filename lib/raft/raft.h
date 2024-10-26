@@ -40,7 +40,7 @@ class RaftManager
     Node &local_node;
     Node *leader;
 
-    Pipeline &pipeline;
+    EventBus &event_bus;
 
     std::unordered_set<SocketAddress> received_votes;
 
@@ -95,5 +95,5 @@ class RaftManager
     unsigned int get_quorum();
 
 public:
-    RaftManager(BroadcastConnection& broadcast_connection, std::map<std::string, Connection> &connections, NodeMap &nodes, Node &local_node, Pipeline &pipeline);
+    RaftManager(BroadcastConnection& broadcast_connection, std::map<std::string, Connection> &connections, NodeMap &nodes, Node &local_node, EventBus &event_bus);
 };

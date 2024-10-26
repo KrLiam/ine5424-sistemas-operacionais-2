@@ -40,8 +40,6 @@ PipelineStep *Pipeline::get_step(int step_index)
 }
 
 void Pipeline::attach_layers() {
-    event_bus.clear();
-
     for (PipelineStep* layer : layers) {
         layer->attach(event_bus);
     }

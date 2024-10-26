@@ -5,14 +5,14 @@ RaftManager::RaftManager(
     std::map<std::string, Connection> &connections,
     NodeMap &nodes,
     Node &local_node,
-    Pipeline &pipeline) : data_filename(format("%s.raft", local_node.get_id().c_str())),
+    EventBus &event_bus) : data_filename(format("%s.raft", local_node.get_id().c_str())),
                           state(FOLLOWER),
                           broadcast_connection(broadcast_connection),
                           connections(connections),
                           nodes(nodes),
                           local_node(local_node),
                           leader(nullptr),
-                          pipeline(pipeline),
+                          event_bus(event_bus),
                           timer_id(0),
                           election_time_dis(3000, 4000)
 {
@@ -21,7 +21,7 @@ RaftManager::RaftManager(
     read_data();
 
     obs_packet_received.on(std::bind(&RaftManager::packet_received, this, _1));
-    pipeline.attach(obs_packet_received);
+    event_bus.attach(obs_packet_received);
 
     set_election_timer();
 }
@@ -309,7 +309,7 @@ void RaftManager::follow(Node &node)
     leader->set_leader(true);
     cancel_election_timer();
     change_state(FOLLOWER);
-    pipeline.notify(LeaderElected());
+    event_bus.notify(LeaderElected());
 }
 
 bool RaftManager::should_grant_vote(SocketAddress address)
@@ -336,7 +336,7 @@ void RaftManager::check_if_won_election()
         log_info("Received quorum of votes, we are now the leader.");
         cancel_election_timer();
         change_state(LEADER);
-        pipeline.notify(LeaderElected());
+        event_bus.notify(LeaderElected());
     }
 }
 

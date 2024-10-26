@@ -16,6 +16,10 @@ public:
         subjects.clear();
     }
 
+    EventBus() {
+        clear();
+    }
+
     ~EventBus() {
         destroyed = true;
         clear();
