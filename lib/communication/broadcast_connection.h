@@ -31,6 +31,7 @@ class BroadcastConnection {
     TransmissionDispatcher ab_dispatcher;
     SequenceNumber ab_sequence_number;
     uint32_t ab_next_deliver;
+    uint32_t delayed_ab_number;
 
     TransmissionDispatcher dispatcher;
     std::unordered_map<std::string, SequenceNumber> sequence_numbers;
@@ -73,6 +74,8 @@ class BroadcastConnection {
     void send_rst(Packet&);
 
     void send_dispatched_packets();
+
+    void synchronize_ab_number(uint32_t number);
 
 public:
     BroadcastConnection(

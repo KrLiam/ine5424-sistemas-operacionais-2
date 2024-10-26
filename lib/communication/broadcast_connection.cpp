@@ -58,11 +58,16 @@ void BroadcastConnection::receive_synchronization(const ReceiveSynchronization& 
     log_info("Broadcast sequence with node ", id, " was resync to ", number.initial_number);
 
     if (ab_sequence_number.next_number >= event.expected_ab_number) return;
-    ab_sequence_number.initial_number = event.expected_ab_number;
-    ab_sequence_number.next_number = event.expected_ab_number;
-    ab_next_deliver = ab_sequence_number.initial_number;
-    ab_dispatcher.reset_number(ab_sequence_number.initial_number);
-    log_info("Atomic broadcast number synchronized to ", ab_sequence_number.initial_number, ".");
+    if (ab_dispatcher.is_active())
+    {
+        log_warn(
+            "Cannot change the expected AB number while we have an active transmission; ", 
+            "we will synchronize after it finishes."
+            );
+        if (event.expected_ab_number > delayed_ab_number) delayed_ab_number = event.expected_ab_number;
+        return;
+    }
+    synchronize_ab_number(event.expected_ab_number);
 }
 void BroadcastConnection::connection_established(const ConnectionEstablished&) {
     request_update();
@@ -93,6 +98,17 @@ void BroadcastConnection::packet_received(const PacketReceived &event)
         return;
     }
 
+    if (packet.data.header.is_rst()) {
+        Node& node = nodes.get_node(packet.meta.origin);
+        log_info(
+            "Received RST from ",
+            node.to_string(),
+            "; considering it as dead for the current broadcast.");
+        pipeline.notify(NodeDeath(node));
+        try_deliver(packet.data.header.id);
+        return;
+    }
+
     uint32_t message_number = packet.data.header.id.msg_num;
     bool is_atomic = message_type::is_atomic(packet.data.header.get_message_type());
 
@@ -113,6 +129,7 @@ void BroadcastConnection::packet_received(const PacketReceived &event)
             sequence.initial_number,
             "; ignoring it."
         );
+        send_rst(packet);
         return;
     }
     if (message_number > sequence.next_number)
@@ -140,16 +157,6 @@ void BroadcastConnection::packet_received(const PacketReceived &event)
             "."
         );
         sequence.next_number = message_number;
-    }
-
-    if (packet.data.header.is_rst()) {
-        Node& node = nodes.get_node(packet.meta.origin);
-        log_info(
-            "Received RST from ",
-            node.to_string(),
-            "; considering it as dead for the current broadcast.");
-        pipeline.notify(NodeDeath(node));
-        return;
     }
 
     receive_fragment(packet);
@@ -354,6 +361,7 @@ void BroadcastConnection::transmission_complete(const TransmissionComplete& even
     {
         ab_dispatcher.complete(true);
         if (ab_transmissions.contains(id)) ab_transmissions.erase(id);
+        if (delayed_ab_number > ab_sequence_number.next_number) synchronize_ab_number(delayed_ab_number);
     }
 
     if (retransmissions.contains(id)) {
@@ -477,4 +485,13 @@ void BroadcastConnection::send_dispatched_packets()
     dispatched_packets.clear();
 
     mutex_dispatched_packets.unlock();
+}
+
+void BroadcastConnection::synchronize_ab_number(uint32_t number)
+{
+    ab_sequence_number.initial_number = number;
+    ab_sequence_number.next_number = number;
+    ab_next_deliver = number;
+    ab_dispatcher.reset_number(number);
+    log_info("Atomic broadcast number synchronized to ", number, ".");
 }
