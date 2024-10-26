@@ -370,7 +370,9 @@ void BroadcastConnection::try_deliver_next_atomic()
     {
         ab_next_deliver = next_atomic->msg_num;
         try_deliver(*next_atomic);
+        return;
     }
+    ab_next_deliver++;  // Se tiver salto, vai ser ressincronizado no receive
 }
 
 void BroadcastConnection::transmission_complete(const TransmissionComplete& event) {
