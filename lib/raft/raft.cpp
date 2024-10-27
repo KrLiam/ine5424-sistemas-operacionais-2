@@ -119,7 +119,7 @@ void RaftManager::send_request_vote()
         meta : meta
     };
 
-    broadcast_connection.dispatch_to_sender(p);;
+    broadcast_connection.dispatch_to_sender(p);
 }
 
 void RaftManager::packet_received(const PacketReceived &event)

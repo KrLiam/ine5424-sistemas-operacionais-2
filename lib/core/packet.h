@@ -180,6 +180,11 @@ struct SynData {
     uint32_t ab_number;
 };
 
+struct ABConfirmation {
+    uint32_t request_sequence_number;
+    uint32_t ab_sequence_number;
+};
+
 
 Packet create_ack(const Packet& packet);
 Packet create_ack(const Packet& packet, SocketAddress destination);

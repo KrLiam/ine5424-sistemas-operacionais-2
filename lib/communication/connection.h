@@ -8,6 +8,7 @@
 #include <cstring>
 #include <vector>
 #include <functional>
+#include <unordered_map>
 #include <exception>
 
 #include "utils/config.h"
@@ -67,6 +68,9 @@ private:
     std::mutex mutex;
     std::mutex mutex_dispatched_packets;
 
+    std::unordered_map<uint32_t, UUID> ab_to_request_uuid;
+    std::unordered_map<uint32_t, TransmissionComplete> pending_ab_completions;
+
     const std::map<ConnectionState, std::function<void(Packet)>> packet_receive_handlers = {
         {ESTABLISHED, std::bind(&Connection::established, this, _1)},
         {SYN_SENT, std::bind(&Connection::syn_sent, this, _1)},
@@ -121,6 +125,8 @@ private:
 
     void observe_pipeline();
 
+    UUID get_transmission_uuid(const TransmissionComplete& event);
+
     Observer<PacketReceived> obs_packet_received;
     Observer<MessageReceived> obs_message_received;
     Observer<MessageDefragmentationIsComplete> obs_message_defragmentation_is_complete;
@@ -167,4 +173,6 @@ public:
     void dispatch_to_sender(Packet);
 
     void heartbeat();
+
+    void send_ab_confirmation(uint32_t request_number, uint32_t ab_number);
 };
