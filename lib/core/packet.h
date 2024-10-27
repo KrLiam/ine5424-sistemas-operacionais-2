@@ -180,10 +180,6 @@ struct SynData {
     uint32_t ab_number;
 };
 
-struct RaftRPCData {
-    bool success;
-};
-
 
 Packet create_ack(const Packet& packet);
 Packet create_ack(const Packet& packet, SocketAddress destination);

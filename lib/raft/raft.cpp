@@ -67,21 +67,15 @@ void RaftManager::send_vote(Packet packet)
         packet.meta.origin.to_string(),
         ".");
 
-    RaftRPCData reply_data =
-        {
-            success : true
-        };
-
     PacketData data = packet.data;
     data.header.flags = data.header.flags | ACK;
     data.header.id.origin = local_node.get_address();
-    memcpy(data.message_data, &reply_data, sizeof(reply_data));
 
     PacketMetadata meta = {
         transmission_uuid : UUID(""),
         origin : local_node.get_address(),
         destination : packet.meta.origin,
-        message_length : sizeof(reply_data),
+        message_length : 0,
         expects_ack : 0,
         silent : 0
     };
@@ -98,11 +92,6 @@ void RaftManager::send_vote(Packet packet)
 
 void RaftManager::send_request_vote()
 {
-    RaftRPCData rvo_data =
-        {
-            success : 0
-        };
-
     PacketData data;
     memset(&data, 0, sizeof(PacketData));
     data.header = {
@@ -115,13 +104,12 @@ void RaftManager::send_request_vote()
         checksum : 0,
         flags : RVO
     };
-    memcpy(data.message_data, &rvo_data, sizeof(rvo_data));
 
     PacketMetadata meta = {
         transmission_uuid : UUID(""),
         origin : local_node.get_address(),
         destination : {BROADCAST_ADDRESS, 0},
-        message_length : sizeof(RaftRPCData),
+        message_length : 0,
         expects_ack : 0,
         silent : 0
     };
@@ -240,16 +228,12 @@ void RaftManager::candidate_receive(Packet packet)
     {
         if (packet.data.header.is_ack())
         {
-            RaftRPCData *rvo_data = reinterpret_cast<RaftRPCData *>(packet.data.message_data);
-            if (rvo_data->success)
-            {
-                log_debug(
-                    "Received vote from ",
-                    packet.meta.origin.to_string(),
-                    ".");
-                received_votes.emplace(packet.meta.origin);
-                check_if_won_election();
-            }
+            log_debug(
+                "Received vote from ",
+                packet.meta.origin.to_string(),
+                ".");
+            received_votes.emplace(packet.meta.origin);
+            check_if_won_election();
             return;
         }
 
