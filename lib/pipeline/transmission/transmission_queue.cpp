@@ -22,10 +22,6 @@ void TransmissionQueue::send(uint32_t num) {
     Packet& packet = entry.packet;
     const SocketAddress& receiver_address = packet.meta.destination;
 
-    if (packet.data.header.get_message_type() == MessageType::AB_CONFIRMATION) {
-        log_info("a");
-    }
-
     if (entry.tries == 0) {
         if (receiver_address == BROADCAST_ADDRESS) {
             for (const auto& [_, node] : nodes) {
