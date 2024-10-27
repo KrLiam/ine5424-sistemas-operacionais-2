@@ -75,7 +75,7 @@ void Connection::transmission_complete(const TransmissionComplete &event)
     if (type == MessageType::AB_URB && !ab_to_request_uuid.contains(event.id.msg_num))
     {
         if (event.id.origin != local_node.get_address() || !remote_node.is_leader()) return;
-        log_warn("AB was complete before receiving AB confirmation; delaying transmission complete event.");
+        log_warn("AB was completed before receiving AB confirmation; delaying transmission complete event.");
         pending_ab_completions.emplace(event.id.msg_num, event);
         return;
     }
