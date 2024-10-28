@@ -67,32 +67,12 @@ void Connection::message_defragmentation_is_complete(const MessageDefragmentatio
 
 void Connection::transmission_complete(const TransmissionComplete &event)
 {
-    const MessageType& type = event.id.msg_type;
+    if (message_type::is_broadcast(event.id.msg_type)) return;
 
-    if (message_type::is_broadcast(type) && type != MessageType::AB_URB) return;
-    if (type == MessageType::AB_REQUEST) return;
-
-    if (type == MessageType::AB_URB && !ab_to_request_uuid.contains(event.id.msg_num))
-    {
-        if (event.id.origin != local_node.get_address() || !remote_node.is_leader()) return;
-        log_warn("AB was completed before receiving AB confirmation; delaying transmission complete event.");
-        pending_ab_completions.emplace(event.id.msg_num, event);
-        return;
-    }
-
-    const UUID &uuid = get_transmission_uuid(event);
+    const UUID &uuid = event.uuid;
     const Transmission* active = dispatcher.get_active();
 
     if (active && uuid == active->uuid) dispatcher.complete(true);
-}
-
-UUID Connection::get_transmission_uuid(const TransmissionComplete &event)
-{
-    if (event.id.msg_type == MessageType::AB_URB)
-    {
-        if (ab_to_request_uuid.contains(event.id.msg_num)) return ab_to_request_uuid.at(event.id.msg_num);
-    }
-    return event.uuid;
 }
 
 void Connection::transmission_fail(const TransmissionFail &event)
@@ -402,44 +382,6 @@ void Connection::send_syn(uint8_t extra_flags)
     send_flag(SYN | extra_flags, MessageData::from(data));
 }
 
-void Connection::send_ab_confirmation(uint32_t request_number, uint32_t ab_number)
-{
-    ABConfirmation response_data = {
-        request_sequence_number : request_number,
-        ab_sequence_number : ab_number
-    };
-
-    PacketData data;
-    memset(&data, 0, sizeof(PacketData));
-    data.header = {
-        id : {
-            origin : local_node.get_address(),
-            msg_num : 0,
-            msg_type : MessageType::AB_CONFIRMATION
-        },
-        fragment_num : 0,
-        checksum : 0,
-        flags : END
-    };
-    memcpy(data.message_data, &response_data, sizeof(ABConfirmation));
-
-    PacketMetadata meta = {
-        transmission_uuid : UUID(""),
-        origin : local_node.get_address(),
-        destination : remote_node.get_address(),
-        message_length : sizeof(ABConfirmation),
-        expects_ack : 1,
-        silent : 0
-    };
-
-    Packet p = {
-        data : data,
-        meta : meta
-    };
-
-    dispatch_to_sender(p);
-}
-
 void Connection::send_flag(uint8_t flags) {
     return send_flag(flags, {nullptr, 0});
 }
@@ -587,32 +529,9 @@ void Connection::send(Packet packet)
 
 void Connection::receive(Packet packet)
 {
-    const MessageType& type = packet.data.header.id.msg_type;
-    if (type == MessageType::HEARTBEAT)
+    if (packet.data.header.get_message_type() == MessageType::HEARTBEAT)
     {
         pipeline.notify(HeartbeatReceived(remote_node)); // TODO: arrumar o lugar disso. o heartbeatreceived não tem nada a ver com o pipeline
-        return;
-    }
-    else if (type == MessageType::AB_CONFIRMATION)
-    {
-        // TODO: acho q n foi a melhor ideia ter feito o AB_CONFIRMATION um pacote avulso.
-        // fazer ele usar uma msg em vez disso q aí n precisa se preocupar em gerenciar o ACK
-        if (packet.data.header.is_ack())
-        {
-            pipeline.notify(PacketAckReceived(packet));
-            return;
-        }
-
-        dispatch_to_sender(create_ack(packet));
-
-        const Transmission* active = dispatcher.get_active();
-        if (!active || active->message.id.msg_type != MessageType::AB_REQUEST) return;
-
-        ABConfirmation* data = reinterpret_cast<ABConfirmation*>(packet.data.message_data);
-        if (active->message.id.msg_num != data->request_sequence_number) return;
-
-        ab_to_request_uuid.emplace(data->ab_sequence_number, active->uuid);
-        if (pending_ab_completions.contains(data->ab_sequence_number)) transmission_complete(pending_ab_completions.at(data->ab_sequence_number));
         return;
     }
 

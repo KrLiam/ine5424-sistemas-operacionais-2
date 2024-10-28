@@ -112,7 +112,7 @@ void RaftManager::send_request_vote() {
 
     Packet p = {data : data, meta : meta};
 
-    broadcast_connection.dispatch_to_sender(p);
+    broadcast_connection.dispatch_to_sender(p);;
 }
 
 

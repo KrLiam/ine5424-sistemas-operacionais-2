@@ -19,16 +19,15 @@ enum class MessageType : uint8_t
     //       irá desfragmentar e produzir uma mensagem.
 
     // Mensagens da lib
-    CONTROL             = 0b00000000,
-    HEARTBEAT           = 0b00001000,
-    RAFT                = 0b00000100,
-    AB_REQUEST          = 0b00000010,
-    AB_CONFIRMATION     = 0b00011001,
+    CONTROL    = 0b00000000,
+    HEARTBEAT  = 0b00001000,
+    RAFT       = 0b00000100,
+    AB_REQUEST = 0b00000010,
     // Mensagens da aplicação
-    SEND                = 0b00000011,
-    BEB                 = 0b00000111,
-    URB                 = 0b00001111,
-    AB_URB              = 0b00010111,
+    SEND       = 0b00000011,
+    BEB        = 0b00000111,
+    URB        = 0b00001111,
+    AB_URB     = 0b00010111,
 };
 // queria tanto que enums pudessem ter métodos :(
 namespace message_type {

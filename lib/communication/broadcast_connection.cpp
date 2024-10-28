@@ -37,7 +37,6 @@ void BroadcastConnection::observe_pipeline() {
     obs_packet_received.on(std::bind(&BroadcastConnection::packet_received, this, _1));
     obs_message_received.on(std::bind(&BroadcastConnection::message_received, this, _1));
     obs_unicast_message_received.on(std::bind(&BroadcastConnection::unicast_message_received, this, _1));
-    obs_transmission_started.on(std::bind(&BroadcastConnection::transmission_started, this, _1));
     obs_transmission_fail.on(std::bind(&BroadcastConnection::transmission_fail, this, _1));
     obs_transmission_complete.on(std::bind(&BroadcastConnection::transmission_complete, this, _1));
     pipeline.attach(obs_receive_synchronization);
@@ -46,7 +45,6 @@ void BroadcastConnection::observe_pipeline() {
     pipeline.attach(obs_packet_received);
     pipeline.attach(obs_message_received);
     pipeline.attach(obs_unicast_message_received);
-    pipeline.attach(obs_transmission_started);
     pipeline.attach(obs_transmission_complete);
     pipeline.attach(obs_transmission_fail);
 }
@@ -240,7 +238,8 @@ void BroadcastConnection::unicast_message_received(const UnicastMessageReceived 
 
         if (ab_transmissions.contains(message.id)) return;
 
-        log_info("Received AB request from ", message.origin.to_string(), ", retransmitting it.");    
+        log_info("Received AB message from ", message.origin.to_string(), ", retransmitting it.");
+    
         ab_transmissions.emplace(message.id, std::make_shared<Transmission>(message, BROADCAST_ID));
         Transmission& t = *ab_transmissions.at(message.id);
 
@@ -251,6 +250,7 @@ void BroadcastConnection::unicast_message_received(const UnicastMessageReceived 
         ab_dispatcher.enqueue(t);
     }
 }
+
 
 void BroadcastConnection::receive_ack(Packet& ack_packet)
 {
@@ -382,28 +382,6 @@ void BroadcastConnection::try_deliver_next_atomic()
     ab_next_deliver++;  // Se tiver salto, vai ser ressincronizado no receive
 }
 
-void BroadcastConnection::transmission_started(const TransmissionStarted& event) {
-    if (!message_type::is_broadcast(event.message.id.msg_type)) return;
-
-    const MessageIdentity& id = event.message.id;
-    const MessageType& type = id.msg_type;
-
-    if (type == MessageType::AB_URB)
-    {
-        const MessageIdentity* request_id = get_ab_request_id(id);
-        if (!request_id) return;
-        
-        log_info(
-            "Transmission of atomic message ",
-            id.msg_num,
-            " started; sending confirmation to source [",
-            request_id->origin.to_string(),
-            "].");
-        Node& source = nodes.get_node(request_id->origin);
-        connections.at(source.get_id()).send_ab_confirmation(request_id->msg_num, id.msg_num);
-    }
-}
-
 void BroadcastConnection::transmission_complete(const TransmissionComplete& event) {
     if (!message_type::is_broadcast(event.id.msg_type)) return;
 
@@ -414,10 +392,7 @@ void BroadcastConnection::transmission_complete(const TransmissionComplete& even
     if (ab_active && uuid == ab_active->uuid)
     {
         ab_dispatcher.complete(true);
-
-        const MessageIdentity* request_id = get_ab_request_id(id);
-        if (request_id) ab_transmissions.erase(*request_id);
-
+        if (ab_transmissions.contains(id)) ab_transmissions.erase(id);
         if (delayed_ab_number > ab_sequence_number.next_number) synchronize_ab_number(delayed_ab_number);
     }
 
@@ -545,13 +520,4 @@ bool BroadcastConnection::has_pending_ab_delivery()
         if (!message_type::is_atomic(entry.message.id.msg_type)) return true;
     }
     return false;
-}
-
-const MessageIdentity* BroadcastConnection::get_ab_request_id(const MessageIdentity& id)
-{
-    for (auto& [req_id, t] : ab_transmissions)
-    {
-        if (id == t->message.id) return &req_id;
-    }
-    return nullptr;
 }

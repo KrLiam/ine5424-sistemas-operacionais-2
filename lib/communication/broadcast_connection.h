@@ -42,8 +42,6 @@ class BroadcastConnection {
     std::vector<Packet> dispatched_packets;
     std::mutex mutex_dispatched_packets;
 
-    std::unordered_map<MessageIdentity, std::shared_ptr<Transmission>> lib_transmissions;
-
     void observe_pipeline();
 
     SequenceNumber* get_sequence(const MessageIdentity& id);
@@ -60,7 +58,6 @@ class BroadcastConnection {
     Observer<ConnectionEstablished> obs_connection_established;
     Observer<ReceiveSynchronization> obs_receive_synchronization;
     Observer<ConnectionClosed> obs_connection_closed;
-    Observer<TransmissionStarted> obs_transmission_started;
     Observer<TransmissionComplete> obs_transmission_complete;
     Observer<TransmissionFail> obs_transmission_fail;
     Observer<MessageReceived> obs_message_received;
@@ -70,7 +67,6 @@ class BroadcastConnection {
     void receive_synchronization(const ReceiveSynchronization& event);
     void connection_established(const ConnectionEstablished& event);
     void connection_closed(const ConnectionClosed& event);
-    void transmission_started(const TransmissionStarted &event);
     void transmission_complete(const TransmissionComplete& event);
     void transmission_fail(const TransmissionFail& event);
     void message_received(const MessageReceived &event);
@@ -83,8 +79,6 @@ class BroadcastConnection {
 
     void synchronize_ab_number(uint32_t number);
     bool has_pending_ab_delivery();
-
-    const MessageIdentity* get_ab_request_id(const MessageIdentity& ab_id);
 
 public:
     BroadcastConnection(

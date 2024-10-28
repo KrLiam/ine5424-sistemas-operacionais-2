@@ -251,7 +251,7 @@ void TransmissionQueue::receive_ack(const Packet& ack_packet)
     entry.pending_receivers.erase(&receiver);
     mutex_timeout.unlock();
 
-    // log_info("Removing pending ack ", frag_num, " of remote ", receiver_address.to_string(), ". over: ", !entry.pending_receivers.size(), ". empty: ", entries.empty());
+    // log_info("Removing pending ack ", frag_num, " of remote ", receiver_address.to_string(), ". over: ", !entry.pending_receivers.size());
     if (entry.pending_receivers.size()) return;
 
     pending.erase(frag_num);
@@ -283,6 +283,5 @@ void TransmissionQueue::discard_node(const Node& node) {
 
 bool TransmissionQueue::packet_can_timeout(const Packet& packet)
 {
-    const MessageType& type = packet.data.header.get_message_type();
-    return !message_type::is_urb(type) && type != MessageType::AB_CONFIRMATION;
+    return !message_type::is_urb(packet.data.header.get_message_type());
 }
