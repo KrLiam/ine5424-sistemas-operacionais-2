@@ -392,7 +392,7 @@ void BroadcastConnection::transmission_complete(const TransmissionComplete& even
     if (ab_active && uuid == ab_active->uuid)
     {
         ab_dispatcher.complete(true);
-        if (ab_transmissions.contains(id)) ab_transmissions.erase(id);
+        if (ab_transmissions.contains(id)) ab_transmissions.erase(id); // TODO: arrumar esse if não entrando nunca
         if (delayed_ab_number > ab_sequence_number.next_number) synchronize_ab_number(delayed_ab_number);
     }
 

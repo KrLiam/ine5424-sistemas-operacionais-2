@@ -67,12 +67,19 @@ void Connection::message_defragmentation_is_complete(const MessageDefragmentatio
 
 void Connection::transmission_complete(const TransmissionComplete &event)
 {
-    if (message_type::is_broadcast(event.id.msg_type)) return;
+    const MessageType& type = event.id.msg_type;
+    bool is_our_atomic = message_type::is_atomic(type) && event.source == local_node.get_address();
+
+    if (message_type::is_broadcast(type) && !is_our_atomic) return;
+    if (type == MessageType::AB_REQUEST) return;
+
+    const Transmission* active = dispatcher.get_active();
+    if (!active) return;
 
     const UUID &uuid = event.uuid;
-    const Transmission* active = dispatcher.get_active();
 
-    if (active && uuid == active->uuid) dispatcher.complete(true);
+    if (uuid == active->uuid || is_our_atomic && active->message.id.msg_type == MessageType::AB_REQUEST)
+        dispatcher.complete(true);
 }
 
 void Connection::transmission_fail(const TransmissionFail &event)

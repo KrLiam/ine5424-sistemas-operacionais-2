@@ -215,7 +215,7 @@ bool TransmissionQueue::try_complete()
         const UUID& uuid = packet.meta.transmission_uuid;
         SocketAddress remote_address = packet.meta.destination;
         [[maybe_unused]] uint32_t msg_num = packet.data.header.get_message_number();
-        TransmissionComplete event(uuid, packet.data.header.id, remote_address);
+        TransmissionComplete event(uuid, packet.data.header.id, packet.data.header.id.origin, remote_address);
 
         log_info(
             "Transmission ", remote_address.to_string(), " / ", msg_num, " is completed. Sent ",
