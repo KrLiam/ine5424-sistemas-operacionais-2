@@ -69,6 +69,14 @@ class RaftManager
 
     void change_state(RaftState new_state);
 
+    void set_election_timer();
+    void cancel_election_timer();
+
+    void follow(Node &node);
+    bool should_grant_vote(SocketAddress address);
+    void check_if_won_election();
+    unsigned int get_quorum();
+
     void send_vote(Packet packet);
     void send_request_vote();
 
@@ -84,16 +92,6 @@ class RaftManager
 
     void on_leader();
     void leader_receive(Packet packet);
-
-    void set_election_timer();
-    void cancel_election_timer();
-
-    void follow(Node &node);
-    bool should_grant_vote(SocketAddress address);
-
-    void check_if_won_election();
-    unsigned int get_quorum();
-
 public:
     RaftManager(BroadcastConnection& broadcast_connection, std::map<std::string, Connection> &connections, NodeMap &nodes, Node &local_node, EventBus &event_bus);
 };
