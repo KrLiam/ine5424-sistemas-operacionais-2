@@ -13,18 +13,16 @@
 #include "core/buffer.h"
 
 struct TransmissionKey {
-    SocketAddress origin;
+    MessageIdentity id;
     SocketAddress destination;
-    uint32_t msg_num;
 
     bool operator==(const TransmissionKey& other) const;
 };
 
 template<> struct std::hash<TransmissionKey> {
     std::size_t operator()(const TransmissionKey& key) const {
-        return std::hash<SocketAddress>()(key.origin)
-            ^ std::hash<SocketAddress>()(key.destination)
-            ^ std::hash<uint32_t>()(key.msg_num);
+        return std::hash<MessageIdentity>()(key.id)
+            ^ std::hash<SocketAddress>()(key.destination);
     }
 };
 
@@ -44,6 +42,7 @@ private:
     Observer<NodeDeath> obs_node_death;
     void node_death(const NodeDeath& event);
 
+    TransmissionKey create_key(const MessageIdentity& id, const SocketAddress& remote);
     bool has_queue(const TransmissionKey& id);
     TransmissionQueue& get_queue(const TransmissionKey& id);
     void clear_queue(const TransmissionKey& id);

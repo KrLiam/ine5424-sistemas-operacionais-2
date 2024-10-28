@@ -3,9 +3,8 @@
 using namespace std::placeholders;
 
 bool TransmissionKey::operator==(const TransmissionKey& other) const {
-    return origin == other.origin
-        && destination == other.destination
-        && msg_num == other.msg_num;
+    return id == other.id
+        && destination == other.destination;
 }
 
 TransmissionLayer::TransmissionLayer(PipelineHandler handler, NodeMap &nodes)
@@ -15,6 +14,13 @@ TransmissionLayer::TransmissionLayer(PipelineHandler handler, NodeMap &nodes)
 
 TransmissionLayer::~TransmissionLayer()
 {
+}
+
+TransmissionKey TransmissionLayer::create_key(const MessageIdentity& id, const SocketAddress& remote) {
+    return {
+        id,
+        message_type::is_broadcast(id.msg_type) ? SocketAddress{BROADCAST_ADDRESS, 0} : remote
+    };
 }
 
 bool TransmissionLayer::has_queue(const TransmissionKey& key) {
@@ -63,7 +69,7 @@ void TransmissionLayer::send(Packet packet)
         return;
     }
 
-    TransmissionKey key{header.id.origin, meta.destination, header.id.msg_num};
+    TransmissionKey key = create_key(header.id, meta.destination);
     TransmissionQueue& queue = get_queue(key);
     queue.add_packet(packet);
 }
@@ -73,14 +79,7 @@ void TransmissionLayer::ack_received(const PacketAckReceived& event) {
 
     const MessageIdentity& id = packet.data.header.id;
     MessageType type = packet.data.header.get_message_type();
-    TransmissionKey key {
-        id.origin,
-        // TODO isso ta ruim
-        message_type::is_broadcast(type) && type != MessageType::AB_REQUEST ?
-            SocketAddress{BROADCAST_ADDRESS, 0} :
-            packet.meta.origin,
-        id.msg_num
-    };
+    TransmissionKey key = create_key(id, packet.meta.origin);
 
     if (has_queue(key)) {
         TransmissionQueue& queue = get_queue(key);
@@ -91,10 +90,10 @@ void TransmissionLayer::ack_received(const PacketAckReceived& event) {
 void TransmissionLayer::pipeline_cleanup(const PipelineCleanup& event) {    
     Message& message = event.message;
 
-    clear_queue({message.id.origin, message.destination, message.id.msg_num});
+    clear_queue(create_key(message.id, message.destination));
 }
 
-void TransmissionLayer::node_death(const NodeDeath& event) {    
+void TransmissionLayer::node_death(const NodeDeath& event) {
     for (auto& [_, queue] : queue_map) {
         queue->discard_node(event.remote_node);
     }
