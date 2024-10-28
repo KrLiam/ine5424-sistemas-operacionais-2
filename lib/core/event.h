@@ -23,7 +23,8 @@ enum EventType {
     FRAGMENT_RECEIVED = 13,
     UNICAST_MESSAGE_RECEIVED = 14,
     RECEIVE_SYNCHRONIZATION = 15,
-    LEADER_ELECTED = 16
+    LEADER_ELECTED = 16,
+    ATOMIC_MAPPING = 17
 };
     
 struct Event {
@@ -179,4 +180,13 @@ struct LeaderElected: public Event {
     static EventType type() { return EventType::LEADER_ELECTED; }
 
     LeaderElected();
+};
+
+struct AtomicMapping: public Event {
+    static EventType type() { return EventType::ATOMIC_MAPPING; }
+
+    const MessageIdentity request_id;
+    const MessageIdentity atomic_id;
+
+    AtomicMapping(const MessageIdentity& request_id, const MessageIdentity& atomic_id);
 };

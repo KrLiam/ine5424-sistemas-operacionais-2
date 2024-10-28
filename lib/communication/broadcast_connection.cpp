@@ -39,6 +39,7 @@ void BroadcastConnection::observe_pipeline() {
     obs_unicast_message_received.on(std::bind(&BroadcastConnection::unicast_message_received, this, _1));
     obs_transmission_fail.on(std::bind(&BroadcastConnection::transmission_fail, this, _1));
     obs_transmission_complete.on(std::bind(&BroadcastConnection::transmission_complete, this, _1));
+    obs_atomic_mapping.on(std::bind(&BroadcastConnection::atomic_mapping, this, _1));
     pipeline.attach(obs_receive_synchronization);
     pipeline.attach(obs_connection_established);
     pipeline.attach(obs_connection_closed);
@@ -47,6 +48,7 @@ void BroadcastConnection::observe_pipeline() {
     pipeline.attach(obs_unicast_message_received);
     pipeline.attach(obs_transmission_complete);
     pipeline.attach(obs_transmission_fail);
+    pipeline.attach(obs_atomic_mapping);
 }
 
 SequenceNumber* BroadcastConnection::get_sequence(const MessageIdentity& id) {
@@ -101,6 +103,11 @@ void BroadcastConnection::node_death(const NodeDeath& event) {
             retransmissions.erase(id);
         }
     }
+}
+
+void BroadcastConnection::atomic_mapping(const AtomicMapping& event) {
+    if (!atomic_to_request_map.contains(event.atomic_id))
+        atomic_to_request_map.emplace(event.atomic_id, event.request_id);
 }
 
 void BroadcastConnection::connection_closed(const ConnectionClosed& event) {
@@ -411,7 +418,10 @@ void BroadcastConnection::transmission_complete(const TransmissionComplete& even
     if (ab_active && uuid == ab_active->uuid)
     {
         ab_dispatcher.complete(true);
-        if (ab_transmissions.contains(id)) ab_transmissions.erase(id); // TODO: arrumar esse if não entrando nunca
+        if (atomic_to_request_map.contains(id)) {
+            const MessageIdentity& ab_id = atomic_to_request_map.at(id);
+            if (ab_transmissions.contains(ab_id)) ab_transmissions.erase(ab_id);
+        }
         if (delayed_ab_number > ab_sequence_number.next_number) synchronize_ab_number(delayed_ab_number);
     }
 
@@ -430,7 +440,10 @@ void BroadcastConnection::transmission_complete(const TransmissionComplete& even
 void BroadcastConnection::transmission_fail(const TransmissionFail& event) {
     const Transmission* ab_active = ab_dispatcher.get_active();
     if (ab_active && event.uuid == ab_active->uuid) ab_dispatcher.complete(false);
-    if (ab_transmissions.contains(event.id)) ab_transmissions.erase(event.id);
+    if (atomic_to_request_map.contains(event.id)) {
+        const MessageIdentity& ab_id = atomic_to_request_map.at(event.id);
+        if (ab_transmissions.contains(ab_id)) ab_transmissions.erase(ab_id);
+    }
 
     const Transmission* active = dispatcher.get_active();
     if (!active) return;

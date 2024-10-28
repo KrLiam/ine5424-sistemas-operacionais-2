@@ -78,7 +78,11 @@ void TransmissionDispatcher::activate(Transmission* transmission) {
 
     Message& message = transmission->message;
 
+    uint32_t original_number = message.id.msg_num;
     message.id.msg_num = next_number++;
+
+    if (message_type::is_atomic(message.id.msg_type))
+        pipeline.notify(AtomicMapping({message.id.origin, original_number, MessageType::AB_REQUEST}, message.id));
 
     pipeline.notify(TransmissionStarted(message));
     pipeline.send(message);

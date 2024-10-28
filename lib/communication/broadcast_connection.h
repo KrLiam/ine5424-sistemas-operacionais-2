@@ -27,6 +27,7 @@ class BroadcastConnection {
     std::map<std::string, Connection>& connections;
     Pipeline& pipeline;
 
+    std::unordered_map<MessageIdentity, MessageIdentity> atomic_to_request_map;
     std::unordered_map<MessageIdentity, std::shared_ptr<Transmission>> ab_transmissions;
     TransmissionDispatcher ab_dispatcher;
     SequenceNumber ab_sequence_number;
@@ -64,6 +65,7 @@ class BroadcastConnection {
     Observer<UnicastMessageReceived> obs_unicast_message_received;
     Observer<PacketReceived> obs_packet_received;
     Observer<NodeDeath> obs_node_death;
+    Observer<AtomicMapping> obs_atomic_mapping;
 
     void receive_synchronization(const ReceiveSynchronization& event);
     void connection_established(const ConnectionEstablished& event);
@@ -74,6 +76,7 @@ class BroadcastConnection {
     void unicast_message_received(const UnicastMessageReceived &event);
     void packet_received(const PacketReceived &event);
     void node_death(const NodeDeath &event);
+    void atomic_mapping(const AtomicMapping &event);
 
     void send_rst(Packet&);
 

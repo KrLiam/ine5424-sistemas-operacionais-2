@@ -45,3 +45,5 @@ HeartbeatReceived::HeartbeatReceived(Node& remote_node) : remote_node(remote_nod
 NodeDeath::NodeDeath(const Node& remote_node) : remote_node(remote_node) {}
 
 LeaderElected::LeaderElected() {}
+
+AtomicMapping::AtomicMapping(const MessageIdentity& request_id, const MessageIdentity& atomic_id) : request_id(request_id), atomic_id(atomic_id) {}
