@@ -63,6 +63,7 @@ class BroadcastConnection {
     Observer<MessageReceived> obs_message_received;
     Observer<UnicastMessageReceived> obs_unicast_message_received;
     Observer<PacketReceived> obs_packet_received;
+    Observer<NodeDeath> obs_node_death;
 
     void receive_synchronization(const ReceiveSynchronization& event);
     void connection_established(const ConnectionEstablished& event);
@@ -72,6 +73,7 @@ class BroadcastConnection {
     void message_received(const MessageReceived &event);
     void unicast_message_received(const UnicastMessageReceived &event);
     void packet_received(const PacketReceived &event);
+    void node_death(const NodeDeath &event);
 
     void send_rst(Packet&);
 

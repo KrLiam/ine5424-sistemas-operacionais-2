@@ -84,6 +84,25 @@ void BroadcastConnection::connection_established(const ConnectionEstablished&) {
     request_update();
 }
 
+void BroadcastConnection::node_death(const NodeDeath& event) {
+    if (event.remote_node.is_leader()) {
+        std::unordered_set<MessageIdentity> remove;
+
+        for (auto& [id, entry] : retransmissions) {
+            if (!message_type::is_atomic(entry.message.id.msg_type)) continue;
+            if (entry.message_received) continue;
+
+            log_warn("AB message ", entry.message.to_string().c_str(), " is incomplete and leader is dead; advancing sequence.");
+            remove.emplace(id);
+            synchronize_ab_number(ab_sequence_number.next_number + 1);
+        }
+
+        for (const MessageIdentity& id : remove) {
+            retransmissions.erase(id);
+        }
+    }
+}
+
 void BroadcastConnection::connection_closed(const ConnectionClosed& event) {
     ab_dispatcher.cancel_all(); // TODO apenas cancelar as transmissoes do nó que morreu
 
