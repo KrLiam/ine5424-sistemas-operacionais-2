@@ -1,3 +1,5 @@
+#include <sys/stat.h>
+
 #include "raft/raft.h"
 
 RaftManager::RaftManager(
@@ -5,7 +7,7 @@ RaftManager::RaftManager(
     std::map<std::string, Connection> &connections,
     NodeMap &nodes,
     Node &local_node,
-    EventBus &event_bus) : data_filename(format("%s.raft", local_node.get_id().c_str())),
+    EventBus &event_bus) : data_filename(format(DATA_DIR "/raft/%s.raft", local_node.get_id().c_str())),
                           state(FOLLOWER),
                           broadcast_connection(broadcast_connection),
                           connections(connections),
@@ -42,6 +44,9 @@ void RaftManager::read_data()
 
 void RaftManager::save_data()
 {
+    mkdir(DATA_DIR, S_IRWXU);
+    mkdir(DATA_DIR "/raft", S_IRWXU);
+
     std::ofstream f(data_filename);
     f.write((char *)&data, sizeof(RaftPersistentData));
     f.close();

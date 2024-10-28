@@ -8,3 +8,5 @@
 #define MAX_PACKET_TRIES 3
 
 #define MAX_HEARTBEAT_TRIES 6
+
+#define DATA_DIR ".data"

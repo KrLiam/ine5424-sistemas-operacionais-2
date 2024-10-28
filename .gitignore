@@ -1,4 +1,4 @@
 build
-messages
+.data
 program
 **/*.a
