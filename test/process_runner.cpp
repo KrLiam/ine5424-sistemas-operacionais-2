@@ -371,8 +371,9 @@ void server_deliver(ThreadArgs* args) {
 
         log_print("[Broadcast] Received '", message_data.c_str(), "' (", result.length, " bytes) from ", result.sender_id);
 
-        mkdir("messages", S_IRWXU);
-        std::string output_filename = "messages/" + UUID().as_string();
+        mkdir(DATA_DIR, S_IRWXU);
+        mkdir(DATA_DIR "/messages", S_IRWXU);
+        std::string output_filename = DATA_DIR "messages/" + UUID().as_string();
         std::ofstream file(output_filename);
         file.write(buffer, result.length);
         log_print("Saved message to file [", output_filename, "].");
