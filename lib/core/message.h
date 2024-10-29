@@ -32,7 +32,7 @@ enum class MessageType : uint8_t
 };
 // queria tanto que enums pudessem ter métodos :(
 namespace message_type {
-    static const std::unordered_map<MessageType, std::string> message_type_name = {
+    static const std::unordered_map<MessageType, const char*> message_type_name = {
         {MessageType::CONTROL, "CONTROL"},
         {MessageType::HEARTBEAT, "HEARTBEAT"},
         {MessageType::RAFT, "RAFT"},
@@ -50,7 +50,7 @@ namespace message_type {
     bool is_urb(MessageType type);
     bool is_atomic(MessageType type);
 
-    std::string to_string(MessageType type);
+    const char* to_string(MessageType type);
 };
 
 struct MessageIdentity {
