@@ -2,7 +2,7 @@
 #include "utils/date.h"
 
 FailureDetection::FailureDetection(std::shared_ptr<GroupRegistry> gr, EventBus &event_bus, unsigned int alive)
-    : gr(gr), event_bus(event_bus), alive(alive), keep_alive(alive * MAX_HEARTBEAT_TRIES), running(true)
+    : gr(gr), event_bus(event_bus), alive(alive), keep_alive(alive * MAX_HEARTBEAT_TRIES), running(true), uuid(UUID())
 {
     attach();
     failure_detection_thread = std::thread([this]() { failure_detection_routine(); });
@@ -31,10 +31,27 @@ void FailureDetection::heartbeat_received(const HeartbeatReceived &event)
 
     log_trace("Received ", event.packet.to_string(), " (node "node.get_id(), ").");
 
+    HeartbeatData* data = reinterpret_cast<HeartbeatData*>(event.packet.data.message_data);
+    const UUID uuid = UUID(std::string(data->uuid));
+
+    mtx.lock();
+    if (node.is_alive() && uuid != node.get_uuid())
+    {
+        log_info(
+            "Node ",
+            node.get_address().to_string(),
+            " restarted. Notifying about its death before marking it as alive.");
+        node.set_alive(false);
+        event_bus.notify(NodeDeath(node));
+    }
+    mtx.unlock();
+
     last_alive[node.get_id()] = DateUtils::now();
 
+    mtx.lock();
     if (!node.is_alive())
     {
+        node.set_uuid(uuid);
         node.set_alive(true);
 
         log_info(
@@ -46,6 +63,7 @@ void FailureDetection::heartbeat_received(const HeartbeatReceived &event)
         );
         // TODO: dá pra lançar um evento NodeAlive aqui caso seja necessário futuramente
     }
+    mtx.unlock();
 
 }
 
@@ -58,6 +76,7 @@ void FailureDetection::failure_detection_routine()
 
         for (auto &[id, node] : gr->get_nodes())
         {
+            mtx.lock();
             if (node.is_alive() && now - last_alive[node.get_id()] > keep_alive)
             {
                 node.set_alive(false);
@@ -73,9 +92,10 @@ void FailureDetection::failure_detection_routine()
                 );
                 event_bus.notify(NodeDeath(node));
             }
+            mtx.unlock();
 
             Connection &conn = gr->get_connection(node);
-            conn.heartbeat();
+            conn.heartbeat(uuid);
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(alive));

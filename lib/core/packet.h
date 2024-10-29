@@ -186,6 +186,10 @@ struct SynData {
     uint32_t ab_number;
 };
 
+struct HeartbeatData {
+    char uuid[36];
+};
+
 
 Packet create_ack(const Packet& packet);
 Packet create_ack(const Packet& packet, SocketAddress destination);

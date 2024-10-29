@@ -585,9 +585,12 @@ void Connection::dispatch_to_sender(Packet p)
     request_update();
 }
 
-void Connection::heartbeat()
+void Connection::heartbeat(const UUID& local_uuid)
 {
     log_trace("Heartbeating to ", remote_node.get_address().to_string(), ".");
+
+    HeartbeatData hb_data;
+    strcpy(hb_data.uuid, local_uuid.as_string().c_str());
 
     uint8_t flags = local_node.is_leader() ? LDR : 0;
 
@@ -603,12 +606,13 @@ void Connection::heartbeat()
         checksum: 0,
         flags: flags
     };
+    memcpy(data.message_data, &hb_data, sizeof(HeartbeatData));
 
     PacketMetadata meta = {
         transmission_uuid : UUID(""),
         origin : local_node.get_address(),
         destination : remote_node.get_address(),
-        message_length : 0,
+        message_length : sizeof(HeartbeatData),
         expects_ack : 0,
         silent : 1
     };

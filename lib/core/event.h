@@ -164,9 +164,9 @@ struct HeartbeatReceived : public Event {
     static EventType type() { return EventType::HEARTBEAT_RECEIVED; }
 
     Node& remote_node;
-    const Packet& packet;
+    Packet& packet;
 
-    HeartbeatReceived(Node& remote_node, const Packet& packet);
+    HeartbeatReceived(Node& remote_node, Packet& packet);
 };
 
 struct NodeDeath: public Event {

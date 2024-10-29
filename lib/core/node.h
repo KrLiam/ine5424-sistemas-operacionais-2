@@ -16,6 +16,7 @@ class Node
 {
 private:
     std::string id;
+    UUID uuid;
     SocketAddress address;
     bool remote;
     bool alive;
@@ -57,6 +58,15 @@ public:
     void set_receiving_ab_broadcast(bool receiving_ab_broadcast)
     {
         this->receiving_ab_broadcast = receiving_ab_broadcast;
+    }
+
+    UUID get_uuid() const
+    {
+        return uuid;
+    }
+    void set_uuid(UUID uuid)
+    {
+        this->uuid = uuid;
     }
 
     std::string to_string() const;

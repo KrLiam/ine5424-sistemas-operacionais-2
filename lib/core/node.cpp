@@ -1,7 +1,7 @@
 #include "core/node.h"
 
 Node::Node(std::string id, SocketAddress address, bool remote)
-    : id(id), address(address), remote(remote), alive(false), leader(false), receiving_ab_broadcast(false) {};
+    : id(id), uuid(UUID()), address(address), remote(remote), alive(false), leader(false), receiving_ab_broadcast(false) {};
 
 Node::~Node()
 {

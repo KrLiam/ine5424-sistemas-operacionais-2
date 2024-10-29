@@ -5,6 +5,7 @@
 #include <thread>
 #include <map>
 #include <memory>
+#include <mutex>
 #include "communication/group_registry.h"
 #include "core/event.h"
 #include "core/event_bus.h"
@@ -13,6 +14,7 @@
 
 class FailureDetection
 {
+    UUID uuid;
 
     std::map<std::string, uint64_t> last_alive;
 
@@ -24,6 +26,8 @@ class FailureDetection
     unsigned int keep_alive;
 
     bool running;
+
+    std::mutex mtx;
 
     std::thread failure_detection_thread;
 
