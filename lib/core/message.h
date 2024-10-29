@@ -6,6 +6,7 @@
 #include "constants.h"
 #include <cstring>
 #include <cstdint>
+#include <unordered_map>
 
 enum class MessageType : uint8_t
 {
@@ -31,12 +32,25 @@ enum class MessageType : uint8_t
 };
 // queria tanto que enums pudessem ter métodos :(
 namespace message_type {
+    static const std::unordered_map<MessageType, std::string> message_type_name = {
+        {MessageType::CONTROL, "CONTROL"},
+        {MessageType::HEARTBEAT, "HEARTBEAT"},
+        {MessageType::RAFT, "RAFT"},
+        {MessageType::AB_REQUEST, "AB_REQUEST"},
+        {MessageType::SEND, "SEND"},
+        {MessageType::BEB, "BEB"},
+        {MessageType::URB, "URB"},
+        {MessageType::AB_URB, "AB_URB"}
+    };
+
     MessageType from_broadcast_type(BroadcastType type);
     bool is_application(MessageType type);
     bool is_data(MessageType type);
     bool is_broadcast(MessageType type);
     bool is_urb(MessageType type);
     bool is_atomic(MessageType type);
+
+    std::string to_string(MessageType type);
 };
 
 struct MessageIdentity {

@@ -25,3 +25,6 @@ bool message_type::is_urb(MessageType type) {
 bool message_type::is_atomic(MessageType type) {
     return type == MessageType::AB_URB;
 }
+std::string to_string(MessageType type) {
+    return message_type::message_type_name.at(type);
+}

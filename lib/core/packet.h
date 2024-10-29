@@ -127,29 +127,31 @@ struct Packet
         std::string origin = meta.origin.to_string();
         std::string destination = meta.destination.to_string();
 
-        MessageType msg_type = header.get_message_type();
+        const MessageType msg_type = header.get_message_type();
         char sequence_type = 'u';
         if (message_type::is_atomic(msg_type)) sequence_type = 'a';
         else if (message_type::is_broadcast(msg_type)) sequence_type = 'b';
 
         if (type == PacketFormat::RECEIVED) {
             return format(
-                "%s %u/%u%c from %s",
+                "%s %u/%u%c (%s) from %s",
                 flags.c_str(),
                 data.header.id.msg_num,
                 data.header.fragment_num,
                 sequence_type,
+                message_type::to_string(msg_type),
                 origin.c_str()
             );
         }
         
         if (type == PacketFormat::SENT) {
             return format(
-                "%s %u/%u%c to %s",
+                "%s %u/%u%c (%s) to %s",
                 flags.c_str(),
                 data.header.id.msg_num,
                 data.header.fragment_num,
                 sequence_type,
+                message_type::to_string(msg_type),
                 destination.c_str()
             );
         }
