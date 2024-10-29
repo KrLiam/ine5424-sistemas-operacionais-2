@@ -39,9 +39,10 @@ struct BroadcastCommand : public Command {
 
 struct DummyCommand : public Command {
     size_t size;
+    size_t count;
     std::string send_id;
 
-    DummyCommand(size_t size, std::string send_id);
+    DummyCommand(size_t size, size_t count, std::string send_id);
 
     virtual std::string name();
 };

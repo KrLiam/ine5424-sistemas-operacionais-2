@@ -24,7 +24,7 @@ std::string get_available_flags(const char* program_name) {
     result += BOLD_CYAN "Available commands:\n" COLOR_RESET;
     result += YELLOW "  text " H_BLACK "<" WHITE "message" H_BLACK ">" COLOR_RESET " -> " H_BLACK "<" WHITE "id" H_BLACK ">" COLOR_RESET ": Send a message to the node with id <id>.\n";
     result += YELLOW "  file " H_BLACK "<" WHITE "path" H_BLACK ">" COLOR_RESET " -> " H_BLACK "<" WHITE "id" H_BLACK ">" COLOR_RESET ": Send a file to the node with id <id>.\n";
-    result += YELLOW "  dummy " H_BLACK "<" WHITE "size" H_BLACK ">" COLOR_RESET " -> " H_BLACK "<" WHITE "id" H_BLACK ">" COLOR_RESET ": Send a dummy message of size <size> to the node with id <id>.\n";
+    result += YELLOW "  dummy " H_BLACK "<" WHITE "size" H_BLACK "> <" WHITE "count" H_BLACK ">" COLOR_RESET " -> " H_BLACK "<" WHITE "id" H_BLACK ">" COLOR_RESET ": Send <count> dummy messages of size <size> to the node with id <id>.\n";
     result += YELLOW "  kill: " COLOR_RESET "Kills the local node.\n";
     result += YELLOW "  init: " COLOR_RESET "Initializes the local node.\n";
     result += YELLOW "  help: " COLOR_RESET "Show the help message.\n";
@@ -123,9 +123,17 @@ Arguments parse_arguments(int argc, char* argv[]) {
 }
 
 
-void create_dummy_data(char* data, size_t size) {
+void create_dummy_data(char* data, size_t count, size_t size) {
     int num = 0;
     size_t pos = 0;
+
+    std::string count_as_string = format("[%d] ", count);
+    for (char ch : count_as_string) {
+        if (pos >= size) break;
+
+        data[pos] = ch;
+        pos++;
+    }
     
     while (pos < size) {
         if (pos > 0) {
@@ -237,18 +245,22 @@ void send_thread(SenderThreadArgs* args) {
             DummyCommand* cmd = static_cast<DummyCommand*>(command.get());
 
             size_t size = cmd->size;
+            size_t count = cmd->count;
             send_id = cmd->send_id;
 
-            std::unique_ptr<char[]> data = std::make_unique<char[]>(size);
-            create_dummy_data(data.get(), size);
+            for (int i = 0; i < count; i++)
+            {
+                char data[size];
+                create_dummy_data(data, i, size);
 
-            success = send_message(
-                proc,
-                cmd->send_id,
-                {data.get(), size},
-                cmd->name(),
-                format("%u bytes of dummy data", size)
-            );
+                success = send_message(
+                    proc,
+                    cmd->send_id,
+                    {data, size},
+                    cmd->name(),
+                    format("%u bytes of dummy data", size)
+                );
+            }
         }
         else if (command->type == CommandType::file) {
             FileCommand* cmd = static_cast<FileCommand*>(command.get());
