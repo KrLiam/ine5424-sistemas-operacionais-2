@@ -538,7 +538,7 @@ void Connection::receive(Packet packet)
 {
     if (packet.data.header.get_message_type() == MessageType::HEARTBEAT)
     {
-        pipeline.notify(HeartbeatReceived(remote_node)); // TODO: arrumar o lugar disso. o heartbeatreceived não tem nada a ver com o pipeline
+        pipeline.notify(HeartbeatReceived(remote_node, packet)); // TODO: arrumar o lugar disso. o heartbeatreceived não tem nada a ver com o pipeline
         return;
     }
 

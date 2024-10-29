@@ -132,10 +132,13 @@ struct Packet
         if (message_type::is_atomic(msg_type)) sequence_type = 'a';
         else if (message_type::is_broadcast(msg_type)) sequence_type = 'b';
 
+        const char* flags_spacing = flags.empty() ? "" : " ";
+
         if (type == PacketFormat::RECEIVED) {
             return format(
-                "%s %u/%u%c (%s) from %s",
+                "%s%s%u/%u%c (%s) from %s",
                 flags.c_str(),
+                flags_spacing,
                 data.header.id.msg_num,
                 data.header.fragment_num,
                 sequence_type,
@@ -146,8 +149,9 @@ struct Packet
         
         if (type == PacketFormat::SENT) {
             return format(
-                "%s %u/%u%c (%s) to %s",
+                "%s%s%u/%u%c (%s) to %s",
                 flags.c_str(),
+                flags_spacing,
                 data.header.id.msg_num,
                 data.header.fragment_num,
                 sequence_type,
@@ -157,9 +161,9 @@ struct Packet
         }
 
         return format(
-            "%u %s %u/%u%c from %s to %s",
-            header.flags,
+            "%s%s%u/%u%c from %s to %s",
             flags.c_str(),
+            flags_spacing,
             data.header.id.msg_num,
             data.header.fragment_num,
             sequence_type,

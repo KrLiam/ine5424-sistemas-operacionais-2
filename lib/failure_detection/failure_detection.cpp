@@ -29,7 +29,7 @@ void FailureDetection::heartbeat_received(const HeartbeatReceived &event)
 {
     Node& node = event.remote_node;
 
-    log_trace("Received heartbeat from ", node.get_address().to_string(), ".");
+    log_trace("Received ", event.packet.to_string(), " (node "node.get_id(), ").");
 
     last_alive[node.get_id()] = DateUtils::now();
 
@@ -38,11 +38,11 @@ void FailureDetection::heartbeat_received(const HeartbeatReceived &event)
         node.set_alive(true);
 
         log_info(
-            "Received heartbeat from node '",
+            "Received ",
+            event.packet.to_string(PacketFormat::RECEIVED),
+            " (node ",
             node.get_id(),
-            "' (",
-            node.get_address().to_string(),
-            "); marking it as alive."
+            "). Marking it as alive."
         );
         // TODO: dá pra lançar um evento NodeAlive aqui caso seja necessário futuramente
     }

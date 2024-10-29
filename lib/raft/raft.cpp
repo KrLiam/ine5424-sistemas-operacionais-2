@@ -127,7 +127,7 @@ void RaftManager::cancel_election_timer() {
 
 
 void RaftManager::follow(Node &node) {
-    log_info("New leader is ", node.get_address().to_string(), ".");
+    log_info("Following new leader, node ", node.get_id(), " (", node.get_address().to_string(), ").");
     if (leader != nullptr) leader->set_leader(false);
     leader = &node;
     leader->set_leader(true);
@@ -154,7 +154,7 @@ bool RaftManager::should_grant_vote(SocketAddress address) {
 void RaftManager::check_if_won_election() {
     unsigned int quorum = get_quorum();
     if (received_votes.size() >= quorum) {
-        log_info("Received quorum of votes, we are now the leader.");
+        log_info("Received ", received_votes.size(), " vote(s) (quorum is ", quorum, "), local node is now leader.");
         cancel_election_timer();
         change_state(LEADER);
         event_bus.notify(LeaderElected());
@@ -258,16 +258,14 @@ void RaftManager::candidate_receive(Packet packet) {
 
     if (packet.data.header.is_rvo()) {
         if (packet.data.header.is_ack()) {
-            log_debug("Received vote from ", packet.meta.origin.to_string(),
-                      ".");
+            log_debug("Received vote from ", packet.meta.origin.to_string(), ".");
             received_votes.emplace(packet.meta.origin);
             check_if_won_election();
             return;
         }
 
         if (data.voted_for != nullptr) {
-            log_debug(
-                "Received vote request, but we already voted for someone.");
+            log_debug("Received vote request, but we already voted for someone.");
             return;
         }
 
