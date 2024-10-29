@@ -93,5 +93,5 @@ class RaftManager
     void on_leader();
     void leader_receive(Packet packet);
 public:
-    RaftManager(BroadcastConnection& broadcast_connection, std::map<std::string, Connection> &connections, NodeMap &nodes, Node &local_node, EventBus &event_bus);
+    RaftManager(BroadcastConnection& broadcast_connection, std::map<std::string, Connection> &connections, NodeMap &nodes, Node &local_node, EventBus &event_bus, unsigned int alive);
 };

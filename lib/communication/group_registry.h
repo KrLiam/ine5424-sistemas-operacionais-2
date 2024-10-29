@@ -58,7 +58,8 @@ public:
         Pipeline& pipeline,
         Buffer<Message> &application_buffer,
         Buffer<Message> &deliver_buffer,
-        BufferSet<std::string> &connection_update_buffer
+        BufferSet<std::string> &connection_update_buffer,
+        unsigned int alive
     );
 
 private:

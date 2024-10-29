@@ -31,7 +31,8 @@ ReliableCommunication::ReliableCommunication(
         *pipeline,
         application_buffer,
         deliver_buffer,
-        connection_update_buffer
+        connection_update_buffer,
+        config.alive
     );
     failure_detection = std::make_unique<FailureDetection>(gr, event_bus, config.alive);
 }

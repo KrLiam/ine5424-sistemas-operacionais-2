@@ -7,7 +7,8 @@ RaftManager::RaftManager(
     std::map<std::string, Connection> &connections,
     NodeMap &nodes,
     Node &local_node,
-    EventBus &event_bus
+    EventBus &event_bus,
+    unsigned int alive
 ) :
     data_filename(format(DATA_DIR "/raft/%s.raft", local_node.get_id().c_str())),
     state(FOLLOWER),
@@ -18,10 +19,8 @@ RaftManager::RaftManager(
     leader(nullptr),
     event_bus(event_bus),
     timer_id(0),
-    election_time_dis(3000, 4000)
+    election_time_dis(alive * 6, alive * 7)
 {
-    // TODO: o election_timeout_dis tem que ser definido com base no `alive`
-
     read_data();
 
     obs_packet_received.on(std::bind(&RaftManager::packet_received, this, _1));

@@ -98,7 +98,8 @@ void GroupRegistry::establish_connections(
     Pipeline &pipeline,
     Buffer<Message> &application_buffer,
     Buffer<Message> &deliver_buffer,
-    BufferSet<std::string> &connection_update_buffer
+    BufferSet<std::string> &connection_update_buffer,
+    unsigned int alive
 ) {
     Node& local_node = get_local_node();
 
@@ -122,6 +123,6 @@ void GroupRegistry::establish_connections(
         );
     
     raft = std::make_unique<RaftManager>(
-        *broadcast_connection, connections, nodes, local_node, event_bus
+        *broadcast_connection, connections, nodes, local_node, event_bus, alive
     );
 }
