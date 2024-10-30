@@ -195,7 +195,10 @@ void RaftManager::on_follower() {
     set_election_timer();
 }
 
-void RaftManager::follower_timeout() { change_state(CANDIDATE); }
+void RaftManager::follower_timeout() { 
+    if (leader != nullptr) leader->set_leader(false);
+    change_state(CANDIDATE);
+}
 
 void RaftManager::follower_receive(Packet packet) {
     if (packet.data.header.is_ldr()) {
