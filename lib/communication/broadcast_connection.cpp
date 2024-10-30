@@ -14,11 +14,11 @@ BroadcastConnection::BroadcastConnection(
     nodes(nodes),
     local_node(local_node),
     connections(connections),
+    connection_update_buffer(connection_update_buffer),
+    deliver_buffer(deliver_buffer),
     pipeline(pipeline),
     ab_dispatcher(BROADCAST_ID, connection_update_buffer, pipeline),
     dispatcher(BROADCAST_ID, connection_update_buffer, pipeline),
-    connection_update_buffer(connection_update_buffer),
-    deliver_buffer(deliver_buffer),
     ab_sequence_number({0, 0}),
     ab_next_deliver(0),
     delayed_ab_number(0)

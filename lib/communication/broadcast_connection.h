@@ -25,20 +25,23 @@ class BroadcastConnection {
     NodeMap& nodes;
     Node& local_node;
     std::map<std::string, Connection>& connections;
+
+    BufferSet<std::string>& connection_update_buffer;
+    Buffer<Message>& deliver_buffer;
+
     Pipeline& pipeline;
+
+    TransmissionDispatcher ab_dispatcher;
+    TransmissionDispatcher dispatcher;
+
+    std::unordered_map<std::string, SequenceNumber> sequence_numbers;
+    std::unordered_map<MessageIdentity, RetransmissionEntry> retransmissions;
 
     std::unordered_map<MessageIdentity, MessageIdentity> atomic_to_request_map;
     std::unordered_map<MessageIdentity, std::shared_ptr<Transmission>> ab_transmissions;
-    TransmissionDispatcher ab_dispatcher;
     SequenceNumber ab_sequence_number;
     uint32_t ab_next_deliver;
     uint32_t delayed_ab_number;
-
-    TransmissionDispatcher dispatcher;
-    std::unordered_map<std::string, SequenceNumber> sequence_numbers;
-    std::unordered_map<MessageIdentity, RetransmissionEntry> retransmissions;
-    BufferSet<std::string>& connection_update_buffer;
-    Buffer<Message>& deliver_buffer;
 
     std::vector<Packet> dispatched_packets;
     std::mutex mutex_dispatched_packets;

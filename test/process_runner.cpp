@@ -211,7 +211,6 @@ void send_thread(SenderThreadArgs* args) {
     Process* proc = args->proc;
 
     try {
-        bool success = false;
         std::string send_id;
 
         if (command->type == CommandType::text) {
@@ -220,7 +219,7 @@ void send_thread(SenderThreadArgs* args) {
             std::string& text = cmd->text;
             send_id = cmd->send_id;
 
-            success = send_message(
+            send_message(
                 proc,
                 cmd->send_id,
                 {text.c_str(), text.length()},
@@ -233,7 +232,7 @@ void send_thread(SenderThreadArgs* args) {
 
             std::string& text = cmd->text;
 
-            success = send_message(
+            send_message(
                 proc,
                 BROADCAST_ID,
                 {text.c_str(), text.length()},
@@ -248,12 +247,12 @@ void send_thread(SenderThreadArgs* args) {
             size_t count = cmd->count;
             send_id = cmd->send_id;
 
-            for (int i = 0; i < count; i++)
+            for (size_t i = 0; i < count; i++)
             {
                 char data[size];
                 create_dummy_data(data, i, size);
 
-                success = send_message(
+                send_message(
                     proc,
                     cmd->send_id,
                     {data, size},
@@ -275,7 +274,7 @@ void send_thread(SenderThreadArgs* args) {
             char buffer[size];
             if (file.read(buffer, size))
             {
-                success = send_message(
+                send_message(
                     proc,
                     cmd->send_id,
                     {buffer, size},

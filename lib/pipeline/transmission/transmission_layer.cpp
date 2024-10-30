@@ -78,7 +78,6 @@ void TransmissionLayer::ack_received(const PacketAckReceived& event) {
     Packet& packet = event.ack_packet;
 
     const MessageIdentity& id = packet.data.header.id;
-    MessageType type = packet.data.header.get_message_type();
     TransmissionKey key = create_key(id, packet.meta.origin);
 
     if (has_queue(key)) {

@@ -33,8 +33,8 @@ class RaftManager
 
     RaftState state;
 
-    std::map<std::string, Connection> &connections;
     BroadcastConnection& broadcast_connection;
+    std::map<std::string, Connection> &connections;
 
     NodeMap &nodes;
     Node &local_node;

@@ -78,7 +78,7 @@ void Connection::transmission_complete(const TransmissionComplete &event)
 
     const UUID &uuid = event.uuid;
 
-    if (uuid == active->uuid || is_our_atomic && active->message.id.msg_type == MessageType::AB_REQUEST)
+    if (uuid == active->uuid || (is_our_atomic && active->message.id.msg_type == MessageType::AB_REQUEST))
         dispatcher.complete(true);
 }
 

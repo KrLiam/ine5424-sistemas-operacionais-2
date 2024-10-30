@@ -2,7 +2,7 @@
 #include "utils/date.h"
 
 FailureDetection::FailureDetection(std::shared_ptr<GroupRegistry> gr, EventBus &event_bus, unsigned int alive)
-    : gr(gr), event_bus(event_bus), alive(alive), keep_alive(alive * MAX_HEARTBEAT_TRIES), running(true), uuid(UUID())
+    : uuid(UUID()), gr(gr), event_bus(event_bus), alive(alive), keep_alive(alive * MAX_HEARTBEAT_TRIES), running(true)
 {
     attach();
     timer_id = TIMER.add(alive, [this]() { failure_detection_routine(); });
