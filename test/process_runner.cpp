@@ -308,6 +308,13 @@ void send_thread(SenderThreadArgs* args) {
 
 void parallelize(Process& proc, const std::vector<std::shared_ptr<Command>>& commands) {
     int thread_num = commands.size();
+
+    if (thread_num == 1) {
+        SenderThreadArgs args = {&proc, commands[0]};
+        send_thread(&args);
+        return;
+    }
+
     std::vector<std::unique_ptr<std::thread>> threads;
     auto thread_args = std::make_unique<SenderThreadArgs[]>(thread_num);
 
