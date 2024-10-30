@@ -23,7 +23,6 @@ struct QueueEntry {
 class TransmissionQueue
 {
 private:
-    Timer& timer;
     PipelineHandler& handler;
     NodeMap& nodes;
 
@@ -45,7 +44,7 @@ private:
 
     bool packet_can_timeout(const Packet&);
 public:
-    TransmissionQueue(Timer& timer, PipelineHandler& handler, NodeMap& nodes);
+    TransmissionQueue(PipelineHandler& handler, NodeMap& nodes);
     ~TransmissionQueue();
 
     uint32_t get_total_bytes();

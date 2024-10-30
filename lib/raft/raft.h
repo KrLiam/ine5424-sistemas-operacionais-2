@@ -45,7 +45,6 @@ class RaftManager
     std::unordered_set<SocketAddress> received_votes;
 
     int timer_id;
-    Timer timer;
     std::uniform_int_distribution<> election_time_dis;
 
     Observer<PacketReceived> obs_packet_received;

@@ -30,7 +30,6 @@ template<> struct std::hash<TransmissionKey> {
 class TransmissionLayer : public PipelineStep
 {
 private:
-    Timer timer;
     NodeMap &nodes;
 
     std::unordered_map<TransmissionKey, std::shared_ptr<TransmissionQueue>> queue_map;

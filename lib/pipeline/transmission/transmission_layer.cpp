@@ -28,7 +28,7 @@ bool TransmissionLayer::has_queue(const TransmissionKey& key) {
 }
 TransmissionQueue& TransmissionLayer::get_queue(const TransmissionKey& key) {
     if (!has_queue(key)) {
-        auto queue = std::make_shared<TransmissionQueue>(timer, handler, nodes);
+        auto queue = std::make_shared<TransmissionQueue>(handler, nodes);
 
         queue_map.insert({key, queue});
         // log_info("Added queue to ", id.origin.to_string(), " ", id.msg_num, " ", id.sequence_type);

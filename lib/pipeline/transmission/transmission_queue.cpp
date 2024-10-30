@@ -6,14 +6,14 @@
 QueueEntry::QueueEntry(const Packet& packet) : packet(packet) {}
 
 
-TransmissionQueue::TransmissionQueue(Timer& timer, PipelineHandler& handler, NodeMap& nodes)
-    : timer(timer), handler(handler), nodes(nodes)
+TransmissionQueue::TransmissionQueue(PipelineHandler& handler, NodeMap& nodes)
+    : handler(handler), nodes(nodes)
 {
 }
 
 TransmissionQueue::~TransmissionQueue() {
     for (auto& [_, entry] : entries) {
-        if (entry.timeout_id != -1) timer.cancel(entry.timeout_id);
+        if (entry.timeout_id != -1) TIMER.cancel(entry.timeout_id);
     }
 }
 
@@ -55,7 +55,7 @@ void TransmissionQueue::send(uint32_t num) {
 
     entry.tries++;
     pending.emplace(num);
-    entry.timeout_id = timer.add(ACK_TIMEOUT, [this, num]() { timeout(num); });
+    entry.timeout_id = TIMER.add(ACK_TIMEOUT, [this, num]() { timeout(num); });
 
     // não transmite o fragmento na primeira tentativa
     if (packet.meta.urb_retransmission && entry.tries == 1) return;
@@ -143,7 +143,7 @@ void TransmissionQueue::reset() {
 
         if (entry.timeout_id != -1)
         {
-            timer.cancel(entry.timeout_id);
+            TIMER.cancel(entry.timeout_id);
             entry.timeout_id = -1;
         }
     }
@@ -259,7 +259,7 @@ void TransmissionQueue::receive_ack(const Packet& ack_packet)
 
     if (entry.timeout_id != -1)
     {
-        timer.cancel(entry.timeout_id);
+        TIMER.cancel(entry.timeout_id);
         entry.timeout_id = -1;
     }
 

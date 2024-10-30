@@ -51,3 +51,5 @@ public:
 
     bool cancel(int id);
 };
+
+extern Timer TIMER;

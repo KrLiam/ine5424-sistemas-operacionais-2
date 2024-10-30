@@ -115,3 +115,6 @@ void Timer::routine() {
         var.wait_for(lock, std::chrono::milliseconds(interval));
     }
 }
+
+
+Timer TIMER;

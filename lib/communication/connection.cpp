@@ -122,7 +122,7 @@ void Connection::close()
 
 void Connection::set_timeout()
 {
-    handshake_timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
+    handshake_timer_id = TIMER.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
 }
 
 void Connection::connection_timeout()
@@ -141,12 +141,12 @@ bool Connection::disconnect()
     log_trace("disconnect: sending FIN.");
     change_state(FIN_WAIT);
     send_flag(FIN);
-    int timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
+    int timer_id = TIMER.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
 
     std::unique_lock lock(mutex);
     while (state != CLOSED)
         state_change.wait(lock);
-    timer.cancel(timer_id);
+    TIMER.cancel(timer_id);
 
     log_trace("disconnect: connection closed.");
     return true;
@@ -479,7 +479,7 @@ void Connection::change_state(ConnectionState new_state)
 
     if (handshake_timer_id != -1)
     {
-        timer.cancel(handshake_timer_id);
+        TIMER.cancel(handshake_timer_id);
         handshake_timer_id = -1;
     }
 

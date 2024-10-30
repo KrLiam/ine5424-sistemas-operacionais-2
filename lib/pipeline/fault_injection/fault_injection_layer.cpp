@@ -82,7 +82,7 @@ void FaultInjectionLayer::receive(Packet packet) {
     }
 
     if (delay > 0) {
-        timer.add(delay, [this, packet]() {
+        TIMER.add(delay, [this, packet]() {
             proceed_receive(packet);
         });
     }

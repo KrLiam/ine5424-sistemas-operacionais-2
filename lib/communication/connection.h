@@ -61,7 +61,6 @@ private:
 
     uint32_t expected_number = 0;
 
-    Timer timer{};
     int handshake_timer_id = -1;
 
     std::mutex mutex;

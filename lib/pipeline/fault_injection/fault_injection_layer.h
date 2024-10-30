@@ -11,7 +11,6 @@ struct FaultConfig {
 };
 
 class FaultInjectionLayer : public PipelineStep {
-    Timer timer;
     std::vector<int> fault_queue;
     std::mutex mutex_fault_queue;
     
