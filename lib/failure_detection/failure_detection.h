@@ -24,12 +24,11 @@ class FailureDetection
 
     unsigned int alive;
     unsigned int keep_alive;
+    int timer_id = -1;
 
     bool running;
 
     std::mutex mtx;
-
-    std::thread failure_detection_thread;
 
     Observer<ConnectionEstablished> obs_connection_established;
     Observer<ConnectionClosed> obs_connection_closed;

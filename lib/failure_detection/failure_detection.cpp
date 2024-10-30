@@ -5,14 +5,13 @@ FailureDetection::FailureDetection(std::shared_ptr<GroupRegistry> gr, EventBus &
     : gr(gr), event_bus(event_bus), alive(alive), keep_alive(alive * MAX_HEARTBEAT_TRIES), running(true), uuid(UUID())
 {
     attach();
-    failure_detection_thread = std::thread([this]() { failure_detection_routine(); });
+    timer_id = TIMER.add(alive, [this]() { failure_detection_routine(); });
 }
 
 FailureDetection::~FailureDetection()
 {
     running = false;
-    if (failure_detection_thread.joinable())
-        failure_detection_thread.join();
+    if (timer_id >= 0) TIMER.cancel(timer_id);
 }
 
 void FailureDetection::connection_established(const ConnectionEstablished &event)
@@ -69,38 +68,35 @@ void FailureDetection::heartbeat_received(const HeartbeatReceived &event)
 
 void FailureDetection::failure_detection_routine()
 {
-    log_info("Initialized failure detection thread.");
-    while (running)
+    if (!running) return;
+
+    uint64_t now = DateUtils::now();
+
+    for (auto &[id, node] : gr->get_nodes())
     {
-        uint64_t now = DateUtils::now();
-
-        for (auto &[id, node] : gr->get_nodes())
+        mtx.lock();
+        if (node.is_alive() && now - last_alive[node.get_id()] > keep_alive)
         {
-            mtx.lock();
-            if (node.is_alive() && now - last_alive[node.get_id()] > keep_alive)
-            {
-                node.set_alive(false);
-                
-                log_warn(
-                    "No heartbeat from node '",
-                    node.get_id(),
-                    "' (",
-                    node.get_address().to_string(),
-                    ") in the last ",
-                    keep_alive,
-                    " milliseconds; marking it as dead."
-                );
-                event_bus.notify(NodeDeath(node));
-            }
-            mtx.unlock();
-
-            Connection &conn = gr->get_connection(node);
-            conn.heartbeat(uuid);
+            node.set_alive(false);
+            
+            log_warn(
+                "No heartbeat from node '",
+                node.get_id(),
+                "' (",
+                node.get_address().to_string(),
+                ") in the last ",
+                keep_alive,
+                " milliseconds; marking it as dead."
+            );
+            event_bus.notify(NodeDeath(node));
         }
+        mtx.unlock();
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(alive));
+        Connection &conn = gr->get_connection(node);
+        conn.heartbeat(uuid);
     }
-    log_info("Closed failure detection thread.");
+
+    timer_id = TIMER.add(alive, [this]() { failure_detection_routine(); });
 }
 
 void FailureDetection::attach()
