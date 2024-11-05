@@ -64,17 +64,39 @@ void RaftManager::change_state(RaftState new_state) {
 
 
 void RaftManager::send_vote(Packet packet) {
-    log_info("Voting for ", packet.meta.origin.to_string(), ".");
+    bool granted = should_grant_vote(packet.meta.origin);
+    if (granted) {
+        if (leader != nullptr && leader->get_address() != packet.meta.origin) {
+            log_debug(
+                "Received a vote request, but we already have a leader; "
+                "ignoring.");
+            return;
+        }
+        if (data.voted_for != nullptr) {
+            log_debug("Received vote request, but we already voted for someone.");
+            return;
+        }
+        data.voted_for = &nodes.get_node(packet.meta.origin);
+        save_data();
+        set_election_timer();
+    }
+
+    log_info(granted ? "Voting for " : "Not voting for ", packet.meta.origin.to_string(), ".");
+
+    RequestVoteData rvo_data = {
+        granted: granted
+    };
 
     PacketData data = packet.data;
     data.header.flags = data.header.flags | ACK;
-    data.header.id.origin = local_node.get_address();
+    // data.header.id.origin = local_node.get_address();
+    memcpy(data.message_data, &rvo_data, sizeof(RequestVoteData));
 
     PacketMetadata meta = {
         transmission_uuid : UUID(""),
         origin : local_node.get_address(),
         destination : packet.meta.origin,
-        message_length : 0,
+        message_length : sizeof(RequestVoteData),
         expects_ack : 0,
         silent : 0
     };
@@ -97,7 +119,7 @@ void RaftManager::send_request_vote() {
         },
         fragment_num : 0,
         checksum : 0,
-        flags : RVO
+        flags : RVO | END
     };
 
     PacketMetadata meta = {
@@ -105,7 +127,7 @@ void RaftManager::send_request_vote() {
         origin : local_node.get_address(),
         destination : {BROADCAST_ADDRESS, 0},
         message_length : 0,
-        expects_ack : 0,
+        expects_ack : 1,
         silent : 0
     };
 
@@ -181,8 +203,7 @@ void RaftManager::packet_received(const PacketReceived &event) {
                   " received by raft manager.");
     }
 
-    // if (packet.data.header.is_ack())
-    // pipeline.notify(PacketAckReceived(packet));
+    if (packet.data.header.is_ack()) event_bus.notify(PacketAckReceived(packet));
 
     packet_receive_handlers.at(state)(packet);
 }
@@ -210,29 +231,10 @@ void RaftManager::follower_receive(Packet packet) {
 
     if (packet.data.header.is_rvo()) {
         if (packet.data.header.is_ack()) {
-            log_debug("Received a vote, but we are not a candidate; ignoring.");
+            log_debug("Received a vote confirmation, but we are not a candidate; ignoring.");
             return;
         }
-
-        if (leader != nullptr) {
-            log_debug(
-                "Received a vote request, but we already have a leader; "
-                "ignoring.");
-            return;
-        }
-
-        if (data.voted_for != nullptr) {
-            log_debug(
-                "Received vote request, but we already voted for someone.");
-            return;
-        }
-
-        if (should_grant_vote(packet.meta.origin)) {
-            data.voted_for = &nodes.get_node(packet.meta.origin);
-            save_data();
-            send_vote(packet);
-            set_election_timer();
-        }
+        send_vote(packet);
     }
 }
 
@@ -261,23 +263,15 @@ void RaftManager::candidate_receive(Packet packet) {
 
     if (packet.data.header.is_rvo()) {
         if (packet.data.header.is_ack()) {
-            log_debug("Received vote from ", packet.meta.origin.to_string(), ".");
-            received_votes.emplace(packet.meta.origin);
-            check_if_won_election();
+            RequestVoteData* data = reinterpret_cast<RequestVoteData*>(packet.data.message_data);
+            if (data->granted) {
+                log_debug("Received vote from ", packet.meta.origin.to_string(), ".");
+                received_votes.emplace(packet.meta.origin);
+                check_if_won_election();
+            }
             return;
         }
-
-        if (data.voted_for != nullptr) {
-            log_debug("Received vote request, but we already voted for someone.");
-            return;
-        }
-
-        if (should_grant_vote(packet.meta.origin)) {
-            data.voted_for = &nodes.get_node(packet.meta.origin);
-            save_data();
-            send_vote(packet);
-            set_election_timer();
-        }
+        send_vote(packet);
     }
 }
 

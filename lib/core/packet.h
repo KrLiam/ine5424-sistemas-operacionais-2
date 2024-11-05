@@ -190,6 +190,10 @@ struct HeartbeatData {
     char uuid[36];
 };
 
+struct RequestVoteData {
+    bool granted;
+};
+
 
 Packet create_ack(const Packet& packet);
 Packet create_ack(const Packet& packet, SocketAddress destination);
