@@ -87,9 +87,7 @@ void TransmissionLayer::ack_received(const PacketAckReceived& event) {
 }
 
 void TransmissionLayer::pipeline_cleanup(const PipelineCleanup& event) {    
-    Message& message = event.message;
-
-    clear_queue(create_key(message.id, message.destination));
+    clear_queue(create_key(event.id, event.destination));
 }
 
 void TransmissionLayer::node_death(const NodeDeath& event) {

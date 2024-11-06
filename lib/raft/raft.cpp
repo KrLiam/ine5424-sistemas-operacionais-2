@@ -150,11 +150,23 @@ void RaftManager::cancel_election_timer() {
 
 void RaftManager::follow(Node &node) {
     log_info("Following new leader, node ", node.get_id(), " (", node.get_address().to_string(), ").");
+
+    MessageIdentity rvo_id = {
+        origin : local_node.get_address(),
+        msg_num : 0,
+        msg_type : MessageType::RAFT
+        };
+    SocketAddress broadcast_address = {BROADCAST_ADDRESS, 0};
+    event_bus.notify(PipelineCleanup(rvo_id, broadcast_address));
+
     if (leader != nullptr) leader->set_leader(false);
     leader = &node;
     leader->set_leader(true);
+
     cancel_election_timer();
+
     change_state(FOLLOWER);
+
     event_bus.notify(LeaderElected());
 }
 

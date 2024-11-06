@@ -111,7 +111,7 @@ void TransmissionDispatcher::complete(bool success) {
 void TransmissionDispatcher::cancel_all() {
     if (active_transmission) {
         active_transmission->active = false;
-        pipeline.notify(PipelineCleanup(active_transmission->message));
+        pipeline.notify(PipelineCleanup(active_transmission->message.id, active_transmission->message.destination));
         active_transmission = nullptr;
     }
 
