@@ -72,7 +72,7 @@ void RaftManager::send_vote(Packet packet) {
                 "ignoring.");
             return;
         }
-        if (data.voted_for != nullptr) {
+        if (data.voted_for != nullptr && data.voted_for->get_address() != packet.meta.origin) {
             log_debug("Received vote request, but we already voted for someone.");
             return;
         }
