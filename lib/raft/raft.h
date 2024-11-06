@@ -63,9 +63,6 @@ class RaftManager
         {CANDIDATE, std::bind(&RaftManager::candidate_receive, this, _1)},
         {LEADER, std::bind(&RaftManager::leader_receive, this, _1)}};
 
-    void read_data();
-    void save_data();
-
     void change_state(RaftState new_state);
 
     void set_election_timer();

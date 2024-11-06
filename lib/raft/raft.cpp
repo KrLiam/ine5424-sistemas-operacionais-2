@@ -21,35 +21,11 @@ RaftManager::RaftManager(
     timer_id(0),
     election_time_dis(alive * 6, alive * 7)
 {
-    read_data();
-
     obs_packet_received.on(std::bind(&RaftManager::packet_received, this, _1));
     event_bus.attach(obs_packet_received);
 
     set_election_timer();
 }
-
-void RaftManager::read_data() {
-    std::ifstream f(data_filename);
-
-    if (!f.good()) {
-        memset(&data, 0, sizeof(RaftPersistentData));
-        return;
-    }
-
-    f.read((char *)&data, sizeof(RaftPersistentData));
-    f.close();
-}
-
-void RaftManager::save_data() {
-    mkdir(DATA_DIR, S_IRWXU);
-    mkdir(DATA_DIR "/raft", S_IRWXU);
-
-    std::ofstream f(data_filename);
-    f.write((char *)&data, sizeof(RaftPersistentData));
-    f.close();
-}
-
 
 void RaftManager::change_state(RaftState new_state) {
     if (state == new_state) return;
@@ -77,7 +53,6 @@ void RaftManager::send_vote(Packet packet) {
             return;
         }
         data.voted_for = &nodes.get_node(packet.meta.origin);
-        save_data();
         set_election_timer();
     }
 
@@ -223,7 +198,6 @@ void RaftManager::packet_received(const PacketReceived &event) {
 
 void RaftManager::on_follower() {
     data.voted_for = nullptr;
-    save_data();
 
     set_election_timer();
 }
@@ -256,8 +230,6 @@ void RaftManager::on_candidate() { candidate_timeout(); }
 void RaftManager::candidate_timeout() {
     log_info("Candidate timed out; starting new election.");
     data.voted_for = nullptr;
-    save_data();
-
     leader = nullptr;
 
     received_votes.clear();
