@@ -38,7 +38,7 @@ MessageDefragmentationIsComplete::MessageDefragmentationIsComplete(Packet& packe
 
 ForwardDefragmentedMessage::ForwardDefragmentedMessage(Packet& packet) : packet(packet) {}
 
-PipelineCleanup::PipelineCleanup(MessageIdentity& id, SocketAddress& destination) : id(id), destination(destination) {}
+PipelineCleanup::PipelineCleanup(const MessageIdentity& id, const SocketAddress& destination) : id(id), destination(destination) {}
 
 HeartbeatReceived::HeartbeatReceived(Node& remote_node, Packet& packet) : remote_node(remote_node), packet(packet) {}
 

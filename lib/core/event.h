@@ -155,10 +155,10 @@ struct ForwardDefragmentedMessage : public Event {
 struct PipelineCleanup : public Event {
     static EventType type() { return EventType::PIPELINE_CLEANUP; }
 
-    MessageIdentity& id;
-    SocketAddress& destination;
+    const MessageIdentity& id;
+    const SocketAddress& destination;
 
-    PipelineCleanup(MessageIdentity& id, SocketAddress& destination);
+    PipelineCleanup(const MessageIdentity& id, const SocketAddress& destination);
 };
 
 struct HeartbeatReceived : public Event {

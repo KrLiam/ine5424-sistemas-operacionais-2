@@ -98,6 +98,7 @@ private:
     void on_established();
 
     void send_syn(uint8_t extra_flags);
+    void stop_syn_transmission();
     
     void send_flag(uint8_t flags);
     void send_flag(uint8_t flags, MessageData data);

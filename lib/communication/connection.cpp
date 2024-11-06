@@ -105,7 +105,7 @@ void Connection::connect()
     if (state != CLOSED)
         return;
 
-    log_trace("connect: sending SYN.");
+    log_debug("connect: sending SYN.");
     reset_message_numbers();
     change_state(SYN_SENT);
     send_syn(0);
@@ -156,7 +156,7 @@ void Connection::closed(Packet p)
 {
     if (p.data.header.is_syn() && !p.data.header.is_ack() && p.data.header.get_message_number() == 0)
     {
-        log_trace("closed: received SYN; sending SYN+ACK.");
+        log_debug("closed: received SYN; sending SYN+ACK.");
         reset_message_numbers();
         resync_broadcast_on_syn(p);
         send_syn(ACK);
@@ -167,7 +167,7 @@ void Connection::closed(Packet p)
 
     if (p.data.header.is_rst()) return;
 
-    log_trace("closed: unexpected packet; sending RST.");
+    log_debug("closed: unexpected packet; sending RST.");
     reset_message_numbers();
     send_flag(RST);
 }
@@ -198,7 +198,8 @@ void Connection::syn_sent(Packet p)
     {
         if (p.data.header.is_ack())
         {
-            log_trace("syn_sent: received SYN+ACK; sending ACK.");
+            log_debug("syn_sent: received SYN+ACK; sending ACK.");
+            stop_syn_transmission();
 
             resync_broadcast_on_syn(p);
 
@@ -211,8 +212,9 @@ void Connection::syn_sent(Packet p)
             return;
         }
 
-        log_trace("syn_sent: received SYN from simultaneous connection; transitioning to syn_received and sending SYN+ACK.");
-        
+        log_debug("syn_sent: received SYN from simultaneous connection; transitioning to syn_received and sending SYN+ACK.");
+
+        stop_syn_transmission();
         resync_broadcast_on_syn(p);
 
         send_syn(ACK);
@@ -233,9 +235,11 @@ void Connection::syn_received(Packet p)
 
     if (p.data.header.is_ack())
     {
+        stop_syn_transmission();
+
         dispatcher.reset_number(1);
         expected_number = 1;
-        log_trace("syn_received: received ACK.");
+        log_debug("syn_received: received ACK.");
 
         change_state(ESTABLISHED);
 
@@ -248,6 +252,7 @@ void Connection::syn_received(Packet p)
         if (p.data.header.is_ack())
         {
             log_debug("syn_received: received SYN+ACK.");
+            stop_syn_transmission();
 
             resync_broadcast_on_syn(p);
             send_flag(ACK);
@@ -258,6 +263,7 @@ void Connection::syn_received(Packet p)
             return;
         }
         log_debug("syn_received: received SYN; sending SYN+ACK.");
+        stop_syn_transmission();
         send_syn(ACK);
     }
 }
@@ -419,6 +425,7 @@ void Connection::send_flag(uint8_t flags, MessageData message_data)
     Packet packet;
     packet.meta.destination = remote_node.get_address();
     packet.meta.message_length = message_data.size;
+    packet.meta.expects_ack = flags & SYN;
     packet.data = data;
 
     dispatch_to_sender(packet);
@@ -587,7 +594,7 @@ void Connection::dispatch_to_sender(Packet p)
 
 void Connection::heartbeat(const UUID& local_uuid)
 {
-    log_trace("Heartbeating to ", remote_node.get_address().to_string(), ".");
+    // log_trace("Heartbeating to ", remote_node.get_address().to_string(), ".");
 
     HeartbeatData hb_data;
     strcpy(hb_data.uuid, local_uuid.as_string().c_str());
@@ -633,4 +640,17 @@ void Connection::send_dispatched_packets()
     dispatched_packets.clear();
 
     mutex_dispatched_packets.unlock();
+}
+
+void Connection::stop_syn_transmission()
+{
+    log_debug("Stopping SYN transmission to ", remote_node.get_address().to_string(), ".");
+    MessageIdentity id;
+    memset(&id, 0, sizeof(MessageIdentity));
+
+    id.origin = local_node.get_address(),
+    id.msg_num = dispatcher.get_next_number();
+    id.msg_type = MessageType::CONTROL;
+
+    pipeline.notify(PipelineCleanup(id, remote_node.get_address()));
 }
