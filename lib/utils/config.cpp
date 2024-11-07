@@ -65,6 +65,27 @@ std::string NodeConfig::to_string() const
     return format("{%s, %s}", id, address.to_string().c_str());
 }
 
+IntRange IntRange::parse(std::string string) {
+    ConfigReader reader(string);
+    return IntRange::parse(reader);
+}
+IntRange IntRange::parse(ConfigReader &reader) {
+    int value = reader.read_int();
+
+    char ch = reader.peek();
+    if (ch != '.') return IntRange{value, value};
+
+    reader.expect("..");
+
+    int end = reader.read_int();
+
+    return IntRange{std::min(value, end), std::max(value, end)};
+}
+
+int IntRange::length() {
+    return max - min + 1;
+}
+
 NodeConfig &Config::get_node(std::string id)
 {
     for (NodeConfig &node : nodes)
@@ -160,6 +181,42 @@ BroadcastType ConfigReader::parse_broadcast()
     throw parse_error(format("Invalid broadcast type '%s' at config file.", value.c_str()));
 }
 
+FaultConfig ConfigReader::parse_faults() {
+    FaultConfig config;
+
+    expect('{');
+
+    while (true) {
+        char ch = peek();
+        if (!ch || ch == '}') break;
+
+        expect('{');
+
+        std::string key = read_word();
+
+        expect('=');
+
+        if (key == "corrupt") {
+            config.corrupt_chance = static_cast<double>(read_int()) / 100.0;
+        }
+        else if (key == "drop") {
+            config.lose_chance = static_cast<double>(read_int()) / 100.0;
+        }
+        else if (key == "delay") {
+            config.delay = IntRange::parse(*this);
+        }
+        else throw parse_error(format("Unknown key '%s' in faults.", key.c_str()));
+
+        expect('}');
+
+        if (!read(',')) break;
+    }
+
+    expect('}');
+
+    return config;
+}
+
 Config ConfigReader::parse()
 {
     reset();
@@ -186,6 +243,9 @@ Config ConfigReader::parse()
         }
         else if (target == "broadcast") {
             config.broadcast = parse_broadcast();
+        }
+        else if (target == "faults") {
+            config.faults = parse_faults();
         }
         else throw parse_error(
             format("Invalid '%s' at pos %i of config file.", target.c_str(), pos)

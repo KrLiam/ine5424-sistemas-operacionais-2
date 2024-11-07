@@ -5,12 +5,6 @@
 ReliableCommunication::ReliableCommunication(
     std::string local_id,
     std::size_t user_buffer_size
-) : ReliableCommunication(local_id, user_buffer_size, FaultConfig()) {}
-
-ReliableCommunication::ReliableCommunication(
-    std::string local_id,
-    std::size_t user_buffer_size,
-    FaultConfig fault_config
 ) :
     connection_update_buffer("connection_update"),
     user_buffer_size(user_buffer_size),
@@ -22,7 +16,7 @@ ReliableCommunication::ReliableCommunication(
     broadcast_type = config.broadcast;
 
     gr = std::make_shared<GroupRegistry>(local_id, config, event_bus);
-    pipeline = std::make_unique<Pipeline>(gr, event_bus, fault_config);
+    pipeline = std::make_unique<Pipeline>(gr, event_bus, config.faults);
 
     sender_thread = std::thread([this]()
                                 { send_routine(); });

@@ -95,6 +95,23 @@ struct NodeConfig
     std::string to_string() const;
 };
 
+struct IntRange {
+    int min;
+    int max;
+
+    static IntRange parse(std::string string);
+    static IntRange parse(ConfigReader &reader);
+
+    int length();
+};
+
+struct FaultConfig {
+    std::vector<int> faults;
+    IntRange delay = {0, 0};
+    double lose_chance = 0;
+    double corrupt_chance = 0;
+};
+
 enum class BroadcastType {
     BEB = 0,
     URB = 1,
@@ -106,6 +123,7 @@ struct Config
     std::vector<NodeConfig> nodes;
     unsigned int alive = 1000;
     BroadcastType broadcast = BroadcastType::BEB;
+    FaultConfig faults;
 
     NodeConfig &get_node(std::string id);
 
@@ -125,5 +143,6 @@ public:
     std::vector<NodeConfig> parse_nodes();
     uint32_t parse_alive();
     BroadcastType parse_broadcast();
+    FaultConfig parse_faults();
     Config parse();
 };

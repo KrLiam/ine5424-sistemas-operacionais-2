@@ -434,10 +434,9 @@ void client(Process& proc) {
 }
 
 void run_process(const Arguments& args) {
-    FaultConfig fault = { faults : args.faults };
     Process proc(
-        [&args, &fault]() {
-            return std::make_unique<ReliableCommunication>(args.node_id, BUFFER_SIZE, fault);
+        [&args]() {
+            return std::make_unique<ReliableCommunication>(args.node_id, BUFFER_SIZE);
         },
         server_receive,
         server_deliver

@@ -7,14 +7,12 @@ bool roll_chance(double chance) {
     return value < chance;
 }
 
-FaultInjectionLayer::FaultInjectionLayer(PipelineHandler handler) : FaultInjectionLayer(handler, 0, 0, 0) {}
+FaultInjectionLayer::FaultInjectionLayer(PipelineHandler handler) : FaultInjectionLayer(handler, FaultConfig()) {}
 FaultInjectionLayer::FaultInjectionLayer(
-    PipelineHandler handler, int min_delay, int max_delay, double lose_chance
+    PipelineHandler handler, FaultConfig config
 ) :
     PipelineStep(handler),
-    min_delay(min_delay),
-    max_delay(max_delay),
-    lose_chance(lose_chance)
+    config(config)
     {}
 
 void FaultInjectionLayer::enqueue_fault(int delay = INT_MAX) {
@@ -54,7 +52,7 @@ void FaultInjectionLayer::receive(Packet packet) {
     }
 
     // lose packet entirely
-    if (delay == INT_MAX || (delay == -1 && roll_chance(lose_chance))) {
+    if (delay == INT_MAX || (delay == -1 && roll_chance(config.lose_chance))) {
         if (!packet.silent()) {
             log_warn("Lost ", packet.to_string(PacketFormat::RECEIVED));
         }
@@ -62,9 +60,9 @@ void FaultInjectionLayer::receive(Packet packet) {
     };
 
     if (delay == -1) {
-        int range_length = max_delay - min_delay;
-        int offset = range_length ? std::rand() % range_length : 0;
-        delay = min_delay + offset;
+        int range_length = config.delay.length();
+        int offset = range_length > 1 ? std::rand() % range_length : 0;
+        delay = config.delay.min + offset;
         [[maybe_unused]] unsigned int msg_num = packet.data.header.id.msg_num;
         [[maybe_unused]] unsigned int fragment_num = packet.data.header.fragment_num;
         
