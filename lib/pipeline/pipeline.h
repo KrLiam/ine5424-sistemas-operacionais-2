@@ -19,6 +19,7 @@ private:
     std::shared_ptr<GroupRegistry> gr;
 
     std::vector<PipelineStep *> layers;
+    FaultInjectionLayer* fault_layer;
     EventBus& event_bus;
 
     friend PipelineHandler;
@@ -52,6 +53,8 @@ public:
     Pipeline(std::shared_ptr<GroupRegistry> gr, EventBus& event_bus, const FaultConfig& fault_config);
 
     ~Pipeline();
+
+    FaultInjectionLayer& get_fault_layer();
 
     template <typename T>
     void attach(Observer<T>& observer) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <arpa/inet.h>
+#include <stdint.h>
 #include <iostream>
 #include <fstream>
 #include <algorithm>
@@ -96,13 +97,27 @@ struct NodeConfig
 };
 
 struct IntRange {
-    int min;
-    int max;
+    uint32_t min;
+    uint32_t max;
+
+    IntRange static full() {
+        return IntRange(0, UINT32_MAX);
+    }
+
+    bool operator==(const IntRange& other) const;
+
+    std::string to_string();
+
+    bool contains(uint32_t value) const;
+    bool contains(IntRange value) const;
 
     static IntRange parse(std::string string);
-    static IntRange parse(ConfigReader &reader);
+    static IntRange parse(Reader &reader);
 
-    int length();
+    IntRange(uint32_t value);
+    IntRange(uint32_t min, uint32_t max);
+
+    uint32_t length();
 };
 
 struct FaultConfig {

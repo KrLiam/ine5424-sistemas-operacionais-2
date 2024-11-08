@@ -28,3 +28,9 @@ bool message_type::is_atomic(MessageType type) {
 const char* message_type::to_string(MessageType type) {
     return message_type::message_type_name.at(type);
 }
+
+MessageSequenceType MessageIdentity::sequence_type() const {
+    if (message_type::is_atomic(msg_type)) return MessageSequenceType::ATOMIC;
+    if (message_type::is_broadcast(msg_type)) return MessageSequenceType::BROADCAST;
+    return MessageSequenceType::UNICAST;
+}

@@ -66,23 +66,48 @@ std::string NodeConfig::to_string() const
 }
 
 IntRange IntRange::parse(std::string string) {
-    ConfigReader reader(string);
+    Reader reader(string);
     return IntRange::parse(reader);
 }
-IntRange IntRange::parse(ConfigReader &reader) {
+IntRange IntRange::parse(Reader &reader) {
+    if (reader.peek() == '*') return IntRange::full();
+
     int value = reader.read_int();
 
+    Override ovr = reader.override_whitespace(false);
+
     char ch = reader.peek();
-    if (ch != '.') return IntRange{value, value};
+    if (ch != '.') return IntRange(value, value);
 
     reader.expect("..");
 
     int end = reader.read_int();
 
-    return IntRange{std::min(value, end), std::max(value, end)};
+    return IntRange(value, end);
 }
 
-int IntRange::length() {
+IntRange::IntRange(uint32_t value) : IntRange(value, value) {}
+IntRange::IntRange(uint32_t min, uint32_t max) :
+    min(std::min(min, max)), max(std::max(min, max)) {}
+
+bool IntRange::operator==(const IntRange& other) const {
+    return min == other.min && max == other.max;
+}
+
+std::string IntRange::to_string() {
+    if (min == max) return std::to_string(min);
+    if (min == 0 && max == UINT32_MAX) return "*";
+    return format("%i..%i", min, max);
+}
+
+bool IntRange::contains(IntRange value) const {
+    return min <= value.min && value.max <= max;
+}
+bool IntRange::contains(uint32_t value) const {
+    return min <= value && value <= max;
+}
+
+uint32_t IntRange::length() {
     return max - min + 1;
 }
 

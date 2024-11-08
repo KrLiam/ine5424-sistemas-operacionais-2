@@ -1,6 +1,7 @@
 #pragma once
 
 #include "utils/reader.h"
+#include "pipeline/fault_injection/fault_injection_layer.h"
 
 
 enum CommandType {
@@ -9,7 +10,8 @@ enum CommandType {
     dummy = 2,
     broadcast = 3,
     kill = 4,
-    init = 5
+    init = 5,
+    fault = 6
 };
 
 struct Command {
@@ -52,6 +54,14 @@ struct FileCommand : public Command {
     std::string send_id;
 
     FileCommand(std::string path, std::string send_id);
+
+    virtual std::string name();
+};
+
+struct FaultCommand : public Command {
+    std::vector<FaultRule> rules;
+
+    FaultCommand(std::vector<FaultRule> rules);
 
     virtual std::string name();
 };

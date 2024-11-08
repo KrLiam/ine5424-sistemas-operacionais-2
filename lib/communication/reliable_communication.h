@@ -33,6 +33,8 @@ public:
     ReliableCommunication(std::string local_id, std::size_t user_buffer_size);
     ~ReliableCommunication();
 
+    void add_fault_rule(const FaultRule& rule);
+
     bool send(std::string id, MessageData data);
     bool broadcast(MessageData data);
     ReceiveResult receive(char *m);

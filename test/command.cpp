@@ -29,6 +29,11 @@ FileCommand::FileCommand(std::string path, std::string send_id)
 
 std::string FileCommand::name() { return "file"; }
 
+FaultCommand::FaultCommand(std::vector<FaultRule> rules)
+    : Command(CommandType::fault), rules(rules) {}
+
+std::string FaultCommand::name() { return "fault"; }
+
 KillCommand::KillCommand() : Command(CommandType::kill) {}
 
 std::string KillCommand::name() { return "kill"; }
@@ -92,6 +97,60 @@ std::string parse_destination(Reader& reader) {
     return send_id;
 }
 
+FaultRule parse_fault_rule(Reader& reader) {
+    std::string type = reader.read_word();
+
+    if (type == "drop") {
+        DropFaultRule rule{
+            pattern: {number: IntRange::full(), fragment: IntRange::full()},
+            chance: 1,
+            count: 1
+        };
+
+        rule.pattern.number = IntRange::parse(reader);
+
+        if (reader.read('/')) {
+            rule.pattern.fragment = IntRange::parse(reader);
+        }
+
+        std::unordered_map<char, MessageSequenceType> ch_map = {
+            {'u', MessageSequenceType::UNICAST},
+            {'b', MessageSequenceType::BROADCAST},
+            {'a', MessageSequenceType::ATOMIC}
+        };
+
+        std::unordered_set<char, std::hash<char>> sequence_types = {'u','b','a'};
+        char ch = reader.peek();
+        if (ch_map.contains(ch)) {
+            reader.advance();
+            sequence_types = {(char)ch_map.at(ch)};
+        }
+
+        if (reader.peek() && isdigit(reader.peek())) {
+            int value = reader.read_int();
+            char value_unit = reader.peek();
+
+            if (value_unit == '%') rule.chance = value;
+            else if (value_unit == 'x') rule.count = value;
+            else throw parse_error(format("Invalid drop rule unit '%c'", value_unit));
+        }
+
+        return rule;
+    }
+
+    throw parse_error(format("Unknown fault rule '%s'.", type.c_str()));
+}
+std::vector<FaultRule> parse_fault_rules(Reader& reader) {
+    std::vector<FaultRule> rules;
+
+    while (!reader.eof()) {
+        rules.push_back(parse_fault_rule(reader));
+        if (!reader.read(',')) break;
+    }
+
+    return rules;
+}
+
 std::shared_ptr<Command> parse_command(Reader& reader) {
     std::string keyword = reader.read_word();
 
@@ -120,6 +179,10 @@ std::shared_ptr<Command> parse_command(Reader& reader) {
     }
     if (keyword == "init") {
         return std::make_shared<InitCommand>();
+    }
+    if (keyword == "fault") {
+        std::vector<FaultRule> rules = parse_fault_rules(reader);
+        return std::make_shared<FaultCommand>(rules);
     }
 
     if (keyword.length()) {

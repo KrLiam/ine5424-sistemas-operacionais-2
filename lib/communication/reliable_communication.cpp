@@ -41,6 +41,11 @@ ReliableCommunication::~ReliableCommunication()
         sender_thread.join();
 }
 
+void ReliableCommunication::add_fault_rule(const FaultRule& rule) {
+    FaultInjectionLayer fault_layer = pipeline->get_fault_layer();
+    fault_layer.add_rule(rule);
+}
+
 std::shared_ptr<GroupRegistry> ReliableCommunication::get_group_registry()
 {
     return gr;

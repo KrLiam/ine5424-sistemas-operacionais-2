@@ -15,18 +15,39 @@ FaultInjectionLayer::FaultInjectionLayer(
     config(config)
     {}
 
-void FaultInjectionLayer::enqueue_fault(int delay = INT_MAX) {
-    mutex_fault_queue.lock();
-    fault_queue.push_back(delay);
-    mutex_fault_queue.unlock();
+void FaultInjectionLayer::discard_drop_rules(const PacketPattern& pattern) {
+    int size = drop_rules.size();
+    for (int i = 0; i < size; i++) {
+        const DropFaultRule& rule = drop_rules[i];
+
+        if (pattern.contains(rule.pattern)) {
+            drop_rules.erase(drop_rules.begin() + i);
+            i--;
+        }
+    }
 }
 
-void FaultInjectionLayer::enqueue_fault(const std::vector<int>& faults) {
-    mutex_fault_queue.lock();
-    for (const int delay : faults) {
-        fault_queue.push_back(delay);
+void FaultInjectionLayer::decrement_drop_rules(const PacketPattern& pattern) {
+    int size = drop_rules.size();
+    for (int i = 0; i < size; i++) {
+        DropFaultRule& rule = drop_rules[i];
+
+        if (rule.pattern.contains(pattern)) {
+            rule.count--;
+
+            if (!rule.count) {
+                drop_rules.erase(drop_rules.begin() + i);
+                i--;
+            }
+        }
     }
-    mutex_fault_queue.unlock();
+}
+
+void FaultInjectionLayer::add_rule(const FaultRule& rule) {
+    if (auto value = std::get_if<DropFaultRule>(&rule)) {
+        discard_drop_rules(value->pattern);
+        drop_rules.push_back(*value);
+    }
 }
 
 void FaultInjectionLayer::receive(Packet packet) {
@@ -42,22 +63,29 @@ void FaultInjectionLayer::receive(Packet packet) {
     
     int delay = -1;
 
-    if (fault_queue.size()) {
-        mutex_fault_queue.lock();
+    const MessageIdentity id = packet.data.header.id;
+    uint32_t fragment = packet.data.header.fragment_num;
 
-        delay = fault_queue.at(0);
-        fault_queue.erase(fault_queue.begin());
+    bool drop = false;
 
-        mutex_fault_queue.unlock();
+    for (size_t i = 0; i < drop_rules.size(); i++) {
+        const DropFaultRule& rule = drop_rules[i];
+
+        if (
+            rule.pattern.matches(id, fragment)
+            && roll_chance(rule.chance)
+        ) {
+            decrement_drop_rules(PacketPattern::from(id, fragment));
+
+            drop = true;
+            break;
+        }
     }
 
-    // lose packet entirely
-    if (delay == INT_MAX || (delay == -1 && roll_chance(config.lose_chance))) {
-        if (!packet.silent()) {
-            log_warn("Lost ", packet.to_string(PacketFormat::RECEIVED));
-        }
+    if (drop) {
+        log_warn("Lost ", packet.to_string(PacketFormat::RECEIVED));
         return;
-    };
+    }
 
     if (delay == -1) {
         int range_length = config.delay.length();

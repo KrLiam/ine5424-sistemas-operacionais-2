@@ -299,6 +299,18 @@ void send_thread(SenderThreadArgs* args) {
             log_print("Initializing node.");
             proc->init();
         }
+        else if (command->type == CommandType::fault) {
+            FaultCommand* cmd = static_cast<FaultCommand*>(command.get());
+            for (FaultRule& rule : cmd->rules) {
+                if (auto r = std::get_if<DropFaultRule>(&rule)) {
+                    std::string types;
+                    for (char ch : r->pattern.sequence_types) {
+                        types += ch;
+                    }
+                    log_print("Drop ", r->pattern.number.to_string(), "/", r->pattern.fragment.to_string(), types, " ", r->chance, "% ", r->count, "x");
+                }
+            }
+        }
     }
     catch (std::invalid_argument& err) {
         log_error(err.what());

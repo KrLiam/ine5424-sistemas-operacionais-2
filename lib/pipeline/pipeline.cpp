@@ -9,11 +9,10 @@ Pipeline::Pipeline(std::shared_ptr<GroupRegistry> gr, EventBus& event_bus, const
 {
     PipelineHandler handler = PipelineHandler(*this, event_bus, -1);
 
-    FaultInjectionLayer* fault_layer = new FaultInjectionLayer(
+    fault_layer = new FaultInjectionLayer(
         handler.at_index(FAULT_INJECTION_LAYER),
         fault_config
     );
-    fault_layer->enqueue_fault(fault_config.faults);
 
     layers.push_back(new ChannelLayer(handler.at_index(CHANNEL_LAYER), gr->get_local_node().get_address(), gr->get_nodes()));
     layers.push_back(fault_layer);
@@ -29,6 +28,8 @@ Pipeline::~Pipeline()
     for (auto layer : layers)
         delete layer;
 }
+
+FaultInjectionLayer& Pipeline::get_fault_layer() { return *fault_layer; }
 
 PipelineStep *Pipeline::get_step(int step_index)
 {
