@@ -98,6 +98,7 @@ class FaultInjectionLayer : public PipelineStep {
     std::vector<DropFaultRule> drop_rules;
     std::unordered_set<int> packet_timer_ids;
    FaultConfig config;
+   std::uniform_int_distribution<> corruption_mask_dis;
 public:
     FaultInjectionLayer(PipelineHandler handler);
     FaultInjectionLayer(PipelineHandler handler, FaultConfig config);
@@ -106,6 +107,8 @@ public:
 
     void discard_drop_rules(const PacketPattern& pattern);
     void decrement_matching_drop_rules(const PacketPattern& pattern);
+
+    void corrupt(Packet& packet);
 
     void add_rule(const FaultRule& rule);
 

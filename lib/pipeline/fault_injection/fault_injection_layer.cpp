@@ -12,7 +12,8 @@ FaultInjectionLayer::FaultInjectionLayer(
     PipelineHandler handler, FaultConfig config
 ) :
     PipelineStep(handler),
-    config(config)
+    config(config),
+    corruption_mask_dis(0, 255)
     {}
 
 FaultInjectionLayer::~FaultInjectionLayer() {
@@ -108,8 +109,29 @@ void FaultInjectionLayer::receive(Packet packet) {
 }
 
 void FaultInjectionLayer::proceed_receive(Packet packet) {
+    if (roll_chance(config.corrupt_chance)) corrupt(packet);
+
     if (!packet.silent()) {
         log_info("Received ", packet.to_string(PacketFormat::RECEIVED), " (", packet.meta.message_length, " bytes).");
     }
     handler.forward_receive(packet);
+}
+
+void FaultInjectionLayer::corrupt(Packet& packet) {
+    if (!packet.silent()) {
+        log_warn("Corrupting ", packet.to_string(PacketFormat::RECEIVED), ".");
+    }
+
+    char new_header[sizeof(packet.data.header)];
+    memcpy(new_header, &packet.data.header, sizeof(new_header));
+    for (int i = 0; i < sizeof(packet.data.header); i++) {
+        char mask = corruption_mask_dis(rc_random::gen);
+        new_header[i] = new_header[i] ^ mask;
+    }
+    memcpy(&packet.data.header, new_header, sizeof(packet.data.header));
+    
+    for (int i = 0; i < packet.meta.message_length; i++) {
+        char mask = corruption_mask_dis(rc_random::gen);
+        packet.data.message_data[i] = packet.data.message_data[i] ^ mask;
+    }
 }
