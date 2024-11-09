@@ -1,0 +1,13 @@
+config = ./ab_100ms.conf
+procedures = {
+ 0 = [
+    sleep 10ms;
+    "AB - recebimento fora de ordem [1]" -> *;
+    "AB - recebimento fora de ordem [2]" -> *;
+  ],
+  1 = [
+  ],
+  2 = [
+    fault drop 0/0a ack 1x;
+  ]
+}
