@@ -140,13 +140,25 @@ bool Process::send_message(
 
 void Process::execute(const Command& command) {
     try {
-        std::string send_id;
+        if (command.type == CommandType::init) {
+            if (initialized()) {
+                log_print("Node is already initialized.");
+                return;
+            }
+            log_print("Initializing node.");
+            init();
+            return;
+        }
+
+        if (!initialized()) {
+            log_print("Node is dead.");
+            return;
+        }
 
         if (command.type == CommandType::text) {
             const TextCommand* cmd = static_cast<const TextCommand*>(&command);
 
             const std::string& text = cmd->text;
-            send_id = cmd->send_id;
 
             send_message(
                 cmd->send_id,
@@ -154,8 +166,10 @@ void Process::execute(const Command& command) {
                 cmd->name(),
                 format("'%s'", text.c_str())
             );
+            return;
         }
-        else if (command.type == CommandType::broadcast) {
+
+        if (command.type == CommandType::broadcast) {
             const BroadcastCommand* cmd = static_cast<const BroadcastCommand*>(&command);
 
             const std::string& text = cmd->text;
@@ -166,13 +180,14 @@ void Process::execute(const Command& command) {
                 cmd->name(),
                 format("'%s'", text.c_str())
             );
+            return;
         }
-        else if (command.type == CommandType::dummy) {
+
+        if (command.type == CommandType::dummy) {
             const DummyCommand* cmd = static_cast<const DummyCommand*>(&command);
 
             size_t size = cmd->size;
             size_t count = cmd->count;
-            send_id = cmd->send_id;
 
             for (size_t i = 0; i < count; i++)
             {
@@ -186,12 +201,13 @@ void Process::execute(const Command& command) {
                     format("%u bytes of dummy data", size)
                 );
             }
+            return;
         }
-        else if (command.type == CommandType::file) {
+
+        if (command.type == CommandType::file) {
             const FileCommand* cmd = static_cast<const FileCommand*>(&command);
 
             const std::string& path = cmd->path;
-            send_id = cmd->send_id;
 
             std::ifstream file(path, std::ios::binary | std::ios::ate);
             size_t size = file.tellg();
@@ -207,29 +223,16 @@ void Process::execute(const Command& command) {
                     format("%u bytes from file '%s'", size, path.c_str())
                 );
             }
+            return;
         }
-        else if (command.type == CommandType::kill) {
-            if (!initialized()) {
-                log_print("Node is already dead.");
-                return;
-            }
+
+        if (command.type == CommandType::kill) {
             log_print("Killing node.");
             kill();
+            return;
         }
-        else if (command.type == CommandType::init) {
-            if (initialized()) {
-                log_print("Node is already initialized.");
-                return;
-            }
-            log_print("Initializing node.");
-            init();
-        }
-        else if (command.type == CommandType::fault) {
-            if (!initialized()) {
-                log_print("Node is dead.");
-                return;
-            }
 
+        if (command.type == CommandType::fault) {
             const FaultCommand* cmd = static_cast<const FaultCommand*>(&command);
             for (const FaultRule& rule : cmd->rules) {
                 comm->add_fault_rule(rule);
@@ -238,6 +241,7 @@ void Process::execute(const Command& command) {
                     log_print("Drop ", r->to_string());
                 }
             }
+            return;
         }
     }
     catch (std::invalid_argument& err) {
