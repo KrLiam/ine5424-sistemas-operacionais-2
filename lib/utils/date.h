@@ -38,6 +38,7 @@ class Timer {
     std::condition_variable var;
 
     std::thread thread;
+    bool initialized = false;
     bool stop = false;
     int current_id = 0;
 
@@ -46,6 +47,8 @@ public:
     Timer();
 
     ~Timer();
+
+    void init();
 
     int add(int interval_ms, std::function<void()> callback);
 

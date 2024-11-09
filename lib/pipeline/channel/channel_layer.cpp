@@ -14,7 +14,7 @@ ChannelLayer::ChannelLayer(PipelineHandler handler, SocketAddress local_address,
 ChannelLayer::~ChannelLayer()
 {
     channel->shutdown_socket();
-    receiver_thread.join();
+    if (receiver_thread.joinable()) receiver_thread.join();
 }
 
 void ChannelLayer::receiver()

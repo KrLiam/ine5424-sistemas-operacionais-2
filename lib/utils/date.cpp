@@ -13,7 +13,10 @@ TimerEntry::TimerEntry(
 ) : id(id), date(date), callback(callback) {}
 
 
-Timer::Timer() {
+Timer::Timer() {}
+
+void Timer::init() {
+    initialized = true;
     thread = std::thread([this]() { routine(); });
 }
 
@@ -22,10 +25,12 @@ Timer::~Timer() {
     var.notify_all();
     has_timers_sem.release();
 
-    thread.join();
+    if (thread.joinable()) thread.join();
 }
 
 int Timer::add(int interval_ms, std::function<void()> callback) {
+    if (!initialized) init();
+    
     uint64_t now = DateUtils::now();
     uint64_t date = now + interval_ms;
 
