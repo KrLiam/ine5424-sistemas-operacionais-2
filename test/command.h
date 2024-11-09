@@ -4,7 +4,7 @@
 #include "pipeline/fault_injection/fault_injection_layer.h"
 
 
-enum CommandType {
+enum CommandType : char {
     text = 0,
     file = 1,
     dummy = 2,
@@ -13,7 +13,9 @@ enum CommandType {
     init = 5,
     fault = 6,
     sequence = 7,
-    async = 8
+    async = 8,
+    sleep_cmd = 9,
+    repeat = 10
 };
 
 struct Command {
@@ -92,6 +94,23 @@ struct AsyncCommand : public Command {
     std::shared_ptr<Command> subcommand;
 
     AsyncCommand(std::shared_ptr<Command>);
+
+    virtual std::string name() const;
+};
+
+struct SleepCommand : public Command {
+    int interval;
+
+    SleepCommand(int interval);
+
+    virtual std::string name() const;
+};
+
+struct RepeatCommand : public Command {
+    int count;
+    std::shared_ptr<Command> subcommand;
+
+    RepeatCommand(std::shared_ptr<Command> subcommand, int count);
 
     virtual std::string name() const;
 };

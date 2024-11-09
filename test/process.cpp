@@ -1,3 +1,6 @@
+#include <thread>
+#include <chrono>
+
 #include "process.h"
 
 Process::Process(
@@ -183,6 +186,24 @@ void Process::execute(const Command& command, ExecutionContext& ctx) {
                     execute(*subcommand);
                 })
             );
+
+            return;
+        }
+
+        if (command.type == CommandType::sleep_cmd) {
+            const SleepCommand* cmd = static_cast<const SleepCommand*>(&command);
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(cmd->interval));
+
+            return;
+        }
+
+        if (command.type == CommandType::repeat) {
+            const RepeatCommand* cmd = static_cast<const RepeatCommand*>(&command);
+
+            for (int i = 0; i < cmd->count; i++) {
+                execute(*cmd->subcommand, ctx);
+            }
 
             return;
         }

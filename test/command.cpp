@@ -52,6 +52,16 @@ AsyncCommand::AsyncCommand(std::shared_ptr<Command> subcommand)
 
 std::string AsyncCommand::name() const { return "async"; }
 
+SleepCommand::SleepCommand(int interval)
+    : Command(CommandType::sleep_cmd), interval(interval) {}
+
+std::string SleepCommand::name() const { return "sleep"; }
+
+RepeatCommand::RepeatCommand(std::shared_ptr<Command> subcommand, int count)
+    : Command(CommandType::repeat), count(count), subcommand(subcommand) {}
+
+std::string RepeatCommand::name() const { return "repeat"; }
+
 
 std::string parse_string(Reader& reader) {
     reader.expect('"');
@@ -210,6 +220,15 @@ std::shared_ptr<Command> parse_command(Reader& reader) {
     if (keyword == "async") {
         std::shared_ptr<Command> subcommand = parse_command(reader);
         return std::make_shared<AsyncCommand>(subcommand);
+    }
+    if (keyword == "sleep") {
+        int interval = reader.read_int();
+        return std::make_shared<SleepCommand>(interval);
+    }
+    if (keyword == "repeat") {
+        int count = reader.read_int();
+        std::shared_ptr<Command> subcommand = parse_command(reader);
+        return std::make_shared<RepeatCommand>(subcommand, count);
     }
 
     if (keyword.length()) {
