@@ -42,7 +42,6 @@ void FailureDetection::heartbeat_received(const HeartbeatReceived &event)
     mtx.lock();
     if (node.is_alive() && uuid != node.get_uuid())
     {
-        log_info("old was ", node.get_uuid().as_string(), "; new is ", uuid.as_string());
         log_info(
             "Node ",
             node.get_address().to_string(),
