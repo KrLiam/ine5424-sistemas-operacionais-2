@@ -19,8 +19,8 @@ BroadcastCommand::BroadcastCommand(std::string text)
 
 std::string BroadcastCommand::name() const { return "broadcast"; }
 
-DummyCommand::DummyCommand(size_t size, size_t count, std::string send_id)
-    : Command(CommandType::dummy), size(size), count(count), send_id(send_id) {}
+DummyCommand::DummyCommand(size_t size, std::string send_id)
+    : Command(CommandType::dummy), size(size), send_id(send_id) {}
 
 std::string DummyCommand::name() const { return "dummy"; }
 
@@ -201,7 +201,7 @@ std::shared_ptr<Command> parse_command(Reader& reader) {
         int size = reader.read_int();
         size_t count = reader.read_int();
         std::string send_id = parse_destination(reader);
-        return std::make_shared<DummyCommand>(size, count, send_id);
+        return std::make_shared<DummyCommand>(size, send_id);
     }
     if (keyword == "broadcast") {
         std::string text = parse_string(reader);

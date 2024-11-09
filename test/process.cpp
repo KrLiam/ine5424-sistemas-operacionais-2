@@ -32,17 +32,9 @@ void Process::kill() {
     if (server_deliver_thread.joinable()) server_deliver_thread.join();
 }
 
-void create_dummy_data(char* data, size_t count, size_t size) {
+void create_dummy_data(char* data, size_t size) {
     int num = 0;
     size_t pos = 0;
-
-    std::string count_as_string = format("[%d] ", count);
-    for (char ch : count_as_string) {
-        if (pos >= size) break;
-
-        data[pos] = ch;
-        pos++;
-    }
     
     while (pos < size) {
         if (pos > 0) {
@@ -321,20 +313,16 @@ void Process::execute(const Command& command, ExecutionContext& ctx) {
             const DummyCommand* cmd = static_cast<const DummyCommand*>(&command);
 
             size_t size = cmd->size;
-            size_t count = cmd->count;
 
-            for (size_t i = 0; i < count; i++)
-            {
-                char data[size];
-                create_dummy_data(data, i, size);
+            char data[size];
+            create_dummy_data(data, size);
 
-                send_message(
-                    cmd->send_id,
-                    {data, size},
-                    cmd->name(),
-                    format("%u bytes of dummy data", size)
+            send_message(
+                cmd->send_id,
+                {data, size},
+                cmd->name(),
+                format("%u bytes of dummy data", size)
                 );
-            }
             return;
         }
 
