@@ -1,0 +1,12 @@
+config = ./beb_100ms.conf
+procedures = {
+ 0 = [
+    sleep 10ms;
+    "BEB - perda de um pacote" -> *;
+  ],
+  1 = [
+  ],
+  2 = [
+    fault drop 0/0b 1x;
+  ]
+}

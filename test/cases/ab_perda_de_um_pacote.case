@@ -1,0 +1,12 @@
+config = ./ab_100ms.conf
+procedures = {
+ 0 = [
+    sleep 10ms;
+    "AB - perda de um pacote" -> *;
+  ],
+  1 = [
+  ],
+  2 = [
+    fault drop 0/0a 1x;
+  ]
+}

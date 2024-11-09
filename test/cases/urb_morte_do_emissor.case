@@ -1,0 +1,14 @@
+config = ./urb_100ms.conf
+procedures = {
+ 0 = [
+    sleep 10ms;
+    async "URB - morte do emissor" -> *;
+    sleep 300ms;
+    kill;
+  ],
+  1 = [
+  ],
+  2 = [
+    fault drop 0/0b 1x;
+  ]
+}

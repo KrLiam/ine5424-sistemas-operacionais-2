@@ -1,0 +1,12 @@
+config = ./urb_100ms.conf
+procedures = {
+ 0 = [
+    "URB - morte do receptor" -> *;
+  ],
+  1 = [
+  ],
+  2 = [
+    sleep 300ms;
+    kill;
+  ]
+}
