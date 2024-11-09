@@ -43,7 +43,7 @@ void FragmentationLayer::receive(Packet packet)
     if (!packet.data.header.is_fragment())
         return;
 
-    std::string message_id = get_message_identifier(packet);
+    MessageIdentity& message_id = packet.data.header.id;
 
     if (!assembler_map.contains(message_id))
         assembler_map.emplace(message_id, FragmentAssembler());
@@ -69,7 +69,7 @@ void FragmentationLayer::attach(EventBus &bus)
 void FragmentationLayer::forward_defragmented_message(const ForwardDefragmentedMessage &event)
 {
     Packet &packet = event.packet;
-    std::string message_id = get_message_identifier(packet);
+    MessageIdentity& message_id = packet.data.header.id;
 
     Message const message = assembler_map.at(message_id).assemble();
     assembler_map.erase(message_id);

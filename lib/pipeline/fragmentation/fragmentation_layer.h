@@ -1,6 +1,6 @@
 #pragma once
 
-#include <map>
+#include <unordered_map>
 #include <mutex>
 
 #include "pipeline/fragmentation/fragment_assembler.h"
@@ -9,15 +9,10 @@
 
 class FragmentationLayer final : public PipelineStep
 {
-    std::map<std::string, FragmentAssembler> assembler_map;
+    std::unordered_map<MessageIdentity, FragmentAssembler> assembler_map;
 
     Observer<ForwardDefragmentedMessage> obs_forward_defragmented_message;
     void forward_defragmented_message(const ForwardDefragmentedMessage& event);
-
-    std::string get_message_identifier(Packet p)
-    {
-        return format("%s/%s", p.data.header.id.origin.to_string().c_str(), std::to_string(p.data.header.get_message_number()).c_str());
-    }
 
 public:
     FragmentationLayer(PipelineHandler handler);
