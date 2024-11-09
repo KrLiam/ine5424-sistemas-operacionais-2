@@ -53,7 +53,7 @@ AsyncCommand::AsyncCommand(std::shared_ptr<Command> subcommand)
 std::string AsyncCommand::name() const { return "async"; }
 
 SleepCommand::SleepCommand(int interval)
-    : Command(CommandType::sleep_cmd), interval(interval) {}
+    : Command(CommandType::sleep), interval(interval) {}
 
 std::string SleepCommand::name() const { return "sleep"; }
 

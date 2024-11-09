@@ -256,7 +256,7 @@ void Process::execute(const Command& command, ExecutionContext& ctx) {
             return;
         }
 
-        if (command.type == CommandType::sleep_cmd) {
+        if (command.type == CommandType::sleep) {
             const SleepCommand* cmd = static_cast<const SleepCommand*>(&command);
 
             std::this_thread::sleep_for(std::chrono::milliseconds(cmd->interval));

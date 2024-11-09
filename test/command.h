@@ -14,7 +14,7 @@ enum class CommandType : char {
     fault = 6,
     sequence = 7,
     async = 8,
-    sleep_cmd = 9,
+    sleep = 9,
     repeat = 10
 };
 
