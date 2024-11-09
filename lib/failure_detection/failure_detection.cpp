@@ -35,9 +35,7 @@ void FailureDetection::heartbeat_received(const HeartbeatReceived &event)
     log_trace("Received ", event.packet.to_string(), " (node ", node.get_id(), ").");
 
     HeartbeatData* data = reinterpret_cast<HeartbeatData*>(event.packet.data.message_data);
-    std::string uuid_str(data->uuid);
-    uuid_str.resize(sizeof(event.packet.meta.message_length));
-    const UUID uuid = UUID(uuid_str);
+    const UUID uuid = UUID(std::string(data->uuid));
 
     mtx.lock();
     if (node.is_alive() && uuid != node.get_uuid())

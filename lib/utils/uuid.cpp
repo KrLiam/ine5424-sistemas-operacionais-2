@@ -2,7 +2,9 @@
 
 UUID::UUID() : uuid(uuid::generate_uuid_v4()) {}
 
-UUID::UUID(std::string uuid) : uuid(uuid) {}
+UUID::UUID(std::string uuid) : uuid(uuid) {
+    uuid.resize(36);
+}
 
 bool UUID::operator==(const UUID& other) const {
     return uuid == other.uuid;
