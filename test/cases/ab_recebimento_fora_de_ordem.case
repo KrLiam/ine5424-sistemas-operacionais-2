@@ -1,7 +1,7 @@
 config = ./ab_100ms.conf
 procedures = {
  0 = [
-    sleep 10ms;
+    sleep 1000ms;
     "AB - recebimento fora de ordem [1]" -> *;
     "AB - recebimento fora de ordem [2]" -> *;
   ],
