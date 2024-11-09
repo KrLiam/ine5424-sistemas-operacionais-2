@@ -300,14 +300,17 @@ void send_thread(SenderThreadArgs* args) {
             proc->init();
         }
         else if (command->type == CommandType::fault) {
+            if (!proc->initialized()) {
+                log_print("Node is dead.");
+                return;
+            }
+
             FaultCommand* cmd = static_cast<FaultCommand*>(command.get());
             for (FaultRule& rule : cmd->rules) {
+                proc->comm->add_fault_rule(rule);
+                
                 if (auto r = std::get_if<DropFaultRule>(&rule)) {
-                    std::string types;
-                    for (char ch : r->pattern.sequence_types) {
-                        types += ch;
-                    }
-                    log_print("Drop ", r->pattern.number.to_string(), "/", r->pattern.fragment.to_string(), types, " ", r->chance, "% ", r->count, "x");
+                    log_print("Drop ", r->to_string());
                 }
             }
         }

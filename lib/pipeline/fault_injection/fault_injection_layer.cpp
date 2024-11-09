@@ -16,8 +16,7 @@ FaultInjectionLayer::FaultInjectionLayer(
     {}
 
 void FaultInjectionLayer::discard_drop_rules(const PacketPattern& pattern) {
-    int size = drop_rules.size();
-    for (int i = 0; i < size; i++) {
+    for (int i = 0; i < (int) drop_rules.size(); i++) {
         const DropFaultRule& rule = drop_rules[i];
 
         if (pattern.contains(rule.pattern)) {
@@ -27,15 +26,17 @@ void FaultInjectionLayer::discard_drop_rules(const PacketPattern& pattern) {
     }
 }
 
-void FaultInjectionLayer::decrement_drop_rules(const PacketPattern& pattern) {
-    int size = drop_rules.size();
-    for (int i = 0; i < size; i++) {
+void FaultInjectionLayer::decrement_matching_drop_rules(const PacketPattern& pattern) {
+    for (int i = 0; i < (int) drop_rules.size(); i++) {
         DropFaultRule& rule = drop_rules[i];
 
-        if (rule.pattern.contains(pattern)) {
-            rule.count--;
+        if (rule.count == UINT32_MAX) continue;
 
-            if (!rule.count) {
+        if (rule.pattern.contains(pattern)) {
+            if (rule.count > 1) {
+                rule.count--;
+            }
+            else {
                 drop_rules.erase(drop_rules.begin() + i);
                 i--;
             }
@@ -50,42 +51,24 @@ void FaultInjectionLayer::add_rule(const FaultRule& rule) {
     }
 }
 
-void FaultInjectionLayer::receive(Packet packet) {
-    // TODO temporário até termos retransmissão de pacotes de controle
-    /*
-    if (
-        packet.data.header.type == MessageType::HEARTBEAT
-        || packet.data.header.type == MessageType::CONTROL
-    ) {
-        handler.forward_receive(packet);
-        return;
-    }*/
-    
-    int delay = -1;
-
+void FaultInjectionLayer::receive(Packet packet) {    
     const MessageIdentity id = packet.data.header.id;
     uint32_t fragment = packet.data.header.fragment_num;
-
-    bool drop = false;
 
     for (size_t i = 0; i < drop_rules.size(); i++) {
         const DropFaultRule& rule = drop_rules[i];
 
-        if (
-            rule.pattern.matches(id, fragment)
-            && roll_chance(rule.chance)
-        ) {
-            decrement_drop_rules(PacketPattern::from(id, fragment));
+        if (!rule.pattern.matches(id, fragment)) continue;
 
-            drop = true;
-            break;
+        if (roll_chance(rule.chance)) {
+            log_warn("Lost ", packet.to_string(PacketFormat::RECEIVED), " (rule ", rule.to_string(), ")");
+
+            decrement_matching_drop_rules(PacketPattern::from(id, fragment));
+            return;
         }
     }
 
-    if (drop) {
-        log_warn("Lost ", packet.to_string(PacketFormat::RECEIVED));
-        return;
-    }
+    int delay = -1;
 
     if (delay == -1) {
         int range_length = config.delay.length();

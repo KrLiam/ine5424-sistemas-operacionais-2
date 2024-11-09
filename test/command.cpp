@@ -103,8 +103,8 @@ FaultRule parse_fault_rule(Reader& reader) {
     if (type == "drop") {
         DropFaultRule rule{
             pattern: {number: IntRange::full(), fragment: IntRange::full()},
-            chance: 1,
-            count: 1
+            chance: 1.0,
+            count: UINT32_MAX
         };
 
         rule.pattern.number = IntRange::parse(reader);
@@ -119,20 +119,22 @@ FaultRule parse_fault_rule(Reader& reader) {
             {'a', MessageSequenceType::ATOMIC}
         };
 
-        std::unordered_set<char, std::hash<char>> sequence_types = {'u','b','a'};
+        rule.pattern.sequence_types = {'u','b','a'};
         char ch = reader.peek();
         if (ch_map.contains(ch)) {
             reader.advance();
-            sequence_types = {(char)ch_map.at(ch)};
+            rule.pattern.sequence_types = {(char)ch_map.at(ch)};
         }
 
         if (reader.peek() && isdigit(reader.peek())) {
             int value = reader.read_int();
             char value_unit = reader.peek();
 
-            if (value_unit == '%') rule.chance = value;
+            if (value_unit == '%') rule.chance = (double) value / 100;
             else if (value_unit == 'x') rule.count = value;
             else throw parse_error(format("Invalid drop rule unit '%c'", value_unit));
+
+            reader.advance();
         }
 
         return rule;

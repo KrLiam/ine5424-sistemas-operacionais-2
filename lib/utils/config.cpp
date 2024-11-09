@@ -70,7 +70,7 @@ IntRange IntRange::parse(std::string string) {
     return IntRange::parse(reader);
 }
 IntRange IntRange::parse(Reader &reader) {
-    if (reader.peek() == '*') return IntRange::full();
+    if (reader.read('*')) return IntRange::full();
 
     int value = reader.read_int();
 
@@ -94,7 +94,7 @@ bool IntRange::operator==(const IntRange& other) const {
     return min == other.min && max == other.max;
 }
 
-std::string IntRange::to_string() {
+std::string IntRange::to_string() const {
     if (min == max) return std::to_string(min);
     if (min == 0 && max == UINT32_MAX) return "*";
     return format("%i..%i", min, max);

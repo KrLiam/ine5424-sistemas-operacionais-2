@@ -106,7 +106,7 @@ struct IntRange {
 
     bool operator==(const IntRange& other) const;
 
-    std::string to_string();
+    std::string to_string() const;
 
     bool contains(uint32_t value) const;
     bool contains(IntRange value) const;

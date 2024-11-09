@@ -42,7 +42,7 @@ ReliableCommunication::~ReliableCommunication()
 }
 
 void ReliableCommunication::add_fault_rule(const FaultRule& rule) {
-    FaultInjectionLayer fault_layer = pipeline->get_fault_layer();
+    FaultInjectionLayer& fault_layer = pipeline->get_fault_layer();
     fault_layer.add_rule(rule);
 }
 

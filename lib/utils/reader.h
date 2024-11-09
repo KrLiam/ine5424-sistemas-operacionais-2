@@ -52,6 +52,8 @@ public:
     void reset();
     void advance();
     void advance(int amount);
+    void rewind();
+    void rewind(int amount);
     char peek();
     char read(char ch);
     int read_int();

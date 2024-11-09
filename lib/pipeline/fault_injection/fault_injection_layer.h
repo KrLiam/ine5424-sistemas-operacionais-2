@@ -33,6 +33,20 @@ struct PacketPattern {
         };
     }
 
+    std::string to_string() const {
+        std::string types;
+        for (char ch : sequence_types) {
+            types += ch;
+        }
+
+        return format(
+            "%s/%s%s", 
+            number.to_string().c_str(),
+            fragment.to_string().c_str(),
+            types.c_str()
+        );
+    }
+
     bool wildcard() const {
         return number == IntRange::full()
             && fragment == IntRange::full()
@@ -40,10 +54,8 @@ struct PacketPattern {
     }
 
     bool contains(const PacketPattern& other) const {
-        bool contains_types = true;
         for (char type : other.sequence_types) {
-            contains_types = sequence_types.contains(type);
-            if (!contains_types) return false;
+            if (!sequence_types.contains(type)) return false;
         }
 
         return number.contains(other.number)
@@ -51,24 +63,32 @@ struct PacketPattern {
     }
 
     bool matches(const MessageIdentity& id, uint32_t frag_num) const {
-        if (!number.contains(id.msg_num)) return false;
-        if (!fragment.contains(frag_num)) return false;
-        if (!sequence_types.contains((char)id.sequence_type())) return false;
-
-        return true;
+        return contains(PacketPattern::from(id, frag_num));
     }
 };
 
 struct DropFaultRule {
     PacketPattern pattern;
-    double chance = 1;
+    double chance = 1.0;
     uint32_t count = 1;
+
+    std::string to_string() const {
+        std::string count_s = count == UINT32_MAX ? std::string("") : format("%ux", count);
+
+        return format(
+            "%s %.2f%% %s",
+            pattern.to_string().c_str(),
+            chance * 100,
+            count_s.c_str()
+        );
+    }
 };
 
 struct DelayFaultRule {
     PacketPattern pattern;
     uint32_t count;
     IntRange delay;
+
 };
 
 using FaultRule = std::variant<DropFaultRule, DelayFaultRule>;
@@ -82,7 +102,7 @@ public:
     FaultInjectionLayer(PipelineHandler handler, FaultConfig config);
 
     void discard_drop_rules(const PacketPattern& pattern);
-    void decrement_drop_rules(const PacketPattern& pattern);
+    void decrement_matching_drop_rules(const PacketPattern& pattern);
 
     void add_rule(const FaultRule& rule);
 

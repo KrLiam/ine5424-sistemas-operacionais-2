@@ -88,6 +88,15 @@ void Reader::advance(int amount)
     pos = std::min(size(), pos + amount);
 }
 
+void Reader::rewind()
+{
+    rewind(1);
+}
+void Reader::rewind(int amount)
+{
+    pos = std::max(0, pos - amount);
+}
+
 char Reader::peek()
 {
     if (eof())
