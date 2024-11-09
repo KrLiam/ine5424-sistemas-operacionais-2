@@ -63,13 +63,13 @@ Saved message to file [messages/f7673f99-fae8-4139-ad28-8fe23cbd1eea].
 >
 ```
 
-É possível executar múltiplos comandos em paralelo escrevendo-os na mesma linha separados por `;`,
+É possível executar múltiplos comandos em sequência escrevendo-os na mesma linha separados por `;`,
 
 ```
 > text "Hello!" -> 0; text "Hello too" -> 1
 ```
 
-Neste caso, o nó 0 enviará `Hello!` para si mesmo **ao mesmo tempo** que envia `Hello too` para 1 (para isso, seria necessário executar `./program 1` em um terminal separado para que a mensagem seja entregue).
+Neste caso, o nó 0 enviará `Hello!` para si mesmo e, após a confirmação da entrega, envia `Hello too` para 1 (para isso, seria necessário executar `./program 1` em um terminal separado para que a mensagem seja entregue).
 Também é possível definir o comando a ser executado assim que o processo inicia execução especificando a flag `-s` com o comando cercado por aspas simples (`'`):
 
 ```
@@ -82,8 +82,16 @@ Isso seria equivalente a executar `"hi" -> 0` manualmente na linha de comando as
 - `text <message> -> <id>`: Envia a string `message` para o nó `id`. A palavra-chave `text` pode ser omitida. Exemplos: `text "Hello world" -> 1`, `"Bye" -> 0`.
 - `file <path> -> <id>`: Envia o arquivo em `path` para o nó `id`. Exemplo: `file "teste.png" -> 0` (envia o arquivo `teste.png` para 0).
 - `dummy <size> -> <id>`: Envia um texto de teste de tamanho `size` para o nó `id`. Exemplo: `dummy 1 -> 0` (envia 1 byte pra 0), `dummy 50000 -> 1` (envia 50000 bytes a 1).
-- `exit`. Encerra o processo.
-- `help`. Exibe lista de comandos e flags disponíveis.
+- `kill`: Mata o nó local.
+- `init`: Inicia o nó local caso esteja morto.
+- `sleep <ms>`: Faz com que o nó durma por `ms` milésimos.
+- `repeat <n> <subcommand>`: Faz com que um subcomando seja executado `n` vezes.
+- `[<subcommand_1>, <subcommand_2>, ..., <subcommand_n>]`: Executa os comandos sequencialmente. Aguarda a finalização de todos os subcomandos, mesmo que assíncronos (`async`). Útil como subcomando de outros comandos, como, por exemplo, `repeat 3 ["a" -> 0; "b" -> 1]`, `async [sleep 1000; "c" -> 3]`. 
+- `async <subcommand>`: Executa um subcomando em paralelo. Por exemplo, `async "a" -> 0; "b" -> 1` fará o envio de `a` para `0`
+ao mesmo tempo que envia `b` para `1`. Pode-se usar a sintaxe `[...]` para sincronizar um conjunto de subcomandos assíncronos.
+Por exemplo, `[async "c" -> 2; async "d" -> 3]; kill` fará com que o nó envie `c` para `2` ao mesmo tempo que envia `d` a `3`, entretanto o comando `kill` só será executado quando os dois comandos `async` encerrarem.
+- `exit`: Encerra o processo.
+- `help`: Exibe lista de comandos e flags disponíveis.
 
 ### Flags disponíveis
 - `-s '<comandos>'`: Executa `comandos` assim que o processo for iniciado.
