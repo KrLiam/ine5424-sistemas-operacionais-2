@@ -2,6 +2,8 @@
 #include <thread>
 #include <unordered_map>
 
+std::string prefix;
+
 std::unordered_map<std::thread::id, int> id_map;
 int counter = 0;
 

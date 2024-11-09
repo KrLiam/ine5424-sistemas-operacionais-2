@@ -97,6 +97,8 @@ CaseFile CaseFile::parse(const std::string& value) {
 Runner::Runner(const Arguments& args) : args(args) {}
 
 void Runner::client(Process& proc) {
+    Logger::set_prefix("\r");
+
     while (true) {
         std::string input;
 
@@ -180,7 +182,10 @@ void Runner::run_test(const std::string& case_path) {
         int status;
         waitpid(pid, &status, 0);
 
-        log_info("Node ", id, " (pid=", pid, ") exited with status ", WIFEXITED(status), ".");
+        log_info(
+            "Node ", id, " exited (", WIFEXITED(status), ") [",
+            case_dir_path + "/" + id + ".log", "]"
+        );
     }
 
     log_info("Test completed.");

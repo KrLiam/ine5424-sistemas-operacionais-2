@@ -62,10 +62,15 @@ int get_thread_id();
 
 
 static std::mutex log_mutex;
+extern std::string prefix;
 
 class Logger
 {
 public:
+    static void set_prefix(const std::string& value) {
+        prefix = value;
+    }
+
     template <typename... Args>
     static void log(const char *level, [[maybe_unused]] const char *file, [[maybe_unused]] int line, Args &&...args)
     {
@@ -77,7 +82,7 @@ public:
         std::ostringstream oss;
 
         (oss
-        << '\r'
+        << prefix
         << std::put_time(&tm, BOLD_H_WHITE "%H:%M:%S" COLOR_RESET)
         << format(" %s", level)
         #if LOG_FILES
@@ -95,13 +100,13 @@ public:
     }
 
     template <typename... Args>
-    static void print([[maybe_unused]] std::string prefix, Args &&...args)
+    static void print([[maybe_unused]] std::string _, Args &&...args)
     {
         log_mutex.lock();
 
         std::ostringstream oss;
 
-        (oss << ... << args) << std::endl;
+        (oss << prefix << ... << args) << std::endl;
         std::cout << oss.str();
 
         log_mutex.unlock();
