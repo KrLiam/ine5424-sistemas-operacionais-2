@@ -42,6 +42,16 @@ InitCommand::InitCommand() : Command(CommandType::init) {}
 
 std::string InitCommand::name() const { return "init"; }
 
+SequenceCommand::SequenceCommand(const std::vector<std::shared_ptr<Command>>& subcommands)
+    : Command(CommandType::sequence), subcommands(subcommands) {}
+
+std::string SequenceCommand::name() const { return "sequence"; }
+
+AsyncCommand::AsyncCommand(std::shared_ptr<Command> subcommand)
+    : Command(CommandType::async), subcommand(subcommand) {}
+
+std::string AsyncCommand::name() const { return "async"; }
+
 
 std::string parse_string(Reader& reader) {
     reader.expect('"');
@@ -153,7 +163,18 @@ std::vector<FaultRule> parse_fault_rules(Reader& reader) {
     return rules;
 }
 
+
+std::shared_ptr<SequenceCommand> parse_command_list(Reader& reader) {
+    reader.expect('[');
+    std::vector<std::shared_ptr<Command>> commands = parse_commands(reader, ']');
+    reader.expect(']');
+
+    return std::make_shared<SequenceCommand>(commands);
+}
+
 std::shared_ptr<Command> parse_command(Reader& reader) {
+    if (reader.peek() == '[') return parse_command_list(reader);
+
     std::string keyword = reader.read_word();
 
     if (keyword == "file") {
@@ -186,6 +207,10 @@ std::shared_ptr<Command> parse_command(Reader& reader) {
         std::vector<FaultRule> rules = parse_fault_rules(reader);
         return std::make_shared<FaultCommand>(rules);
     }
+    if (keyword == "async") {
+        std::shared_ptr<Command> subcommand = parse_command(reader);
+        return std::make_shared<AsyncCommand>(subcommand);
+    }
 
     if (keyword.length()) {
         throw std::invalid_argument(
@@ -211,7 +236,7 @@ std::vector<std::shared_ptr<Command>> parse_commands(Reader& reader, char stop) 
 
     while (!reader.eof()) {
         char ch = reader.peek();
-        if (ch == stop) break;
+        if (!ch || ch == stop) break;
 
         commands.push_back(parse_command(reader));
 

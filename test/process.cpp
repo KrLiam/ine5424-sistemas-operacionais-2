@@ -73,6 +73,19 @@ struct SenderThreadArgs {
 };
 
 
+ExecutionContext::ExecutionContext() {}
+
+ExecutionContext::~ExecutionContext() {
+    wait_complete();
+}
+
+void ExecutionContext::wait_complete() {
+    for (std::unique_ptr<std::thread>& thread : threads) {
+        if (thread->joinable()) thread->join();
+    }
+}
+
+
 bool Process::send_message(
     std::string node_id,
     MessageData data,
@@ -118,28 +131,62 @@ bool Process::send_message(
 
 // void parallelize(Process& proc, const std::vector<std::shared_ptr<Command>>& commands) {
 //     int thread_num = commands.size();
-
+//
 //     if (thread_num == 1) {
 //         SenderThreadArgs args = {&proc, commands[0]};
 //         send_thread(&args);
 //         return;
 //     }
-
+//
 //     std::vector<std::unique_ptr<std::thread>> threads;
 //     auto thread_args = std::make_unique<SenderThreadArgs[]>(thread_num);
-
+//
 //     for (int i=0; i < thread_num; i++) {
 //         thread_args[i] = {&proc, commands[i]};
 //         threads.push_back(std::make_unique<std::thread>(send_thread, &thread_args[i]));
 //     }
-    
+//
 //     for (std::unique_ptr<std::thread>& thread : threads) {
 //         thread->join();
 //     }
 // }
 
 void Process::execute(const Command& command) {
+    ExecutionContext ctx;
+
+    execute(command, ctx);
+
+    ctx.wait_complete();
+}
+void Process::execute(const Command& command, ExecutionContext& ctx) {
     try {
+        if (command.type == CommandType::sequence) {
+            const SequenceCommand* cmd = static_cast<const SequenceCommand*>(&command);
+
+            ExecutionContext sub_ctx;
+
+            for (const std::shared_ptr<Command>& sub_cmd : cmd->subcommands) {
+                execute(*sub_cmd, sub_ctx);
+            }
+
+            sub_ctx.wait_complete();
+
+            return;
+        }
+
+        if (command.type == CommandType::async) {
+            const AsyncCommand* cmd = static_cast<const AsyncCommand*>(&command);
+            const std::shared_ptr<Command> subcommand = cmd->subcommand;
+
+            ctx.threads.push_back(
+                std::make_unique<std::thread>([this, subcommand]() {
+                    execute(*subcommand);
+                })
+            );
+
+            return;
+        }
+
         if (command.type == CommandType::init) {
             if (initialized()) {
                 log_print("Node is already initialized.");
@@ -168,7 +215,7 @@ void Process::execute(const Command& command) {
             );
             return;
         }
-
+        
         if (command.type == CommandType::broadcast) {
             const BroadcastCommand* cmd = static_cast<const BroadcastCommand*>(&command);
 
@@ -250,7 +297,5 @@ void Process::execute(const Command& command) {
 }
 
 void Process::execute(std::vector<std::shared_ptr<Command>> commands) {
-    for (std::shared_ptr<Command> command : commands) {
-        execute(*command);
-    }
+    execute(SequenceCommand(commands));
 }

@@ -11,7 +11,9 @@ enum CommandType {
     broadcast = 3,
     kill = 4,
     init = 5,
-    fault = 6
+    fault = 6,
+    sequence = 7,
+    async = 8
 };
 
 struct Command {
@@ -78,6 +80,21 @@ struct InitCommand : public Command {
     virtual std::string name() const;
 };
 
+struct SequenceCommand : public Command {
+    std::vector<std::shared_ptr<Command>> subcommands;
+
+    SequenceCommand(const std::vector<std::shared_ptr<Command>>&);
+
+    virtual std::string name() const;
+};
+
+struct AsyncCommand : public Command {
+    std::shared_ptr<Command> subcommand;
+
+    AsyncCommand(std::shared_ptr<Command>);
+
+    virtual std::string name() const;
+};
 
 std::string parse_string(Reader& reader);
 

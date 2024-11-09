@@ -10,6 +10,15 @@ struct ThreadArgs {
     ReliableCommunication* communication{};
 };
 
+struct ExecutionContext {
+    std::vector<std::unique_ptr<std::thread>> threads;
+
+    ExecutionContext();
+    ~ExecutionContext();
+
+    void wait_complete();
+};
+
 struct Process {
     std::function<std::unique_ptr<ReliableCommunication> ()> create_comm;
     std::function<void(ThreadArgs*)> receive_routine;
@@ -43,4 +52,8 @@ struct Process {
 
     void execute(const Command& command);
     void execute(std::vector<std::shared_ptr<Command>> commands);
+
+private:
+
+    void execute(const Command& command, ExecutionContext& ctx);
 };
