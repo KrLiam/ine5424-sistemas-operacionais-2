@@ -38,7 +38,7 @@ default_target: release
 
 
 .PHONY: release
-release: run
+release: shell
 
 .PHONY: all
 all: lib
@@ -83,12 +83,12 @@ $(LIB_PATH)/$(LIB_FILENAME): $(LIB_OBJECTS)
 	ar rcs $(LIB_PATH)/$(LIB_FILENAME) $(LIB_OBJECTS)
 
 
-# make test
+# make program
 #
 # Comando para compilar programa de testes. Irá compilar a biblioteca em conjunto.
-.PHONY: test
-test: export CXXFLAGS := $(CXXFLAGS) $(COMPILE_FLAGS)
-test: dirs $(BIN_PATH)/$(TEST_BIN_FILENAME)
+.PHONY: program
+program: export CXXFLAGS := $(CXXFLAGS) $(COMPILE_FLAGS)
+program: dirs $(BIN_PATH)/$(TEST_BIN_FILENAME)
 	@$(RM) $(TEST_BIN_FILENAME)
 	@ln -s $(BIN_PATH)/$(TEST_BIN_FILENAME) $(TEST_BIN_FILENAME)
 
@@ -101,10 +101,18 @@ $(BIN_PATH)/$(TEST_BIN_FILENAME): $(LIB_PATH)/$(LIB_FILENAME) $(TEST_OBJECTS)
 	$(CXX) -o $@ $(TEST_OBJECTS) -L $(LIB_PATH) -l$(LIB_NAME)
 
 
-# make run id=...
+# make shell id=...
 #
 # Comando para compilar programa de teste de automaticamente executá-lo
-.PHONY: run
-run: export CXXFLAGS := $(CXXFLAGS) $(COMPILE_FLAGS)
-run: dirs $(BIN_PATH)/$(TEST_BIN_FILENAME)
+.PHONY: shell
+shell: export CXXFLAGS := $(CXXFLAGS) $(COMPILE_FLAGS)
+shell: dirs $(BIN_PATH)/$(TEST_BIN_FILENAME)
 	./$(BIN_PATH)/$(TEST_BIN_FILENAME) $(id)
+
+# make test case=...
+#
+# Comando para compilar programa de teste e automaticamente executá-lo 
+.PHONY: test
+test: export CXXFLAGS := $(CXXFLAGS) $(COMPILE_FLAGS)
+test: dirs $(BIN_PATH)/$(TEST_BIN_FILENAME)
+	./$(BIN_PATH)/$(TEST_BIN_FILENAME) test $(case)

@@ -9,10 +9,11 @@
 ## Como compilar
 
 Nosso projeto usa Makefile. Os comandos disponíveis são:
-- `make`: Compila o programa de testes e automaticamente o executa para o nó de id 0;
-- `make id=<id>`: Compila o programa de testes e automaticamente o executa para o nó de id `id`;
+- `make`: Compila o programa de testes e automaticamente executa o shell para o nó de id 0;
+- `make id=<id>`: Compila o programa de testes e automaticamente executa o shell para o nó de id `id`;
 - `make lib`: Compila a biblioteca estática e gera um arquivo `.a`;
-- `make test`: Compila o programa de testes e gera um executável `program`;
+- `make program`: Compila o programa de testes e gera um executável `program`;
+- `make test case=<case-file-path>`: Compila o programa de testes e automaticamente execute o caso de teste do arquivo especificado`;
 - `make clean`: Remove os arquivos gerados pela build;
 - `make dirs`: Cria os diretórios de build;
 

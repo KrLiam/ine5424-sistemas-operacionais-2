@@ -44,6 +44,9 @@ Arguments parse_arguments(int argc, char* argv[]) {
     if (reader.read("test")) {
         args.test = true;
         args.case_path = parse_path(reader);
+        if (args.case_path.empty()) throw std::invalid_argument(
+            format("Missing case file path. Usage:\n%s test <case>", argv[0])
+        );
         return args;
     }
 
