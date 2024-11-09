@@ -26,7 +26,9 @@ bool message_type::is_atomic(MessageType type) {
     return type == MessageType::AB_URB;
 }
 const char* message_type::to_string(MessageType type) {
-    return message_type::message_type_name.at(type);
+    if (message_type::message_type_name.contains(type))
+        return message_type::message_type_name.at(type);
+    return "UNKNOWN";
 }
 
 MessageSequenceType MessageIdentity::sequence_type() const {
