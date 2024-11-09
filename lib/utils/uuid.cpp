@@ -3,11 +3,11 @@
 UUID::UUID() : uuid(uuid::generate_uuid_v4()) {}
 
 UUID::UUID(std::string uuid) : uuid(uuid) {
-    uuid.resize(36);
+    uuid.resize(UUID::MAX_SIZE);
 }
 
 bool UUID::operator==(const UUID& other) const {
-    return uuid == other.uuid;
+    return strncmp(uuid.c_str(), other.uuid.c_str(), UUID::MAX_SIZE) == 0;
 }
 
 std::string UUID::as_string() const {

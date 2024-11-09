@@ -7,6 +7,8 @@
 #include "utils/random.h"
 
 struct UUID {
+    static const int MAX_SIZE = 36;
+
     UUID();
 
     UUID(std::string uuid);
