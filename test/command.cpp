@@ -12,35 +12,35 @@ Command::Command(CommandType type) : type(type) {}
 TextCommand::TextCommand(std::string text, std::string send_id)
     : Command(CommandType::text), text(text), send_id(send_id) {}
 
-std::string TextCommand::name() { return "text"; }
+std::string TextCommand::name() const { return "text"; }
 
 BroadcastCommand::BroadcastCommand(std::string text)
     : Command(CommandType::broadcast), text(text) {}
 
-std::string BroadcastCommand::name() { return "broadcast"; }
+std::string BroadcastCommand::name() const { return "broadcast"; }
 
 DummyCommand::DummyCommand(size_t size, size_t count, std::string send_id)
     : Command(CommandType::dummy), size(size), count(count), send_id(send_id) {}
 
-std::string DummyCommand::name() { return "dummy"; }
+std::string DummyCommand::name() const { return "dummy"; }
 
 FileCommand::FileCommand(std::string path, std::string send_id)
     : Command(CommandType::file), path(path), send_id(send_id)  {}
 
-std::string FileCommand::name() { return "file"; }
+std::string FileCommand::name() const { return "file"; }
 
 FaultCommand::FaultCommand(std::vector<FaultRule> rules)
     : Command(CommandType::fault), rules(rules) {}
 
-std::string FaultCommand::name() { return "fault"; }
+std::string FaultCommand::name() const { return "fault"; }
 
 KillCommand::KillCommand() : Command(CommandType::kill) {}
 
-std::string KillCommand::name() { return "kill"; }
+std::string KillCommand::name() const { return "kill"; }
 
 InitCommand::InitCommand() : Command(CommandType::init) {}
 
-std::string InitCommand::name() { return "init"; }
+std::string InitCommand::name() const { return "init"; }
 
 
 std::string parse_string(Reader& reader) {

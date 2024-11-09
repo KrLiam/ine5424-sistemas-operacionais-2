@@ -5,18 +5,23 @@
 #include <memory>
 #include "communication/reliable_communication.h"
 
-#include "process.h"
+#include "arguments.h"
 #include "command.h"
+#include "process.h"
 
-struct Arguments {
-    std::string node_id;
-    std::vector<int> faults;
-    std::vector<std::shared_ptr<Command>> send_commands;
+
+class Runner {
+    const Arguments& args;
+    std::unique_ptr<Process> proc;
+
+    void server_receive(ThreadArgs* args);
+    void server_deliver(ThreadArgs* args);
+    
+    void client();
+
+public:
+    Runner(const Arguments& args);
+
+    void run();
 };
 
-Arguments parse_arguments(int argc, char* argv[]);
-
-void server_receive(ThreadArgs* args);
-void server_deliver(ThreadArgs* args);
-void client(Process& proc);
-void run_process(const Arguments& args);

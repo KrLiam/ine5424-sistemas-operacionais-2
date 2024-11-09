@@ -19,7 +19,7 @@ struct Command {
 protected:
     Command(CommandType type);
 
-    virtual std::string name() = 0;
+    virtual std::string name() const = 0;
 };
 
 struct TextCommand : public Command {
@@ -28,7 +28,7 @@ struct TextCommand : public Command {
 
     TextCommand(std::string text, std::string send_id);
 
-    virtual std::string name();
+    virtual std::string name() const;
 };
 
 struct BroadcastCommand : public Command {
@@ -36,7 +36,7 @@ struct BroadcastCommand : public Command {
 
     BroadcastCommand(std::string text);
 
-    virtual std::string name();
+    virtual std::string name() const;
 };
 
 struct DummyCommand : public Command {
@@ -46,7 +46,7 @@ struct DummyCommand : public Command {
 
     DummyCommand(size_t size, size_t count, std::string send_id);
 
-    virtual std::string name();
+    virtual std::string name() const;
 };
 
 struct FileCommand : public Command {
@@ -55,7 +55,7 @@ struct FileCommand : public Command {
 
     FileCommand(std::string path, std::string send_id);
 
-    virtual std::string name();
+    virtual std::string name() const;
 };
 
 struct FaultCommand : public Command {
@@ -63,19 +63,19 @@ struct FaultCommand : public Command {
 
     FaultCommand(std::vector<FaultRule> rules);
 
-    virtual std::string name();
+    virtual std::string name() const;
 };
 
 struct KillCommand : public Command {
     KillCommand();
 
-    virtual std::string name();
+    virtual std::string name() const;
 };
 
 struct InitCommand : public Command {
     InitCommand();
 
-    virtual std::string name();
+    virtual std::string name() const;
 };
 
 

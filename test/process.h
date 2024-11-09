@@ -1,8 +1,10 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 #include "communication/reliable_communication.h"
+#include "command.h"
 
 struct ThreadArgs {
     ReliableCommunication* communication{};
@@ -31,4 +33,14 @@ struct Process {
     void init();
 
     void kill();
+
+    bool send_message(
+        std::string node_id,
+        MessageData data,
+        [[maybe_unused]] std::string cmd_name,
+        [[maybe_unused]] std::string data_description
+    );
+
+    void execute(const Command& command);
+    void execute(std::vector<std::shared_ptr<Command>> commands);
 };
