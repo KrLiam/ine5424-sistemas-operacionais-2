@@ -90,6 +90,17 @@ Isso seria equivalente a executar `"hi" -> 0` manualmente na linha de comando as
 - `async <subcommand>`: Executa um subcomando em paralelo. Por exemplo, `async "a" -> 0; "b" -> 1` fará o envio de `a` para `0`
 ao mesmo tempo que envia `b` para `1`. Pode-se usar a sintaxe `[...]` para sincronizar um conjunto de subcomandos assíncronos.
 Por exemplo, `[async "c" -> 2; async "d" -> 3]; kill` fará com que o nó envie `c` para `2` ao mesmo tempo que envia `d` a `3`, entretanto o comando `kill` só será executado quando os dois comandos `async` encerrarem.
+- `fault {drop <number>[/<fragment>][u|b|a] [<n>% | <n>x],}`: Injeta falhas no nó local. Uma lista de falhas pode ser especificada. No caso da falha `drop`, fará com que a mensagem de número `number`, fragmento `fragment` de tipo `u`, `b` ou `a` (todos, se omitido), será perdida `n` vezes (caso seja `nx`) ou será perdido com `n`% de chance. `number` e `fragment` podem ser intervalos de inteiros e.g `1`, `1..2`, `*` (equivalente a `0..MAX_INT`).Segue abaixo alguns exemplos de uso:
+    - `fault drop 1`: Perca todos os fragmentos da mensagem de número 1, indepedente do tipo de sequência (unicast, broadcast, atomic ou heartbeat)
+    - `fault drop 1..3`: Perca todos os fragmentos das mensagens de número 1 a 3 (inclusivo), independente do tipo de sequência.
+    - `fault drop 4b`: Perca a mensagem de número 4 de broadcast.
+    - `fault drop *`: Perca todos os fragmentos de todas as mensagens.
+    - `fault drop */0`: Perca o fragmento de número 0 de todas as mensagens.
+    - `fault drop 1 30%`: Perca todos os fragmentos da mensagem de número 1 com 30% de chance.
+    - `fault drop * 1x`: Perca o próximo pacote.
+    - `fault drop 1u 1x`: Perca uma vez qualquer fragmento da mensagem de unicast de número 1.
+    - `fault drop * 5%`: Perca qualquer pacote com 5% de chance (similar ao campo `faults` da configuração)
+    - `fault drop * 5%, drop 1/0 1x`: Perca qualquer pacote com 5% de chance e perca o fragmento 0 da mensagem de número 1 uma vez (100% de chance).
 - `exit`: Encerra o processo.
 - `help`: Exibe lista de comandos e flags disponíveis.
 
