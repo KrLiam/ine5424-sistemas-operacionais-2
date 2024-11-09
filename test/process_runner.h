@@ -13,9 +13,6 @@
 class Runner {
     const Arguments& args;
     std::unique_ptr<Process> proc;
-
-    void server_receive(ThreadArgs* args);
-    void server_deliver(ThreadArgs* args);
     
     void client();
 

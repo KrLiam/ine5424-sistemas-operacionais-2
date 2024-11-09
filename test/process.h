@@ -21,8 +21,6 @@ struct ExecutionContext {
 
 struct Process {
     std::function<std::unique_ptr<ReliableCommunication> ()> create_comm;
-    std::function<void(ThreadArgs*)> receive_routine;
-    std::function<void(ThreadArgs*)> deliver_routine;
 
     std::unique_ptr<ReliableCommunication> comm;
     ThreadArgs thread_args;
@@ -30,14 +28,15 @@ struct Process {
     std::thread server_deliver_thread;
 
     Process(
-        std::function<std::unique_ptr<ReliableCommunication> ()> create_comm,
-        std::function<void(ThreadArgs*)> receive_routine,
-        std::function<void(ThreadArgs*)> deliver_routine
+        std::function<std::unique_ptr<ReliableCommunication> ()> create_comm
     );
 
     ~Process();
 
     bool initialized();
+
+    void receive(ThreadArgs* args);
+    void deliver(ThreadArgs* args);
 
     void init();
 

@@ -1,7 +1,5 @@
 // process_runner.cpp
 
-#include <sys/stat.h>
-
 #include "process_runner.h"
 #include "utils/log.h"
 #include "core/node.h"
@@ -13,7 +11,6 @@
 
 #include "command.h"
 
-const std::size_t BUFFER_SIZE = Message::MAX_SIZE;
 
 std::string get_available_flags(const char* program_name) {
     std::string result;
@@ -41,83 +38,9 @@ std::string get_available_flags(const char* program_name) {
 Runner::Runner(const Arguments& args) : args(args) {
     proc = std::make_unique<Process>(
         [&args]() {
-            return std::make_unique<ReliableCommunication>(args.node_id, BUFFER_SIZE);
-        },
-        std::bind(&Runner::server_receive, this, _1),
-        std::bind(&Runner::server_deliver, this, _1)
+            return std::make_unique<ReliableCommunication>(args.node_id, Message::MAX_SIZE);
+        }
     );
-}
-
-void Runner::server_receive(ThreadArgs* args) {
-    ReliableCommunication* comm = args->communication;
-    char buffer[BUFFER_SIZE];
-    while (true) {
-        ReceiveResult result;
-        try {
-            result = comm->receive(buffer);
-        }
-        catch (buffer_termination& err) {
-            break;
-        }
-        
-        if (result.length == 0) break;
-
-        std::string message_data(buffer, result.length);
-
-        if (message_data.length() > 100 )
-        {
-            message_data = message_data.substr(0, 100) + "...";
-        }
-
-        mkdir(DATA_DIR, S_IRWXU);
-        mkdir(DATA_DIR "/messages", S_IRWXU);
-        std::string output_filename = DATA_DIR "/messages/" + UUID().as_string();
-
-        std::ofstream file(output_filename);
-        file.write(buffer, result.length);
-        log_print(
-            "Received '",
-            message_data.c_str(),
-            "' (", result.length, " bytes) from ",
-            result.sender_id,
-            ".\nSaved message to file [", output_filename, "].");
-    }
-
-    log_info("Closed application receiver thread.");
-}
-
-void Runner::server_deliver(ThreadArgs* args) {
-    ReliableCommunication* comm = args->communication;
-    char buffer[BUFFER_SIZE];
-    while (true) {
-        ReceiveResult result;
-        try {
-            result = comm->deliver(buffer);
-        }
-        catch (buffer_termination& err) {
-            break;
-        }
-        
-        if (result.length == 0) break;
-
-        std::string message_data(buffer, result.length);
-
-        if (message_data.length() > 100 )
-        {
-            message_data = message_data.substr(0, 100) + "...";
-        }
-
-        log_print("[Broadcast] Received '", message_data.c_str(), "' (", result.length, " bytes) from ", result.sender_id);
-
-        mkdir(DATA_DIR, S_IRWXU);
-        mkdir(DATA_DIR "/messages", S_IRWXU);
-        std::string output_filename = DATA_DIR "/messages/" + UUID().as_string();
-        std::ofstream file(output_filename);
-        file.write(buffer, result.length);
-        log_print("Saved message to file [", output_filename, "].");
-    }
-
-    log_info("Closed application deliver thread.");
 }
 
 void Runner::client() {

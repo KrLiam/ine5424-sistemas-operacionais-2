@@ -1,16 +1,13 @@
+#include <sys/stat.h>
 #include <thread>
 #include <chrono>
 
 #include "process.h"
 
 Process::Process(
-    std::function<std::unique_ptr<ReliableCommunication> ()> create_comm,
-    std::function<void(ThreadArgs*)> receive_routine,
-    std::function<void(ThreadArgs*)> deliver_routine
+    std::function<std::unique_ptr<ReliableCommunication> ()> create_comm
 ) :
-    create_comm(create_comm),
-    receive_routine(receive_routine),
-    deliver_routine(deliver_routine)
+    create_comm(create_comm)
 {};
 
 Process::~Process() {
@@ -25,8 +22,8 @@ void Process::init() {
     comm = create_comm();
 
     thread_args = { comm.get() };
-    server_receive_thread = std::thread(receive_routine, &thread_args);
-    server_deliver_thread = std::thread(deliver_routine, &thread_args);
+    server_receive_thread = std::thread(std::bind(&Process::receive, this, _1), &thread_args);
+    server_deliver_thread = std::thread(std::bind(&Process::deliver, this, _1), &thread_args);
 }
 
 void Process::kill() {
@@ -88,6 +85,78 @@ void ExecutionContext::wait_complete() {
     }
 }
 
+
+void Process::receive(ThreadArgs* args) {
+    ReliableCommunication* comm = args->communication;
+    char buffer[Message::MAX_SIZE];
+    while (true) {
+        ReceiveResult result;
+        try {
+            result = comm->receive(buffer);
+        }
+        catch (buffer_termination& err) {
+            break;
+        }
+        
+        if (result.length == 0) break;
+
+        std::string message_data(buffer, result.length);
+
+        if (message_data.length() > 100 )
+        {
+            message_data = message_data.substr(0, 100) + "...";
+        }
+
+        mkdir(DATA_DIR, S_IRWXU);
+        mkdir(DATA_DIR "/messages", S_IRWXU);
+        std::string output_filename = DATA_DIR "/messages/" + UUID().as_string();
+
+        std::ofstream file(output_filename);
+        file.write(buffer, result.length);
+        log_print(
+            "Received '",
+            message_data.c_str(),
+            "' (", result.length, " bytes) from ",
+            result.sender_id,
+            ".\nSaved message to file [", output_filename, "].");
+    }
+
+    log_info("Closed application receiver thread.");
+}
+
+void Process::deliver(ThreadArgs* args) {
+    ReliableCommunication* comm = args->communication;
+    char buffer[Message::MAX_SIZE];
+    while (true) {
+        ReceiveResult result;
+        try {
+            result = comm->deliver(buffer);
+        }
+        catch (buffer_termination& err) {
+            break;
+        }
+        
+        if (result.length == 0) break;
+
+        std::string message_data(buffer, result.length);
+
+        if (message_data.length() > 100 )
+        {
+            message_data = message_data.substr(0, 100) + "...";
+        }
+
+        log_print("[Broadcast] Received '", message_data.c_str(), "' (", result.length, " bytes) from ", result.sender_id);
+
+        mkdir(DATA_DIR, S_IRWXU);
+        mkdir(DATA_DIR "/messages", S_IRWXU);
+        std::string output_filename = DATA_DIR "/messages/" + UUID().as_string();
+        std::ofstream file(output_filename);
+        file.write(buffer, result.length);
+        log_print("Saved message to file [", output_filename, "].");
+    }
+
+    log_info("Closed application deliver thread.");
+}
 
 bool Process::send_message(
     std::string node_id,
