@@ -31,8 +31,7 @@ std::vector<int> parse_fault_list(Reader& reader) {
 }
 
 Arguments parse_arguments(int argc, char* argv[]) {
-    std::vector<int> faults;
-    std::vector<std::shared_ptr<Command>> send_commands;
+    Arguments args;
 
     std::string value;
     for (int i=1; i < argc; i++) {
@@ -42,9 +41,15 @@ Arguments parse_arguments(int argc, char* argv[]) {
 
     Reader reader(value);
 
-    std::string node_id = reader.read_word();
+    if (reader.read("test")) {
+        args.test = true;
+        args.case_path = parse_path(reader);
+        return args;
+    }
 
-    if (!node_id.length()) throw std::invalid_argument(
+    args.node_id = reader.read_word();
+
+    if (!args.node_id.length()) throw std::invalid_argument(
         format("Missing node id argument. Usage:\n%s <id-int>", argv[0])
     );
 
@@ -70,10 +75,10 @@ Arguments parse_arguments(int argc, char* argv[]) {
         );
 
         if (flag == "f") {
-            faults = parse_fault_list(reader);
+            args.faults = parse_fault_list(reader);
         }
         else if (flag == "s") {
-            send_commands = parse_commands(reader);
+            args.send_commands = parse_commands(reader);
         }
         else {
             throw std::invalid_argument(
@@ -82,5 +87,5 @@ Arguments parse_arguments(int argc, char* argv[]) {
         }
     }
 
-    return Arguments{node_id, faults, send_commands};
+    return args;
 }

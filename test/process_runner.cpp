@@ -1,4 +1,8 @@
 // process_runner.cpp
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <filesystem>
 
 #include "process_runner.h"
 #include "utils/log.h"
@@ -35,15 +39,64 @@ std::string get_available_flags(const char* program_name) {
 }
 
 
-Runner::Runner(const Arguments& args) : args(args) {
-    proc = std::make_unique<Process>(
-        [&args]() {
-            return std::make_unique<ReliableCommunication>(args.node_id, Message::MAX_SIZE);
+CaseFile CaseFile::parse_file(const std::string& path) {
+    return  CaseFile::parse(read_file(path));
+}
+CaseFile CaseFile::parse(const std::string& value) {
+    Reader reader(value);
+    CaseFile f;
+
+    while (reader.peek()) {
+        int pos = reader.get_pos();
+        std::string target = reader.read_word();
+
+        if (!target.length()) {
+            throw parse_error(
+                format("Unexpected '%c' at pos %i of config file.", reader.peek(), reader.get_pos())
+            );
         }
-    );
+
+        reader.expect('=');
+
+        if (target == "config") {
+            f.config_path = parse_path(reader);
+        }
+        else if (target == "procedures") {
+            reader.expect('{');
+
+            while (!reader.eof()) {
+                char p = reader.peek();
+                if (!p || p == '}') break;
+
+                std::string key = reader.read_word();
+
+                if (!key.length()) throw parse_error(
+                    format("Unexpected '%c' at pos %i of procedures in case file.", p, reader.get_pos())
+                );
+                if (f.procedures.contains(key)) throw parse_error(
+                    format("Key '%s' was defined twice at procedures.", key.c_str())
+                );
+
+                reader.expect('=');
+                std::shared_ptr<Command> value = parse_command_list(reader);
+
+                f.procedures.emplace(key, value);
+
+                if (!reader.read(',')) break;
+            }
+
+            reader.expect('}');
+        }
+        else throw parse_error(format("Invalid '%s' at pos %i", target.c_str(), pos));
+    }
+
+    return f;
 }
 
-void Runner::client() {
+
+Runner::Runner(const Arguments& args) : args(args) {}
+
+void Runner::client(Process& proc) {
     while (true) {
         std::string input;
 
@@ -70,23 +123,89 @@ void Runner::client() {
             log_print(err.what());
         }
 
-        proc->execute(commands);
+        proc.execute(commands);
     }
 
     log_info("Exited client.");
 }
 
 void Runner::run() {
-    proc->init();
+    if (args.test) {
+        run_test(args.case_path);
+        return;
+    }
+
+    Config config = ConfigReader::parse_file(DEFAULT_CONFIG_PATH);
+    auto commands = std::make_shared<SequenceCommand>(args.send_commands);
+    run_node(args.node_id, commands, config, true);
+}
+
+void Runner::run_test(const std::string& case_path) {
+    log_info("Parsing case file...");
+    CaseFile f = CaseFile::parse_file(case_path);
+
+    log_info("Parsing config file...");
+    Config config = ConfigReader::parse_file(f.config_path); // TODO fazer resolução do caminho a partir do .case
+
+    log_info("Initializing test case...");
+
+    std::string case_name = std::filesystem::path(case_path).stem().string();
+    std::string case_dir_path = format(DATA_DIR "/cases/%s", case_name.c_str());
+
+    mkdir(DATA_DIR, S_IRWXU);
+    mkdir(DATA_DIR "/cases", S_IRWXU);
+    mkdir(case_dir_path.c_str(), S_IRWXU);
+
+    std::vector<std::pair<std::string, pid_t>> pids;
+
+    for (const auto& [id, command] : f.procedures) {
+        pid_t pid = fork();
+
+        if (pid < 0) throw std::runtime_error("Could not fork process.");
+
+        if (pid == 0) {
+            std::ofstream out(case_dir_path + "/" + id + ".log");
+            std::cout.rdbuf(out.rdbuf()); //redirect std::cout to out.txt!
+
+            run_node(id, command, config, false);
+            return;
+        }
+
+        pids.push_back({id, pid});
+
+        log_info("Created node ", id, " (pid=", pid, ").");
+    }
+
+    for (auto [id, pid] : pids) {
+        int status;
+        waitpid(pid, &status, 0);
+
+        log_info("Node ", id, " (pid=", pid, ") exited with status ", WIFEXITED(status), ".");
+    }
+
+    log_info("Test completed.");
+}
+
+void Runner::run_node(
+    const std::string& id,
+    std::shared_ptr<Command> command,
+    const Config& config,
+    bool execute_client
+) {
+    Process proc(id, Message::MAX_SIZE, config);
+
+    proc.init();
 
     try {
-        Node local_node = proc->comm->get_group_registry()->get_local_node();
+        Node local_node = proc.comm->get_group_registry()->get_local_node();
         log_info("Local node endpoint is ", local_node.get_address().to_string(), ".");
     } catch (const std::exception& e) {
         throw std::invalid_argument("Nodo não encontrado no registro.");
     }
 
-    proc->execute(args.send_commands);
+    proc.execute(*command);
 
-    client();
+    if (execute_client) {
+        client(proc);
+    }
 }

@@ -4,17 +4,15 @@
 
 ReliableCommunication::ReliableCommunication(
     std::string local_id,
-    std::size_t user_buffer_size
+    std::size_t user_buffer_size,
+    const Config& config
 ) :
+    config(config),
     connection_update_buffer("connection_update"),
     user_buffer_size(user_buffer_size),
     application_buffer(INTERMEDIARY_BUFFER_ITEMS),
     deliver_buffer(INTERMEDIARY_BUFFER_ITEMS)
 {
-    Config config = ConfigReader::parse_file("nodes.conf");
-
-    broadcast_type = config.broadcast;
-
     gr = std::make_shared<GroupRegistry>(local_id, config, event_bus);
     pipeline = std::make_unique<Pipeline>(gr, event_bus, config.faults);
 
@@ -127,7 +125,7 @@ bool ReliableCommunication::broadcast(MessageData data) {
         return false;
     }
 
-    MessageType message_type = message_type::from_broadcast_type(broadcast_type);
+    MessageType message_type = message_type::from_broadcast_type(config.broadcast);
     std::string receiver_id = message_type == MessageType::AB_REQUEST ? LEADER_ID : BROADCAST_ID;
     Transmission transmission = create_transmission(receiver_id, data, message_type);
     gr->enqueue(transmission);

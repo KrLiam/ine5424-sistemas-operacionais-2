@@ -128,6 +128,24 @@ char Reader::read(char ch = 0)
 
     return 0;
 }
+bool Reader::read(const std::string &chars)
+{
+    peek();
+    Override ovr = override_whitespace(false);
+
+    int start = pos;
+
+    for (char ch : chars) {
+        char p = read();
+
+        if (!p || p != ch) {
+            pos = start;
+            return false;
+        }
+    }
+
+    return true;
+}
 
 int Reader::read_int()
 {

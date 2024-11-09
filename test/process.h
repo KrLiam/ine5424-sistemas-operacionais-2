@@ -20,16 +20,16 @@ struct ExecutionContext {
 };
 
 struct Process {
-    std::function<std::unique_ptr<ReliableCommunication> ()> create_comm;
+    std::string node_id;
+    int buffer_size;
+    Config config;
 
     std::unique_ptr<ReliableCommunication> comm;
     ThreadArgs thread_args;
     std::thread server_receive_thread;
     std::thread server_deliver_thread;
 
-    Process(
-        std::function<std::unique_ptr<ReliableCommunication> ()> create_comm
-    );
+    Process(const std::string& node_id, int buffer_size, const Config& config);
 
     ~Process();
 

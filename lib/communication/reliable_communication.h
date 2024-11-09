@@ -30,7 +30,7 @@ struct ReceiveResult {
 class ReliableCommunication
 {
 public:
-    ReliableCommunication(std::string local_id, std::size_t user_buffer_size);
+    ReliableCommunication(std::string local_id, std::size_t user_buffer_size, const Config& config);
     ~ReliableCommunication();
 
     void add_fault_rule(const FaultRule& rule);
@@ -49,7 +49,7 @@ private:
     
     EventBus event_bus;
 
-    BroadcastType broadcast_type;
+    Config config;
 
     std::thread sender_thread;
     BufferSet<std::string> connection_update_buffer;

@@ -56,6 +56,7 @@ public:
     void rewind(int amount);
     char peek();
     char read(char ch);
+    bool read(const std::string &chars);
     int read_int();
     std::string read_word();
 

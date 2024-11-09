@@ -4,7 +4,7 @@
 #include "pipeline/fault_injection/fault_injection_layer.h"
 
 
-enum CommandType : char {
+enum class CommandType : char {
     text = 0,
     file = 1,
     dummy = 2,
@@ -121,6 +121,7 @@ std::string parse_path(Reader& reader);
 
 std::string parse_destination(Reader& reader);
 
+std::shared_ptr<SequenceCommand> parse_command_list(Reader& reader);
 std::shared_ptr<Command> parse_command(Reader& reader);
 
 std::vector<std::shared_ptr<Command>> parse_commands(Reader& reader);

@@ -11,3 +11,4 @@
 #define MAX_HEARTBEAT_TRIES 6
 
 #define DATA_DIR ".data"
+#define DEFAULT_CONFIG_PATH "./nodes.conf"

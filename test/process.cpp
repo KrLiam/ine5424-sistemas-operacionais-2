@@ -4,11 +4,8 @@
 
 #include "process.h"
 
-Process::Process(
-    std::function<std::unique_ptr<ReliableCommunication> ()> create_comm
-) :
-    create_comm(create_comm)
-{};
+Process::Process(const std::string& node_id, int buffer_size, const Config& config)
+    : node_id(node_id), buffer_size(buffer_size), config(config) {};
 
 Process::~Process() {
     if (initialized()) kill();
@@ -19,7 +16,7 @@ bool Process::initialized() { return comm.get(); }
 void Process::init() {
     if (initialized()) return;
 
-    comm = create_comm();
+    comm = std::make_unique<ReliableCommunication>(node_id, buffer_size, config);
 
     thread_args = { comm.get() };
     server_receive_thread = std::thread(std::bind(&Process::receive, this, _1), &thread_args);
@@ -88,7 +85,7 @@ void ExecutionContext::wait_complete() {
 
 void Process::receive(ThreadArgs* args) {
     ReliableCommunication* comm = args->communication;
-    char buffer[Message::MAX_SIZE];
+    char buffer[buffer_size];
     while (true) {
         ReceiveResult result;
         try {
@@ -126,7 +123,7 @@ void Process::receive(ThreadArgs* args) {
 
 void Process::deliver(ThreadArgs* args) {
     ReliableCommunication* comm = args->communication;
-    char buffer[Message::MAX_SIZE];
+    char buffer[buffer_size];
     while (true) {
         ReceiveResult result;
         try {
