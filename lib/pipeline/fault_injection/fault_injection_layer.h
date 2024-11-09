@@ -1,5 +1,6 @@
 #pragma once
 
+#include <variant>
 #include <mutex>
 
 #include "pipeline/pipeline_step.h"
