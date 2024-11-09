@@ -15,6 +15,12 @@ FaultInjectionLayer::FaultInjectionLayer(
     config(config)
     {}
 
+FaultInjectionLayer::~FaultInjectionLayer() {
+    for (int id : packet_timer_ids) {
+        TIMER.cancel(id);
+    }
+}
+
 void FaultInjectionLayer::discard_drop_rules(const PacketPattern& pattern) {
     for (int i = 0; i < (int) drop_rules.size(); i++) {
         const DropFaultRule& rule = drop_rules[i];
@@ -91,9 +97,10 @@ void FaultInjectionLayer::receive(Packet packet) {
     }
 
     if (delay > 0) {
-        TIMER.add(delay, [this, packet]() {
+        int id = TIMER.add(delay, [this, packet]() {
             proceed_receive(packet);
         });
+        packet_timer_ids.emplace(id);
     }
     else {
         proceed_receive(packet);

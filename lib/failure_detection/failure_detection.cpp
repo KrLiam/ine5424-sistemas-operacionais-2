@@ -10,6 +10,10 @@ FailureDetection::FailureDetection(std::shared_ptr<GroupRegistry> gr, EventBus &
 
 FailureDetection::~FailureDetection()
 {
+    terminate();
+}
+
+void FailureDetection::terminate() {
     running = false;
     if (timer_id >= 0) TIMER.cancel(timer_id);
 }

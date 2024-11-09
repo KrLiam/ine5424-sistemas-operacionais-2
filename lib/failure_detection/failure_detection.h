@@ -47,5 +47,7 @@ public:
 
     ~FailureDetection();
 
+    void terminate();
+
     void attach();
 };

@@ -507,7 +507,10 @@ bool Connection::enqueue(Transmission &transmission)
 
 void Connection::request_update()
 {
-    connection_update_buffer.produce(remote_node.get_id());
+    try {
+        connection_update_buffer.produce(remote_node.get_id());
+    }
+    catch (std::runtime_error& e) {}
 }
 
 void Connection::cancel_transmissions()

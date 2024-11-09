@@ -35,6 +35,8 @@ ReliableCommunication::~ReliableCommunication()
 {
     application_buffer.terminate();
     deliver_buffer.terminate();
+    
+    failure_detection->terminate();
 
     connection_update_buffer.terminate();
     if (sender_thread.joinable())

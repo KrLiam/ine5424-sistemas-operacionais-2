@@ -96,10 +96,13 @@ using FaultRule = std::variant<DropFaultRule, DelayFaultRule>;
 
 class FaultInjectionLayer : public PipelineStep {
     std::vector<DropFaultRule> drop_rules;
+    std::unordered_set<int> packet_timer_ids;
    FaultConfig config;
 public:
     FaultInjectionLayer(PipelineHandler handler);
     FaultInjectionLayer(PipelineHandler handler, FaultConfig config);
+
+    ~FaultInjectionLayer();
 
     void discard_drop_rules(const PacketPattern& pattern);
     void decrement_matching_drop_rules(const PacketPattern& pattern);
