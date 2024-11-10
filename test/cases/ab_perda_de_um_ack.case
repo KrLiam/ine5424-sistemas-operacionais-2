@@ -1,0 +1,15 @@
+config = ./ab_100ms.conf
+min_lifespan=10000
+procedures = {
+  0 = [
+    sleep 5000;
+    "AB - perda de um ACK (1)" -> *;
+    "AB - perda de um ACK (2)" -> *;
+  ],
+  1 = [
+  ],
+  2 = [
+    sleep 5000;
+    fault drop 0/0a ack 4x;
+  ]
+}

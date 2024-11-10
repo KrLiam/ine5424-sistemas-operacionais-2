@@ -3,7 +3,7 @@ min_lifespan=10000
 procedures = {
  0 = [
     sleep 5000;
-    "URB - perda de pacote" -> *;
+    "URB - perda de um ACK" -> *;
   ],
  1 = [
   ],
