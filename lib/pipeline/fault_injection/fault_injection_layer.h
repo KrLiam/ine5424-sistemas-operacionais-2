@@ -11,26 +11,18 @@
 
 bool roll_chance(double chance);
 
-enum class FaultRuleType {
-    LOSE = 0,
-    DELAY = 1
-};
-
-// delay * 0s, delay * 1s
-// lose * once, lose 1u once
-
-// lose * 5%
-
 struct PacketPattern {
     IntRange number;
     IntRange fragment;
     std::unordered_set<char> sequence_types;
+    uint32_t flags = 0;
 
-    static PacketPattern from(const MessageIdentity& id, uint32_t frag_num) {
+    static PacketPattern from(const MessageIdentity& id, uint32_t frag_num, uint32_t flags) {
         return PacketPattern{
             IntRange(id.msg_num),
             IntRange(frag_num),
-            {(char) id.sequence_type()}
+            {(char) id.sequence_type()},
+            flags
         };
     }
 
@@ -48,23 +40,19 @@ struct PacketPattern {
         );
     }
 
-    bool wildcard() const {
-        return number == IntRange::full()
-            && fragment == IntRange::full()
-            && sequence_types.size() == 3;
-    }
-
     bool contains(const PacketPattern& other) const {
         for (char type : other.sequence_types) {
             if (!sequence_types.contains(type)) return false;
         }
 
+        if ((flags & other.flags) != flags) return false;
+
         return number.contains(other.number)
             && fragment.contains(other.fragment);
     }
 
-    bool matches(const MessageIdentity& id, uint32_t frag_num) const {
-        return contains(PacketPattern::from(id, frag_num));
+    bool matches(const MessageIdentity& id, uint32_t frag_num, uint32_t flags) const {
+        return contains(PacketPattern::from(id, frag_num, flags));
     }
 };
 
@@ -77,7 +65,7 @@ struct DropFaultRule {
         std::string count_s = count == UINT32_MAX ? std::string("") : format("%ux", count);
 
         return format(
-            "%s %.2f%% %s",
+            "%s %.0f%% %s",
             pattern.to_string().c_str(),
             chance * 100,
             count_s.c_str()

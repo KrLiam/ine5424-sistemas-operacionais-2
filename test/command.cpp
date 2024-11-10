@@ -122,9 +122,9 @@ FaultRule parse_fault_rule(Reader& reader) {
 
     if (type == "drop") {
         DropFaultRule rule{
-            pattern: {number: IntRange::full(), fragment: IntRange::full()},
+            pattern: {number: IntRange::full(), fragment: IntRange::full(), flags: 0},
             chance: 1.0,
-            count: UINT32_MAX
+            count: UINT32_MAX,
         };
 
         rule.pattern.number = IntRange::parse(reader);
@@ -139,12 +139,19 @@ FaultRule parse_fault_rule(Reader& reader) {
             {'a', MessageSequenceType::ATOMIC}
         };
 
-        rule.pattern.sequence_types = {'u','b','a'};
-        char ch = reader.peek();
-        if (ch_map.contains(ch)) {
-            reader.advance();
-            rule.pattern.sequence_types = {(char)ch_map.at(ch)};
+        {
+            Override ovr = reader.override_whitespace(false);
+
+            rule.pattern.sequence_types = {'u','b','a'};
+            char ch = reader.peek();
+            if (ch_map.contains(ch)) {
+                reader.advance();
+                rule.pattern.sequence_types = {(char)ch_map.at(ch)};
+            }
         }
+
+        if (reader.read("ack")) rule.pattern.flags |= ACK;
+
 
         if (reader.peek() && isdigit(reader.peek())) {
             int value = reader.read_int();
