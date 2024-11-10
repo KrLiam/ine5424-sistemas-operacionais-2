@@ -14,7 +14,16 @@ FaultInjectionLayer::FaultInjectionLayer(
     PipelineStep(handler),
     config(config),
     corruption_mask_dis(0, 255)
-    {}
+{
+    if (config.lose_chance > 0) {
+        DropFaultRule rule{
+            pattern: {number: IntRange::full(), fragment: IntRange::full(), sequence_types: {'u','b','a','h'}, flags: 0},
+            chance: config.lose_chance,
+            count: UINT32_MAX,
+        };
+        add_rule(rule);
+    }
+}
 
 FaultInjectionLayer::~FaultInjectionLayer() {
     for (int id : packet_timer_ids) {
