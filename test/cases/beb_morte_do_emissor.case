@@ -1,14 +1,16 @@
 config = ./beb_100ms.conf
 procedures = {
  0 = [
-    sleep 10ms;
+    sleep 10;
     async "BEB - morte do emissor" -> *;
-    sleep 300ms;
+    sleep 300;
     kill;
   ],
   1 = [
+    sleep 8000;
   ],
   2 = [
     fault drop 0/0b 1x;
+    sleep 8000;
   ]
 }

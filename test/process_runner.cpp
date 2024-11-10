@@ -16,6 +16,7 @@
 
 #include "command.h"
 
+namespace fs = std::filesystem;
 
 std::string get_available_flags(const char* program_name) {
     std::string result;
@@ -158,18 +159,23 @@ void tail_dir(const char* dir) {
     }
 }
 
-void Runner::run_test(const std::string& case_path) {
-    log_info("Parsing case file...");
+void Runner::run_test(const std::string& case_path_str) {
+    fs::path case_path = case_path_str;
+
+    log_info("Parsing case file in ", case_path);
     CaseFile f = CaseFile::parse_file(case_path);
 
-    log_info("Parsing config file...");
-    Config config = ConfigReader::parse_file(f.config_path); // TODO fazer resolução do caminho a partir do .case
+    fs::path config_path = fs::absolute(
+        case_path.parent_path() / f.config_path
+    ).lexically_normal().lexically_relative(fs::current_path());
+
+    log_info("Parsing config file in ", config_path);
+    Config config = ConfigReader::parse_file(config_path); // TODO fazer resolução do caminho a partir do .case
 
     log_info("Initializing test case...");
 
-    std::string case_name = std::filesystem::path(case_path).stem().string();
-    std::string case_dir_path = format(DATA_DIR "/cases/%s", case_name.c_str());
-
+    std::string case_name = fs::path(case_path).stem().string();
+    fs::path case_dir_path = format(DATA_DIR "/cases/%s", case_name.c_str());
     mkdir(DATA_DIR, S_IRWXU);
     mkdir(DATA_DIR "/cases", S_IRWXU);
     mkdir(case_dir_path.c_str(), S_IRWXU);
@@ -183,7 +189,7 @@ void Runner::run_test(const std::string& case_path) {
 
         if (pid == 0) {
             Logger::set_colored(false);
-            std::ofstream out(case_dir_path + "/" + id + ".log");
+            std::ofstream out(case_dir_path.string() + "/" + id + ".log");
             std::cout.rdbuf(out.rdbuf()); //redirect std::cout to out.txt!
 
             run_node(id, command, config, false);

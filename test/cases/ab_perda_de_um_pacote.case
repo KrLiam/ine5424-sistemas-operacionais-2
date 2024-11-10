@@ -1,12 +1,14 @@
 config = ./ab_100ms.conf
 procedures = {
  0 = [
-    sleep 1000ms;
+    sleep 1000;
     "AB - perda de um pacote" -> *;
   ],
   1 = [
+    sleep 8000;
   ],
   2 = [
     fault drop 0/0a 1x;
+    sleep 8000;
   ]
 }

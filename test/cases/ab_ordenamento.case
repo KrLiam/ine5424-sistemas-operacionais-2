@@ -1,4 +1,4 @@
-config = ./test/cases/ab_100ms_com_falhas.conf
+config = ./ab_100ms_com_falhas.conf
 procedures = {
     0 = [
         sleep 1000;

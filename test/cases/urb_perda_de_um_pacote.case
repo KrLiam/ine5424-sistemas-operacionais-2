@@ -1,12 +1,14 @@
 config = ./urb_100ms.conf
 procedures = {
  0 = [
-    sleep 10ms;
+    sleep 3000;
     "URB - perda de pacote" -> *;
   ],
   1 = [
+    sleep 8000;
   ],
   2 = [
     fault drop 0/0b 1x;
+    sleep 8000;
   ]
 }
