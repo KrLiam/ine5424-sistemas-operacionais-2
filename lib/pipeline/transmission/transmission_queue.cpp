@@ -55,7 +55,7 @@ void TransmissionQueue::send(uint32_t num) {
 
     entry.tries++;
     pending.emplace(num);
-    entry.timeout_id = TIMER.add(ACK_TIMEOUT, [this, num]() { timeout(num); });
+    entry.timeout_id = TIMER.add(Config::ACK_TIMEOUT, [this, num]() { timeout(num); });
 
     // não transmite o fragmento na primeira tentativa
     if (packet.meta.urb_retransmission && entry.tries == 1) return;

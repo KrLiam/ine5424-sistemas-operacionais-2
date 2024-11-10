@@ -7,6 +7,7 @@
 
 #include "core/packet.h"
 #include "core/node.h"
+#include "utils/config.h"
 #include "utils/date.h"
 #include "pipeline/pipeline_handler.h"
 

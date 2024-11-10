@@ -135,6 +135,8 @@ enum class BroadcastType {
 
 struct Config
 {
+    static int ACK_TIMEOUT;
+
     std::vector<NodeConfig> nodes;
     unsigned int alive = 1000;
     BroadcastType broadcast = BroadcastType::BEB;
