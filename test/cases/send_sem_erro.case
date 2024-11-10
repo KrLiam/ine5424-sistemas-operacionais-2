@@ -1,0 +1,10 @@
+config = ./test/cases/ab_100ms.conf
+procedures = {
+    0 = [
+        sleep 1000;
+        "hello" -> 1;
+    ],
+    1 = [
+        sleep 3000;
+    ]
+}
