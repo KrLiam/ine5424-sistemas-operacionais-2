@@ -1,0 +1,10 @@
+config = ./beb_100a500ms.conf
+min_lifespan=10000
+procedures = {
+ 0 = [
+	sleep 1000;
+	dummy 60000 -> 1
+  ],
+  1 = [
+  ]
+}

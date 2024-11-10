@@ -1,0 +1,15 @@
+config = ./beb_100ms.conf
+min_lifespan=3000
+procedures = {
+ 0 = [
+	sleep 1000;
+	async "1" -> 1;
+	async "2" -> 1;
+	async "3" -> 1;
+  ],
+  1 = [
+  ],
+  2 = [
+	kill;
+  ]
+}

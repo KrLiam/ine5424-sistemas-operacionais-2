@@ -1,0 +1,14 @@
+config = ./beb_100ms.conf
+min_lifespan=3000
+procedures = {
+ 0 = [
+	sleep 1000;
+	"Timeout" -> 1;
+  ],
+  1 = [
+	fault drop 1 30x;
+  ],
+  2 = [
+	kill;
+  ]
+}

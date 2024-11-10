@@ -1,0 +1,14 @@
+config = ./beb_100ms.conf
+min_lifespan=3000
+procedures = {
+ 0 = [
+	sleep 1000;
+	fault drop 1u ack 1x;
+	"Perda de ACK" -> 1;
+  ],
+  1 = [
+  ],
+  2 = [
+	kill;
+  ]
+}

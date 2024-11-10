@@ -1,0 +1,14 @@
+config = ./beb_100ms.conf
+min_lifespan=5000
+procedures = {
+ 0 = [
+	sleep 1000;
+	fault drop 1/0u ack 1x;
+	"Morte e renascimento do receptor" -> 1;
+  ],
+  1 = [
+	sleep 1600;
+	kill;
+	init;
+  ]
+}

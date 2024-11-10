@@ -1,0 +1,14 @@
+config = ./beb_100ms.conf
+min_lifespan=3000
+procedures = {
+ 0 = [
+	sleep 1000;
+	"Perda de fragmento" -> 1;
+  ],
+  1 = [
+	fault drop 1/0u 1x;
+  ],
+  2 = [
+	kill;
+  ]
+}
