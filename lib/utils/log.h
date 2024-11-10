@@ -78,14 +78,18 @@ public:
 
     static void set_colored(bool value) {
         log_colored = value;
-    }
+    }   
 
     template <typename... Args>
     static void log(const char *level, [[maybe_unused]] const char *file, [[maybe_unused]] int line, Args &&...args)
-    {
+    {        
         log_mutex.lock();
-        auto t = std::time(nullptr);
-        auto tm = *std::localtime(&t);
+
+        auto now = std::chrono::system_clock::now();
+        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+        auto timer = std::chrono::system_clock::to_time_t(now);
+        auto tm = *std::localtime(&timer);
+
         int thread_id = get_thread_id();
 
         std::ostringstream oss;
@@ -93,7 +97,7 @@ public:
         if (log_colored) {
             (oss
             << prefix
-            << std::put_time(&tm, BOLD_H_WHITE "%H:%M:%S" COLOR_RESET)
+            << std::put_time(&tm, BOLD_H_WHITE "%H:%M:%S" COLOR_RESET) << '.' << std::setfill('0') << std::setw(3) << ms.count()
             << format(" %s%s" COLOR_RESET, label_color.at(std::string(level)), level)
             #if LOG_FILES
             << format(H_BLACK " [%s:%i]" COLOR_RESET, file, line)
@@ -107,7 +111,7 @@ public:
         else {
             (oss
             << prefix
-            << std::put_time(&tm, "%H:%M:%S")
+            << std::put_time(&tm, "%H:%M:%S") << '.' << std::setfill('0') << std::setw(3) << ms.count()
             << format(" %s", level)
             #if LOG_FILES
             << format(" [%s:%i]", file, line)
