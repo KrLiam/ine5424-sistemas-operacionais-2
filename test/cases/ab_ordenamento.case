@@ -1,16 +1,31 @@
-config = ./ab_100ms_com_perda.conf
+config = ./test/cases/ab_100ms_com_falhas.conf
 procedures = {
- 0 = [
-    sleep 1000ms;
-    "AB - perda de um pacote" -> *;
-    repeat 5 ["0 do processo 0" -> *; "1 do processo 0" -> *; "2 do processo 0" -> *; "3 do processo 0" -> *];
-  ],
-  1 = [
-    sleep 1000ms;
-    repeat 5 ["0 do processo 1" -> *; "1 do processo 1" -> *; "2 do processo 1" -> *; "3 do processo 1" -> *];
-  ],
-  2 = [
-    sleep 1000ms;
-    repeat 5 ["0 do processo 2" -> *; "1 do processo 2" -> *; "2 do processo 2" -> *; "3 do processo 2" -> *];
-  ]
+    0 = [
+        sleep 1000;
+        "AB - perda de um pacote" -> *;
+        repeat 5 [
+            "0 do processo 0" -> *;
+            "1 do processo 0" -> *;
+            "2 do processo 0" -> *;
+            "3 do processo 0" -> *
+        ];
+    ],
+    1 = [
+        sleep 1000;
+        repeat 5 [
+            "0 do processo 1" -> *;
+            "1 do processo 1" -> *;
+            "2 do processo 1" -> *;
+            "3 do processo 1" -> *
+        ];
+    ],
+    2 = [
+        sleep 1000;
+        repeat 5 [
+            "0 do processo 2" -> *;
+            "1 do processo 2" -> *;
+            "2 do processo 2" -> *;
+            "3 do processo 2" -> *
+        ];
+    ]
 }

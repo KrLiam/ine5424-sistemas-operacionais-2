@@ -1,14 +1,16 @@
-config = ./ab_100ms.conf
+config = ./test/cases/ab_100ms.conf
 procedures = {
  0 = [
-    sleep 1000ms;
+    sleep 2000;
     async "AB - morte do líder" -> *;
-    sleep 300ms;
+    sleep 300;
     kill;
   ],
   1 = [
+    sleep 10000;
   ],
   2 = [
     fault drop 0/0a 1x;
+    sleep 10000;
   ]
 }
