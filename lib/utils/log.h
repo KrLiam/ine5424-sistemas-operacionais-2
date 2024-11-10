@@ -5,6 +5,8 @@
 #include <mutex>
 #include <thread>
 #include <unordered_map>
+#include <memory>
+#include <fstream>
 
 #include "utils/format.h"
 #include "utils/ansi.h"
@@ -62,6 +64,8 @@ int get_thread_id();
 
 
 static std::mutex log_mutex;
+
+extern std::ofstream log_out;
 extern std::string prefix;
 extern bool log_colored;
 extern bool log_show_files;
@@ -79,6 +83,11 @@ public:
 
     static void show_files(bool value) {
         log_show_files = value;
+    }
+
+    static void set_output_file(const std::string& path) {
+        log_out = std::ofstream(path);
+        std::cout.rdbuf(log_out.rdbuf());
     }   
 
     template <typename... Args>

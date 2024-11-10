@@ -2,6 +2,7 @@
 #include <thread>
 #include <unordered_map>
 
+std::ofstream log_out;
 std::string prefix;
 bool log_colored = true;
 bool log_show_files = true;
