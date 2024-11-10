@@ -1,0 +1,22 @@
+config = ./ab_100ms.conf
+auto_init = 0
+min_lifespan = 20000
+procedures = {
+    0 = [
+        init;
+        sleep 5000;
+        fault drop * 50x;
+    ],
+    1 = [
+        sleep 2000;
+        init;
+        sleep 3000;
+        fault drop * 50x;
+    ],
+    2 = [
+        sleep 2000;
+        init;
+        sleep 3000;
+        fault drop * 50x;
+    ]
+}
