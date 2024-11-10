@@ -4,9 +4,20 @@
 #include <iostream>
 #include <mutex>
 #include <thread>
+#include <unordered_map>
 
 #include "utils/format.h"
 #include "utils/ansi.h"
+
+
+static std::unordered_map<const char*, const char*> label_color = {
+    {"ERROR", RED},
+    {"WARN", YELLOW},
+    {"INFO", GREEN},
+    {"DEBUG", BLUE},
+    {"TRACE", CYAN}
+};
+
 
 #ifndef LOG_FILES
 #define LOG_FILES true
@@ -17,45 +28,38 @@
 #endif
 
 
-#define LABEL_ERROR RED "ERROR" COLOR_RESET
-#define LABEL_WARN YELLOW "WARN" COLOR_RESET
-#define LABEL_INFO GREEN "INFO" COLOR_RESET
-#define LABEL_DEBUG BLUE "DEBUG" COLOR_RESET
-#define LABEL_TRACE CYAN "TRACE" COLOR_RESET
-
-
 #if LOG_LEVEL <= 4
-#define log_error(...) Logger::log(LABEL_ERROR, __FILE__, __LINE__, ##__VA_ARGS__)
+#define log_error(...) Logger::log("ERROR", __FILE__, __LINE__, ##__VA_ARGS__)
 #else
 #define log_error(...)
 #endif
 
 #if LOG_LEVEL <= 3
-#define log_warn(...) Logger::log(LABEL_WARN, __FILE__, __LINE__, ##__VA_ARGS__)
+#define log_warn(...) Logger::log("WARN", __FILE__, __LINE__, ##__VA_ARGS__)
 #else
 #define log_warn(...)
 #endif
 
 #if LOG_LEVEL <= 2
-#define log_info(...) Logger::log(LABEL_INFO, __FILE__, __LINE__, ##__VA_ARGS__)
+#define log_info(...) Logger::log("INFO", __FILE__, __LINE__, ##__VA_ARGS__)
 #else
 #define log_info(...)
 #endif
 
 #if LOG_LEVEL <= 1
-#define log_debug(...) Logger::log(LABEL_DEBUG, __FILE__, __LINE__, ##__VA_ARGS__)
+#define log_debug(...) Logger::log("DEBUG", __FILE__, __LINE__, ##__VA_ARGS__)
 #else
 #define log_debug(...)
 #endif
 
 #if LOG_LEVEL <= 0
-#define log_trace(...) Logger::log(LABEL_TRACE, __FILE__, __LINE__, ##__VA_ARGS__)
+#define log_trace(...) Logger::log("TRACE", __FILE__, __LINE__, ##__VA_ARGS__)
 #else
 #define log_trace(...)
 #endif
 
 
-#define log_print(...) Logger::print( "", ##__VA_ARGS__ )
+#define log_print(...) Logger::print("", ##__VA_ARGS__ )
 
 
 int get_thread_id();
@@ -63,12 +67,17 @@ int get_thread_id();
 
 static std::mutex log_mutex;
 extern std::string prefix;
+extern bool log_colored;
 
 class Logger
 {
 public:
     static void set_prefix(const std::string& value) {
         prefix = value;
+    }
+
+    static void set_colored(bool value) {
+        log_colored = value;
     }
 
     template <typename... Args>
@@ -81,18 +90,34 @@ public:
 
         std::ostringstream oss;
 
-        (oss
-        << prefix
-        << std::put_time(&tm, BOLD_H_WHITE "%H:%M:%S" COLOR_RESET)
-        << format(" %s", level)
-        #if LOG_FILES
-        << format(H_BLACK " [%s:%i]" COLOR_RESET, file, line)
-        #endif
-        << format(H_BLACK " (%u)" COLOR_RESET, thread_id)
-        << ": "
-        << ...
-        << args)
-        << std::endl;
+        if (log_colored) {
+            (oss
+            << prefix
+            << std::put_time(&tm, BOLD_H_WHITE "%H:%M:%S" COLOR_RESET)
+            << format(" %s%s" COLOR_RESET, label_color.at(level), level)
+            #if LOG_FILES
+            << format(H_BLACK " [%s:%i]" COLOR_RESET, file, line)
+            #endif
+            << format(H_BLACK " (%u)" COLOR_RESET, thread_id)
+            << ": "
+            << ...
+            << args)
+            << std::endl;
+        }
+        else {
+            (oss
+            << prefix
+            << std::put_time(&tm, "%H:%M:%S")
+            << format(" %s", level)
+            #if LOG_FILES
+            << format(" [%s:%i]", file, line)
+            #endif
+            << format(" (%u)", thread_id)
+            << ": "
+            << ...
+            << args)
+            << std::endl;
+        }
 
         std::cout << oss.str();
 

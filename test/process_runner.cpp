@@ -166,6 +166,7 @@ void Runner::run_test(const std::string& case_path) {
         if (pid < 0) throw std::runtime_error("Could not fork process.");
 
         if (pid == 0) {
+            Logger::set_colored(false);
             std::ofstream out(case_dir_path + "/" + id + ".log");
             std::cout.rdbuf(out.rdbuf()); //redirect std::cout to out.txt!
 

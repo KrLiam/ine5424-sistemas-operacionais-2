@@ -3,6 +3,7 @@
 #include <unordered_map>
 
 std::string prefix;
+bool log_colored = true;
 
 std::unordered_map<std::thread::id, int> id_map;
 int counter = 0;
