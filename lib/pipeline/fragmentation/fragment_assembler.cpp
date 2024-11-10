@@ -61,6 +61,6 @@ Message &FragmentAssembler::assemble()
 
 void FragmentAssembler::message_timeout()
 {
-    log_debug("Reception of message ", message.to_string() " timed out; triggering pipeline cleanup.");
+    log_debug("Reception of message ", message.to_string(), " timed out; triggering pipeline cleanup.");
     event_bus.notify(PipelineCleanup(message.id, {{0, 0, 0, 0}, 0})); // O destination não importa aqui
 }
