@@ -63,7 +63,9 @@ void FragmentationLayer::receive(Packet packet)
 void FragmentationLayer::attach(EventBus &bus)
 {
     obs_forward_defragmented_message.on(std::bind(&FragmentationLayer::forward_defragmented_message, this, _1));
+    obs_pipeline_cleanup.on(std::bind(&FragmentationLayer::pipeline_cleanup, this, _1));
     bus.attach(obs_forward_defragmented_message);
+    bus.attach(obs_pipeline_cleanup);
 }
 
 void FragmentationLayer::forward_defragmented_message(const ForwardDefragmentedMessage &event)
@@ -75,4 +77,10 @@ void FragmentationLayer::forward_defragmented_message(const ForwardDefragmentedM
     assembler_map.erase(message_id);
 
     handler.forward_receive(message);
+}
+
+void FragmentationLayer::pipeline_cleanup(const PipelineCleanup &event)
+{
+    const MessageIdentity& id = event.id;
+    if (assembler_map.contains(id)) assembler_map.erase(id);
 }

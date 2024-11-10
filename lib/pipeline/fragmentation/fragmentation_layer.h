@@ -14,6 +14,9 @@ class FragmentationLayer final : public PipelineStep
     Observer<ForwardDefragmentedMessage> obs_forward_defragmented_message;
     void forward_defragmented_message(const ForwardDefragmentedMessage& event);
 
+    Observer<PipelineCleanup> obs_pipeline_cleanup;
+    void pipeline_cleanup(const PipelineCleanup& event);
+
 public:
     FragmentationLayer(PipelineHandler handler);
     ~FragmentationLayer() override;
