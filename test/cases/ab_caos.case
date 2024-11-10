@@ -1,0 +1,23 @@
+config = ./ab_100ms_com_falhas.conf
+min_lifespan=60000
+procedures = {
+    0 = [
+	sleep 1000;
+	async ["0" -> 0; "1" -> 1; "2" -> 2];
+        sleep 1000;
+        repeat 20 "Olá novamente do 0!" -> *;
+    ],
+    1 = [
+	sleep 1000;
+	async "Olá do 1!" -> *;
+        sleep 1000;
+        repeat 5 [
+            "0 do processo 1" -> *;
+            "1 do processo 1" -> *;
+        ];
+    ],
+    2 = [
+	sleep 1000;
+        repeat 20 [async "Oi 0" -> 0; async "Oi 1" -> 1; async "Oi 2" -> 2; async "Oi mundo" -> *];
+    ]
+}
