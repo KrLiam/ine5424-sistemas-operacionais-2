@@ -19,10 +19,6 @@ static std::unordered_map<std::string, const char*> label_color = {
 };
 
 
-#ifndef LOG_FILES
-#define LOG_FILES true
-#endif
-
 #ifndef LOG_LEVEL
 #define LOG_LEVEL 2
 #endif
@@ -68,6 +64,7 @@ int get_thread_id();
 static std::mutex log_mutex;
 extern std::string prefix;
 extern bool log_colored;
+extern bool log_show_files;
 
 class Logger
 {
@@ -78,6 +75,10 @@ public:
 
     static void set_colored(bool value) {
         log_colored = value;
+    }
+
+    static void show_files(bool value) {
+        log_show_files = value;
     }   
 
     template <typename... Args>
@@ -92,6 +93,8 @@ public:
 
         int thread_id = get_thread_id();
 
+        std::string file_str = log_show_files ? format(" [%s:%i]", file, line) : "";
+
         std::ostringstream oss;
 
         if (log_colored) {
@@ -99,9 +102,7 @@ public:
             << prefix
             << std::put_time(&tm, BOLD_H_WHITE "%H:%M:%S" COLOR_RESET) << '.' << std::setfill('0') << std::setw(3) << ms.count()
             << format(" %s%s" COLOR_RESET, label_color.at(std::string(level)), level)
-            #if LOG_FILES
-            << format(H_BLACK " [%s:%i]" COLOR_RESET, file, line)
-            #endif
+            << format(H_BLACK "%s" COLOR_RESET, file_str.c_str())
             << format(H_BLACK " (%u)" COLOR_RESET, thread_id)
             << ": "
             << ...
@@ -113,9 +114,7 @@ public:
             << prefix
             << std::put_time(&tm, "%H:%M:%S") << '.' << std::setfill('0') << std::setw(3) << ms.count()
             << format(" %s", level)
-            #if LOG_FILES
-            << format(" [%s:%i]", file, line)
-            #endif
+            << file_str
             << format(" (%u)", thread_id)
             << ": "
             << ...

@@ -195,6 +195,8 @@ void Runner::run_test(const std::string& case_path_str) {
 
         if (pid == 0) {
             Logger::set_colored(false);
+            Logger::show_files(false);
+            
             std::ofstream out(case_dir_path.string() + "/" + id + ".log");
             std::cout.rdbuf(out.rdbuf()); //redirect std::cout to out.txt!
 

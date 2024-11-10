@@ -4,8 +4,7 @@ LIB_NAME = communication
 # flags
 CXX ?= g++
 LOG_LEVEL = 2
-LOG_FILES = 1
-APP_FLAGS = -DLOG_LEVEL=$(LOG_LEVEL) -DLOG_FILES=$(LOG_FILES)
+APP_FLAGS = -DLOG_LEVEL=$(LOG_LEVEL)
 COMPILE_FLAGS = -std=c++20 -Wall -Wextra -g $(APP_FLAGS)
 INCLUDES = -I include/ -I lib/ -I /usr/local/include
 
