@@ -7,12 +7,14 @@ bool roll_chance(double chance) {
     return value < chance;
 }
 
-FaultInjectionLayer::FaultInjectionLayer(PipelineHandler handler) : FaultInjectionLayer(handler, FaultConfig()) {}
+FaultInjectionLayer::FaultInjectionLayer(PipelineHandler handler, NodeMap& nodes)
+    : FaultInjectionLayer(handler, nodes, FaultConfig()) {}
 FaultInjectionLayer::FaultInjectionLayer(
-    PipelineHandler handler, FaultConfig config
+    PipelineHandler handler, NodeMap& nodes, FaultConfig config
 ) :
     PipelineStep(handler),
     config(config),
+    nodes(nodes),
     corruption_mask_dis(0, 255)
 {
     if (config.lose_chance > 0) {
@@ -73,15 +75,17 @@ void FaultInjectionLayer::receive(Packet packet) {
     uint32_t flags = packet.data.header.flags;
     const SocketAddress& origin = packet.data.header.id.origin;
 
+    std::string origin_id = nodes.contains(origin) ? nodes.get_node(origin).get_id() : "";
+
     for (size_t i = 0; i < drop_rules.size(); i++) {
         const DropFaultRule& rule = drop_rules[i];
 
-        if (!rule.pattern.matches(id, fragment, flags, origin)) continue;
+        if (!rule.pattern.matches(id, fragment, flags, origin_id)) continue;
 
         if (roll_chance(rule.chance)) {
             log_warn("Lost ", packet.to_string(PacketFormat::RECEIVED), " (rule ", rule.to_string(), ")");
 
-            decrement_matching_drop_rules(PacketPattern::from(id, fragment, flags, origin));
+            decrement_matching_drop_rules(PacketPattern::from(id, fragment, flags, origin_id));
             return;
         }
     }

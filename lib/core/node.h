@@ -87,7 +87,7 @@ public:
     NodeMap(std::map<std::string, Node> nodes);
 
     Node &get_node(std::string id);
-    Node &get_node(SocketAddress address);
+    Node &get_node(const SocketAddress& address);
 
     Node *get_leader();
 

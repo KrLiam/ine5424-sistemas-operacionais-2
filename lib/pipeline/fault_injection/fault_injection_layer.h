@@ -18,13 +18,13 @@ struct PacketPattern {
     uint32_t flags = 0;
     std::string source;
 
-    static PacketPattern from(const MessageIdentity& id, uint32_t frag_num, uint32_t flags, const SocketAddress& source) {
+    static PacketPattern from(const MessageIdentity& id, uint32_t frag_num, uint32_t flags, const std::string& origin_id) {
         return PacketPattern{
             IntRange(id.msg_num),
             IntRange(frag_num),
             {(char) id.sequence_type()},
             flags,
-            source.to_string()
+            origin_id
         };
     }
 
@@ -52,11 +52,11 @@ struct PacketPattern {
 
         return number.contains(other.number)
             && fragment.contains(other.fragment)
-            && (source == "*" || source == other.source);
+            && (source.empty() || source == other.source);
     }
 
-    bool matches(const MessageIdentity& id, uint32_t frag_num, uint32_t flags, const SocketAddress& source) const {
-        return contains(PacketPattern::from(id, frag_num, flags, source));
+    bool matches(const MessageIdentity& id, uint32_t frag_num, uint32_t flags, const std::string& origin_id) const {
+        return contains(PacketPattern::from(id, frag_num, flags, origin_id));
     }
 };
 
@@ -91,10 +91,11 @@ class FaultInjectionLayer : public PipelineStep {
     std::vector<DropFaultRule> drop_rules;
     std::unordered_set<int> packet_timer_ids;
    FaultConfig config;
+   NodeMap& nodes;
    std::uniform_int_distribution<> corruption_mask_dis;
 public:
-    FaultInjectionLayer(PipelineHandler handler);
-    FaultInjectionLayer(PipelineHandler handler, FaultConfig config);
+    FaultInjectionLayer(PipelineHandler handler, NodeMap& nodes);
+    FaultInjectionLayer(PipelineHandler handler, NodeMap& nodes, FaultConfig config);
 
     ~FaultInjectionLayer();
 

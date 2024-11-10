@@ -11,6 +11,7 @@ Pipeline::Pipeline(std::shared_ptr<GroupRegistry> gr, EventBus& event_bus, const
 
     fault_layer = new FaultInjectionLayer(
         handler.at_index(FAULT_INJECTION_LAYER),
+        gr->get_nodes(),
         fault_config
     );
 

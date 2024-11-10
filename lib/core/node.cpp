@@ -46,7 +46,7 @@ Node &NodeMap::get_node(std::string id)
     throw std::invalid_argument(format("Node %s not found.", id.c_str()));
 }
 
-Node &NodeMap::get_node(SocketAddress address)
+Node &NodeMap::get_node(const SocketAddress& address)
 {
     for (auto &[id, node] : nodes)
     {

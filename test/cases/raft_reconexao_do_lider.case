@@ -5,19 +5,19 @@ procedures = {
     0 = [
         init;
         sleep 5000;
-        fault drop * from 127.0.0.1:3001 20x;
-	fault drop * from 127.0.0.1:3002 20x;
+        fault drop * from 1 20x;
+	    fault drop * from 2 20x;
     ],
     1 = [
         sleep 2000;
         init;
         sleep 3000;
-        fault drop * from 127.0.0.1:3000 20x;
+        fault drop * from 0 20x;
     ],
     2 = [
         sleep 2000;
         init;
         sleep 3000;
-        fault drop * from 127.0.0.1:3000 20x;
+        fault drop * from 0 20x;
     ]
 }
