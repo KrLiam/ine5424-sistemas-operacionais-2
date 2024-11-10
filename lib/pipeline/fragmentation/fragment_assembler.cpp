@@ -1,11 +1,12 @@
 #include "pipeline/fragmentation/fragment_assembler.h"
 
-FragmentAssembler::FragmentAssembler() : bytes_received(0), last_fragment_number(INT_MAX), received_fragments()
+FragmentAssembler::FragmentAssembler(EventBus &event_bus) : event_bus(event_bus), bytes_received(0), last_fragment_number(INT_MAX), received_fragments(), timer_id(-1)
 {
 }
 
 FragmentAssembler::~FragmentAssembler()
 {
+    if (timer_id != -1) TIMER.cancel(timer_id);
 }
 
 bool FragmentAssembler::has_received(Packet &packet)
@@ -20,6 +21,9 @@ bool FragmentAssembler::is_complete()
 
 void FragmentAssembler::add_packet(Packet &packet)
 {
+    if (timer_id != -1) TIMER.cancel(timer_id);
+    timer_id = TIMER.add(MESSAGE_TIMEOUT, std::bind(&FragmentAssembler::message_timeout, this));
+
     if (has_received(packet))
     {
         log_trace("Ignoring duplicated ", packet.to_string(PacketFormat::RECEIVED), ".");
@@ -52,4 +56,9 @@ Message &FragmentAssembler::assemble()
 {
     message.length = bytes_received;
     return message;
+}
+
+void FragmentAssembler::message_timeout()
+{
+    event_bus.notify(PipelineCleanup(message.id, {{0, 0, 0, 0}, 0})); // O destination não importa aqui
 }

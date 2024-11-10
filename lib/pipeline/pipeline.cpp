@@ -18,7 +18,7 @@ Pipeline::Pipeline(std::shared_ptr<GroupRegistry> gr, EventBus& event_bus, const
     layers.push_back(fault_layer);
     layers.push_back(new TransmissionLayer(handler.at_index(TRANSMISSION_LAYER), gr->get_nodes()));
     layers.push_back(new ChecksumLayer(handler.at_index(CHECKSUM_LAYER)));
-    layers.push_back(new FragmentationLayer(handler.at_index(FRAGMENTATION_LAYER)));
+    layers.push_back(new FragmentationLayer(handler.at_index(FRAGMENTATION_LAYER), event_bus));
 
     attach_layers();
 }

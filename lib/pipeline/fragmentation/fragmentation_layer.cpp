@@ -3,8 +3,8 @@
 
 using namespace std::placeholders;
 
-FragmentationLayer::FragmentationLayer(PipelineHandler handler)
-    : PipelineStep(handler)
+FragmentationLayer::FragmentationLayer(PipelineHandler handler, EventBus &event_bus)
+    : event_bus(event_bus), PipelineStep(handler)
 {
 }
 
@@ -46,7 +46,7 @@ void FragmentationLayer::receive(Packet packet)
     MessageIdentity& message_id = packet.data.header.id;
 
     if (!assembler_map.contains(message_id))
-        assembler_map.emplace(message_id, FragmentAssembler());
+        assembler_map.emplace(message_id, FragmentAssembler(bus));
 
     FragmentAssembler &assembler = assembler_map.at(message_id);
     assembler.add_packet(packet);

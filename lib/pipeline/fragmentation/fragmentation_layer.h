@@ -9,6 +9,8 @@
 
 class FragmentationLayer final : public PipelineStep
 {
+    EventBus &event_bus;
+
     std::unordered_map<MessageIdentity, FragmentAssembler> assembler_map;
 
     Observer<ForwardDefragmentedMessage> obs_forward_defragmented_message;
@@ -18,7 +20,7 @@ class FragmentationLayer final : public PipelineStep
     void pipeline_cleanup(const PipelineCleanup& event);
 
 public:
-    FragmentationLayer(PipelineHandler handler);
+    FragmentationLayer(PipelineHandler handler, EventBus &bus);
     ~FragmentationLayer() override;
 
     void attach(EventBus&);
