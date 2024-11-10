@@ -72,7 +72,7 @@ class BroadcastConnection {
 
     void receive_synchronization(const ReceiveSynchronization& event);
     void connection_established(const ConnectionEstablished& event);
-    void connection_closed(const ConnectionClosed& event);
+    // void connection_closed(const ConnectionClosed& event);
     void transmission_complete(const TransmissionComplete& event);
     void transmission_fail(const TransmissionFail& event);
     void message_received(const MessageReceived &event);
