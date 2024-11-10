@@ -10,7 +10,7 @@
 #include "utils/ansi.h"
 
 
-static std::unordered_map<const char*, const char*> label_color = {
+static std::unordered_map<std::string, const char*> label_color = {
     {"ERROR", RED},
     {"WARN", YELLOW},
     {"INFO", GREEN},
@@ -94,7 +94,7 @@ public:
             (oss
             << prefix
             << std::put_time(&tm, BOLD_H_WHITE "%H:%M:%S" COLOR_RESET)
-            << format(" %s%s" COLOR_RESET, label_color.at(level), level)
+            << format(" %s%s" COLOR_RESET, label_color.at(std::string(level)), level)
             #if LOG_FILES
             << format(H_BLACK " [%s:%i]" COLOR_RESET, file, line)
             #endif
