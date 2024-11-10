@@ -136,13 +136,14 @@ FaultRule parse_fault_rule(Reader& reader) {
         std::unordered_map<char, MessageSequenceType> ch_map = {
             {'u', MessageSequenceType::UNICAST},
             {'b', MessageSequenceType::BROADCAST},
-            {'a', MessageSequenceType::ATOMIC}
+            {'a', MessageSequenceType::ATOMIC},
+            {'h', MessageSequenceType::HEARTBEAT}
         };
 
         {
             Override ovr = reader.override_whitespace(false);
 
-            rule.pattern.sequence_types = {'u','b','a'};
+            rule.pattern.sequence_types = {'u','b','a','h'};
             char ch = reader.peek();
             if (ch_map.contains(ch)) {
                 reader.advance();

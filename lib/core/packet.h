@@ -128,9 +128,7 @@ struct Packet
         std::string destination = meta.destination.to_string();
 
         const MessageType msg_type = header.get_message_type();
-        char sequence_type = 'u';
-        if (message_type::is_atomic(msg_type)) sequence_type = 'a';
-        else if (message_type::is_broadcast(msg_type)) sequence_type = 'b';
+        char sequence_type = (char) header.id.sequence_type();
 
         const char* flags_spacing = flags.empty() ? "" : " ";
 

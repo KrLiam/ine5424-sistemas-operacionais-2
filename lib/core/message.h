@@ -49,6 +49,7 @@ namespace message_type {
     bool is_broadcast(MessageType type);
     bool is_urb(MessageType type);
     bool is_atomic(MessageType type);
+    bool is_heartbeat(MessageType type);
 
     const char* to_string(MessageType type);
 };
@@ -56,7 +57,8 @@ namespace message_type {
 enum class MessageSequenceType : char {
     UNICAST = 'u',
     BROADCAST = 'b',
-    ATOMIC = 'a'
+    ATOMIC = 'a',
+    HEARTBEAT = 'h'
 };
 template<> struct std::hash<MessageSequenceType> {
     std::size_t operator()(const MessageSequenceType& value) const {

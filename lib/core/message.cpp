@@ -25,6 +25,9 @@ bool message_type::is_urb(MessageType type) {
 bool message_type::is_atomic(MessageType type) {
     return type == MessageType::AB_URB;
 }
+bool message_type::is_heartbeat(MessageType type) {
+    return type == MessageType::HEARTBEAT;
+}
 const char* message_type::to_string(MessageType type) {
     if (message_type::message_type_name.contains(type))
         return message_type::message_type_name.at(type);
@@ -32,6 +35,7 @@ const char* message_type::to_string(MessageType type) {
 }
 
 MessageSequenceType MessageIdentity::sequence_type() const {
+    if (message_type::is_heartbeat(msg_type)) return MessageSequenceType::HEARTBEAT;
     if (message_type::is_atomic(msg_type)) return MessageSequenceType::ATOMIC;
     if (message_type::is_broadcast(msg_type)) return MessageSequenceType::BROADCAST;
     return MessageSequenceType::UNICAST;
