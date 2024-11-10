@@ -22,7 +22,8 @@ bool FragmentAssembler::is_complete()
 void FragmentAssembler::add_packet(Packet &packet)
 {
     if (timer_id != -1) TIMER.cancel(timer_id);
-    timer_id = TIMER.add(MESSAGE_TIMEOUT, std::bind(&FragmentAssembler::message_timeout, this));
+    if (!message_type::is_urb(packet.data.header.get_message_type()))
+        timer_id = TIMER.add(MESSAGE_TIMEOUT, std::bind(&FragmentAssembler::message_timeout, this));
 
     if (has_received(packet))
     {
@@ -60,5 +61,6 @@ Message &FragmentAssembler::assemble()
 
 void FragmentAssembler::message_timeout()
 {
+    log_debug("Reception of message ", message.to_string() " timed out; triggering pipeline cleanup.");
     event_bus.notify(PipelineCleanup(message.id, {{0, 0, 0, 0}, 0})); // O destination não importa aqui
 }

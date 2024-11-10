@@ -46,7 +46,7 @@ void FragmentationLayer::receive(Packet packet)
     MessageIdentity& message_id = packet.data.header.id;
 
     if (!assembler_map.contains(message_id))
-        assembler_map.emplace(message_id, FragmentAssembler(bus));
+        assembler_map.emplace(message_id, FragmentAssembler(event_bus));
 
     FragmentAssembler &assembler = assembler_map.at(message_id);
     assembler.add_packet(packet);
