@@ -87,24 +87,22 @@ void FaultInjectionLayer::receive(Packet packet) {
 
     int delay = -1;
 
-    if (delay == -1) {
-        int range_length = config.delay.length();
-        int offset = range_length > 1 ? std::rand() % range_length : 0;
-        delay = config.delay.min + offset;
-        [[maybe_unused]] unsigned int msg_num = packet.data.header.id.msg_num;
-        [[maybe_unused]] unsigned int fragment_num = packet.data.header.fragment_num;
-        
-        if (!packet.silent()) {
-            log_debug(
-                "Reception of packet ",
-                msg_num,
-                "/",
-                fragment_num,
-                " is delayed by ",
-                delay,
-                " ms."
-            );
-        }
+    int range_length = config.delay.length();
+    int offset = range_length > 1 ? std::rand() % range_length : 0;
+    delay = config.delay.min + offset;
+    [[maybe_unused]] unsigned int msg_num = packet.data.header.id.msg_num;
+    [[maybe_unused]] unsigned int fragment_num = packet.data.header.fragment_num;
+
+    if (!packet.silent()) {
+        log_debug(
+            "Reception of packet ",
+            msg_num,
+            "/",
+            fragment_num,
+            " is delayed by ",
+            delay,
+            " ms."
+        );
     }
 
     if (delay > 0) {
