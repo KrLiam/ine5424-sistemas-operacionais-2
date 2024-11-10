@@ -119,7 +119,7 @@ public:
             << std::endl;
         }
 
-        std::cout << oss.str();
+        std::cout << oss.str() << std::flush;
 
         log_mutex.unlock();
     }

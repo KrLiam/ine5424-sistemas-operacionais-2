@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <filesystem>
 
 #include "process_runner.h"
@@ -142,6 +143,21 @@ void Runner::run() {
     run_node(args.node_id, commands, config, true);
 }
 
+
+void tail_dir(const char* dir) {
+    std::string command = format("clear -x && /usr/bin/tail %s/*", dir);
+
+    std::array<char, 128> buffer;
+    std::string result;
+
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"), pclose);
+    if (!pipe) return;
+
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        std::cout << buffer.data();
+    }
+}
+
 void Runner::run_test(const std::string& case_path) {
     log_info("Parsing case file...");
     CaseFile f = CaseFile::parse_file(case_path);
@@ -179,16 +195,24 @@ void Runner::run_test(const std::string& case_path) {
         log_info("Created node ", id, " (pid=", pid, ").");
     }
 
+    pid_t tail_pid = fork();
+    if (tail_pid == 0) {
+        while (true) {
+            tail_dir(case_dir_path.c_str());
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+    }
+
     for (auto [id, pid] : pids) {
         int status;
         waitpid(pid, &status, 0);
-
-        log_info(
-            "Node ", id, " exited (", WIFEXITED(status), ") [",
-            case_dir_path + "/" + id + ".log", "]"
-        );
     }
 
+    if (tail_pid > 0) kill(tail_pid, 15);
+
+    tail_dir(case_dir_path.c_str());
+
+    log_print("");
     log_info("Test completed.");
 }
 
