@@ -2,7 +2,6 @@ config = ./ab_100ms_com_falhas.conf
 procedures = {
     0 = [
         sleep 1000;
-        "AB - perda de um pacote" -> *;
         repeat 5 [
             "0 do processo 0" -> *;
             "1 do processo 0" -> *;
