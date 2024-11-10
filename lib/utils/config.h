@@ -40,7 +40,7 @@ struct IPv4
     unsigned char d;
 
     static IPv4 parse(std::string string);
-    static IPv4 parse(ConfigReader &reader);
+    static IPv4 parse(Reader &reader);
 
     std::string to_string() const;
 

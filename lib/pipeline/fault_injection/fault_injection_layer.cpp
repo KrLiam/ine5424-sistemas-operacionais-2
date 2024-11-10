@@ -71,16 +71,17 @@ void FaultInjectionLayer::receive(Packet packet) {
     const MessageIdentity id = packet.data.header.id;
     uint32_t fragment = packet.data.header.fragment_num;
     uint32_t flags = packet.data.header.flags;
+    const SocketAddress& origin = packet.data.header.id.origin;
 
     for (size_t i = 0; i < drop_rules.size(); i++) {
         const DropFaultRule& rule = drop_rules[i];
 
-        if (!rule.pattern.matches(id, fragment, flags)) continue;
+        if (!rule.pattern.matches(id, fragment, flags, origin)) continue;
 
         if (roll_chance(rule.chance)) {
             log_warn("Lost ", packet.to_string(PacketFormat::RECEIVED), " (rule ", rule.to_string(), ")");
 
-            decrement_matching_drop_rules(PacketPattern::from(id, fragment, flags));
+            decrement_matching_drop_rules(PacketPattern::from(id, fragment, flags, origin));
             return;
         }
     }

@@ -122,7 +122,7 @@ FaultRule parse_fault_rule(Reader& reader) {
 
     if (type == "drop") {
         DropFaultRule rule{
-            pattern: {number: IntRange::full(), fragment: IntRange::full(), flags: 0},
+            pattern: {number: IntRange::full(), fragment: IntRange::full(), flags: 0, source: "*"},
             chance: 1.0,
             count: UINT32_MAX,
         };
@@ -152,6 +152,13 @@ FaultRule parse_fault_rule(Reader& reader) {
         }
 
         if (reader.read("ack")) rule.pattern.flags |= ACK;
+
+        if (reader.read("from")) {
+            IPv4 ip = IPv4::parse(reader);
+            reader.expect(':');
+            int port = reader.read_int();
+            rule.pattern.source = SocketAddress{ip, (uint16_t)port}.to_string();
+        }
 
 
         if (reader.peek() && isdigit(reader.peek())) {

@@ -16,13 +16,15 @@ struct PacketPattern {
     IntRange fragment;
     std::unordered_set<char> sequence_types;
     uint32_t flags = 0;
+    std::string source;
 
-    static PacketPattern from(const MessageIdentity& id, uint32_t frag_num, uint32_t flags) {
+    static PacketPattern from(const MessageIdentity& id, uint32_t frag_num, uint32_t flags, const SocketAddress& source) {
         return PacketPattern{
             IntRange(id.msg_num),
             IntRange(frag_num),
             {(char) id.sequence_type()},
-            flags
+            flags,
+            source.to_string()
         };
     }
 
@@ -33,10 +35,11 @@ struct PacketPattern {
         }
 
         return format(
-            "%s/%s%s", 
+            "%s/%s%s from %s",
             number.to_string().c_str(),
             fragment.to_string().c_str(),
-            types.c_str()
+            types.c_str(),
+            source.c_str()
         );
     }
 
@@ -48,11 +51,12 @@ struct PacketPattern {
         if ((flags & other.flags) != flags) return false;
 
         return number.contains(other.number)
-            && fragment.contains(other.fragment);
+            && fragment.contains(other.fragment)
+            && (source == "*" || source == other.source);
     }
 
-    bool matches(const MessageIdentity& id, uint32_t frag_num, uint32_t flags) const {
-        return contains(PacketPattern::from(id, frag_num, flags));
+    bool matches(const MessageIdentity& id, uint32_t frag_num, uint32_t flags, const SocketAddress& source) const {
+        return contains(PacketPattern::from(id, frag_num, flags, source));
     }
 };
 

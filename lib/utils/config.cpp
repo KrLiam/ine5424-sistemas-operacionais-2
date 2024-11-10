@@ -31,7 +31,7 @@ IPv4 IPv4::parse(std::string string) {
     ConfigReader reader(string);
     return IPv4::parse(reader);
 }
-IPv4 IPv4::parse(ConfigReader& reader) {
+IPv4 IPv4::parse(Reader& reader) {
     int a = reader.read_int();
     reader.expect('.');
     int b = reader.read_int();
