@@ -1,0 +1,14 @@
+config = ./urb_100ms.conf
+min_lifespan=10000
+procedures = {
+ 0 = [
+    sleep 5000;
+    "URB - perda de pacote" -> *;
+  ],
+ 1 = [
+  ],
+  2 = [
+    sleep 5000;
+    fault drop 0/0b ack 4x;
+  ]
+}
