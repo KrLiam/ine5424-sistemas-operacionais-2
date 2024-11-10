@@ -207,22 +207,22 @@ void Runner::run_test(const std::string& case_path_str) {
         log_info("Created node ", id, " (pid=", pid, ").");
     }
 
-    // pid_t tail_pid = fork();
-    // if (tail_pid == 0) {
-    //     while (true) {
-    //         tail_dir(case_dir_path.c_str());
-    //         std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    //     }
-    // }
+    pid_t tail_pid = fork();
+    if (tail_pid == 0) {
+        while (true) {
+            tail_dir(case_dir_path.c_str());
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+    }
 
     for (auto [id, pid] : pids) {
         int status;
         waitpid(pid, &status, 0);
     }
 
-    // if (tail_pid > 0) kill(tail_pid, 15);
+    if (tail_pid > 0) kill(tail_pid, 15);
 
-    // tail_dir(case_dir_path.c_str());
+    tail_dir(case_dir_path.c_str());
 
     log_print("");
     log_info("Test completed.");
