@@ -1,16 +1,22 @@
 config = ./ab_100ms.conf
+auto_init=0
+min_lifespan=15000
 procedures = {
- 0 = [
-    sleep 2000;
-    async "AB - morte do líder" -> *;
-    sleep 300;
-    kill;
-  ],
-  1 = [
-    sleep 10000;
-  ],
-  2 = [
-    fault drop 0/0a 1x;
-    sleep 10000;
-  ]
+    0 = [
+        init;
+        sleep 5000;
+
+        async "AB - morte do líder" -> *;
+        sleep 550;
+        kill;
+    ],
+    1 = [
+        sleep 2000;
+        init;
+    ],
+    2 = [
+        sleep 2000;
+        init;
+        fault drop 0/0a 1x;
+    ]
 }
