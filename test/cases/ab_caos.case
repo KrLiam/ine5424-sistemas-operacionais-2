@@ -1,13 +1,16 @@
 config = ./ab_0ms_com_falhas.conf
+auto_init=0
 min_lifespan=60000
 procedures = {
     0 = [
+	init;
 	sleep 2000;
 	async ["0" -> 0; "1" -> 1; "2" -> 2];
         sleep 1000;
         repeat 20 "Olá novamente do 0!" -> *;
     ],
     1 = [
+	init;
 	sleep 2000;
 	repeat 3 async "Olá" -> *;
 	repeat 3 ["Oi 0" -> 0; "Oi 1" -> 1; "Oi 2" -> 2];
@@ -18,10 +21,12 @@ procedures = {
         ];
     ],
     2 = [
+	init;
 	sleep 2000;
         repeat 20 [async "Oi 0" -> 0; async "Oi 1" -> 1; async "Oi 2" -> 2; async file "apresentacao-logo-ufsc.png" -> *];
     ],
     3 = [
+	init;
 	sleep 2000;
         repeat 5 [
             dummy 60000 -> *;
@@ -29,14 +34,16 @@ procedures = {
         ];
     ],
     4 = [
-	sleep 2000;
+	sleep 4000;
+	init;
         repeat 5 [
             dummy 60000 -> *;
             dummy 23456 -> *;
         ];
     ],
     5 = [
-	sleep 2000;
+	sleep 7000;
+	init;
         repeat 5 [
             dummy 60000 -> *;
             dummy 23456 -> *;
@@ -44,6 +51,7 @@ procedures = {
     ],
     6 = [
 	sleep 2000;
+	init;
         repeat 5 [
             dummy 60000 -> *;
             dummy 23456 -> *;
