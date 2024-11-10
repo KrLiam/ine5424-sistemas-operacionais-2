@@ -3,6 +3,7 @@
 #include <fstream>
 #include <algorithm>
 #include <vector>
+#include <unordered_set>
 
 #include "utils/reader.h"
 #include "utils/log.h"
@@ -167,14 +168,20 @@ int Reader::read_int()
     return std::stoi(string);
 }
 
+const static std::unordered_set<char> WORD_CHARS = {
+    '0','1','2','3','4','5','6','7','8','9', '_',
+    'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+    'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'
+};
 std::string Reader::read_word()
 {
+
     char ch = peek();
     int start = pos;
     
     Override ovr = override_whitespace(false);
 
-    while (ch && (isdigit(ch) || isalpha(ch)))
+    while (ch && WORD_CHARS.contains(ch))
     {
         advance();
         ch = peek();

@@ -140,7 +140,7 @@ struct Config
     BroadcastType broadcast = BroadcastType::BEB;
     FaultConfig faults;
 
-    NodeConfig &get_node(std::string id);
+    const NodeConfig &get_node(std::string id) const;
 
     std::string to_string() const;
 };

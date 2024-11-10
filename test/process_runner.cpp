@@ -63,6 +63,9 @@ CaseFile CaseFile::parse(const std::string& value) {
         if (target == "config") {
             f.config_path = parse_path(reader);
         }
+        else if (target == "auto_init") {
+            f.auto_init = reader.read_int();
+        }
         else if (target == "procedures") {
             reader.expect('{');
 
@@ -141,7 +144,7 @@ void Runner::run() {
 
     Config config = ConfigReader::parse_file(DEFAULT_CONFIG_PATH);
     auto commands = std::make_shared<SequenceCommand>(args.send_commands);
-    run_node(args.node_id, commands, config, true);
+    run_node(args.node_id, commands, config, true, true);
 }
 
 
@@ -192,7 +195,7 @@ void Runner::run_test(const std::string& case_path_str) {
             std::ofstream out(case_dir_path.string() + "/" + id + ".log");
             std::cout.rdbuf(out.rdbuf()); //redirect std::cout to out.txt!
 
-            run_node(id, command, config, false);
+            run_node(id, command, config, false, f.auto_init);
             return;
         }
 
@@ -226,17 +229,13 @@ void Runner::run_node(
     const std::string& id,
     std::shared_ptr<Command> command,
     const Config& config,
-    bool execute_client
+    bool execute_client,
+    bool auto_init
 ) {
     Process proc(id, Message::MAX_SIZE, config);
 
-    proc.init();
-
-    try {
-        Node local_node = proc.comm->get_group_registry()->get_local_node();
-        log_info("Local node endpoint is ", local_node.get_address().to_string(), ".");
-    } catch (const std::exception& e) {
-        throw std::invalid_argument("Nodo não encontrado no registro.");
+    if (auto_init) {
+        proc.init();
     }
 
     proc.execute(*command);

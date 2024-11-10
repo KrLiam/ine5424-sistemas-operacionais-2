@@ -271,7 +271,6 @@ void Process::execute(const Command& command, ExecutionContext& ctx) {
                 log_print("Node is already initialized.");
                 return;
             }
-            log_print("Initializing node.");
             init();
             return;
         }
@@ -349,7 +348,6 @@ void Process::execute(const Command& command, ExecutionContext& ctx) {
         }
 
         if (command.type == CommandType::kill) {
-            log_print("Killing node.");
             kill();
             return;
         }

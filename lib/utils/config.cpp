@@ -111,9 +111,9 @@ uint32_t IntRange::length() {
     return max - min + 1;
 }
 
-NodeConfig &Config::get_node(std::string id)
+const NodeConfig &Config::get_node(std::string id) const
 {
-    for (NodeConfig &node : nodes)
+    for (const NodeConfig &node : nodes)
     {
         if (node.id == id)
             return node;

@@ -13,6 +13,9 @@ ReliableCommunication::ReliableCommunication(
     application_buffer(INTERMEDIARY_BUFFER_ITEMS),
     deliver_buffer(INTERMEDIARY_BUFFER_ITEMS)
 {
+    const NodeConfig& node_config = config.get_node(local_id);
+    log_info("Initializing node ", node_config.id, " (", node_config.address.to_string(), ")."); 
+
     gr = std::make_shared<GroupRegistry>(local_id, config, event_bus);
     pipeline = std::make_unique<Pipeline>(gr, event_bus, config.faults);
 
@@ -31,6 +34,9 @@ ReliableCommunication::ReliableCommunication(
 
 ReliableCommunication::~ReliableCommunication()
 {
+    Node& node = gr->get_local_node();
+    log_info("Killing node ", node.get_id(), " (", node.get_address().to_string(), ")."); 
+
     application_buffer.terminate();
     deliver_buffer.terminate();
     
