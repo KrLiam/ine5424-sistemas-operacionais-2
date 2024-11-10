@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/inotify.h>
 #include <unistd.h>
 #include <filesystem>
 
@@ -165,6 +166,46 @@ void tail_dir(const char* dir) {
     }
 }
 
+pid_t create_tail_process(std::string directory) {
+    pid_t pid = fork();
+    if (pid != 0) return pid;
+
+    tail_dir(directory.c_str());
+
+    int inotifyFd = inotify_init();
+    if (inotifyFd < 0) exit(EXIT_FAILURE);
+
+    int watchDescriptor = inotify_add_watch(inotifyFd, directory.c_str(), IN_MODIFY);
+    if (watchDescriptor < 0) {
+        close(inotifyFd);
+        exit(EXIT_FAILURE);
+    }
+
+    const size_t bufferSize = 1024 * (sizeof(struct inotify_event) + 16);
+    char buffer[bufferSize];
+
+    while (true) {
+        int length = read(inotifyFd, buffer, bufferSize);
+        if (length < 0) break;
+
+        for (int i = 0; i < length;) {
+            struct inotify_event* event = (struct inotify_event*)&buffer[i];
+
+            if ((event->mask & IN_MODIFY) && (event->len > 0)) {
+                std::string filename = event->name;
+                if (filename.size() >= 4 && filename.substr(filename.size() - 4) == ".log") {
+                    tail_dir(directory.c_str());
+                }
+            }
+
+            i += sizeof(struct inotify_event) + event->len;
+        }
+    }
+
+    close(inotifyFd);
+    exit(EXIT_SUCCESS);
+}
+
 void Runner::run_test(const std::string& case_path_str) {
     fs::path case_path = case_path_str;
 
@@ -207,13 +248,7 @@ void Runner::run_test(const std::string& case_path_str) {
         log_info("Created node ", id, " (pid=", pid, ").");
     }
 
-    pid_t tail_pid = fork();
-    if (tail_pid == 0) {
-        while (true) {
-            tail_dir(case_dir_path.c_str());
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
-    }
+    pid_t tail_pid = create_tail_process(case_dir_path);
 
     for (auto [id, pid] : pids) {
         int status;
@@ -221,7 +256,6 @@ void Runner::run_test(const std::string& case_path_str) {
     }
 
     if (tail_pid > 0) kill(tail_pid, 15);
-
     tail_dir(case_dir_path.c_str());
 
     log_print("");
