@@ -19,7 +19,7 @@ ChannelLayer::~ChannelLayer()
 
 void ChannelLayer::receiver()
 {
-    log_info("Initialized receiver thread.");
+    log_debug("Initialized receiver thread.");
     while (true)
     {
         try
@@ -32,7 +32,7 @@ void ChannelLayer::receiver()
             break;
         }
     }
-    log_info("Closed receiver thread.");
+    log_debug("Closed receiver thread.");
 }
 
 void ChannelLayer::send(Packet packet)

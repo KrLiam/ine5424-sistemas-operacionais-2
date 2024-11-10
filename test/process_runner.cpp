@@ -63,6 +63,9 @@ CaseFile CaseFile::parse(const std::string& value) {
         if (target == "config") {
             f.config_path = parse_path(reader);
         }
+        else if (target == "min_lifespan") {
+            f.min_lifespan = reader.read_int();
+        }
         else if (target == "auto_init") {
             f.auto_init = reader.read_int();
         }
@@ -144,7 +147,7 @@ void Runner::run() {
 
     Config config = ConfigReader::parse_file(DEFAULT_CONFIG_PATH);
     auto commands = std::make_shared<SequenceCommand>(args.send_commands);
-    run_node(args.node_id, commands, config, true, true);
+    run_node(args.node_id, commands, config, true, true, 0);
 }
 
 
@@ -195,7 +198,7 @@ void Runner::run_test(const std::string& case_path_str) {
             std::ofstream out(case_dir_path.string() + "/" + id + ".log");
             std::cout.rdbuf(out.rdbuf()); //redirect std::cout to out.txt!
 
-            run_node(id, command, config, false, f.auto_init);
+            run_node(id, command, config, false, f.auto_init, f.min_lifespan);
             return;
         }
 
@@ -230,8 +233,10 @@ void Runner::run_node(
     std::shared_ptr<Command> command,
     const Config& config,
     bool execute_client,
-    bool auto_init
+    bool auto_init,
+    uint32_t min_lifespan
 ) {
+    uint64_t start_time = DateUtils::now();
     Process proc(id, Message::MAX_SIZE, config);
 
     if (auto_init) {
@@ -242,5 +247,12 @@ void Runner::run_node(
 
     if (execute_client) {
         client(proc);
+    }
+
+    // forçar o nó a permanecer vivo por um tempo mínimo determinado
+    uint64_t end_time = DateUtils::now();
+    uint64_t lifespan = end_time - start_time;
+    if (lifespan < min_lifespan) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(min_lifespan - lifespan));
     }
 }

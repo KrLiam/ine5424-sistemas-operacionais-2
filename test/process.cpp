@@ -110,7 +110,7 @@ void Process::receive(ThreadArgs* args) {
             ".\nSaved message to file [", output_filename, "].");
     }
 
-    log_info("Closed application receiver thread.");
+    log_debug("Closed application receiver thread.");
 }
 
 void Process::deliver(ThreadArgs* args) {
@@ -144,7 +144,7 @@ void Process::deliver(ThreadArgs* args) {
         log_print("Saved message to file [", output_filename, "].");
     }
 
-    log_info("Closed application deliver thread.");
+    log_debug("Closed application deliver thread.");
 }
 
 bool Process::send_message(
