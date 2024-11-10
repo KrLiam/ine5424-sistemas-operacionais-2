@@ -145,7 +145,7 @@ void Runner::run() {
 
 
 void tail_dir(const char* dir) {
-    std::string command = format("clear -x && /usr/bin/tail %s/*", dir);
+    std::string command = format("clear -x && /usr/bin/tail -n 5 %s/*", dir);
 
     std::array<char, 128> buffer;
     std::string result;
