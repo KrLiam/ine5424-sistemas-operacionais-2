@@ -6,7 +6,7 @@
         {
             "label": "build-test",
             "type": "shell",
-            "command": "make test"
+            "command": "make program"
         }
     ]
 }
