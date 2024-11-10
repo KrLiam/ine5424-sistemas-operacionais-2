@@ -1,0 +1,14 @@
+config = ./beb_100ms.conf
+procedures = {
+ 0 = [
+	sleep 1000;
+	"Olá" -> 1;
+  ],
+  1 = [
+	sleep 1000;
+	"Oi" -> 0;
+  ],
+  2 = [
+	kill;
+  ]
+}
