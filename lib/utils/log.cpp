@@ -1,6 +1,7 @@
-
 #include <thread>
 #include <unordered_map>
+
+#include "log.h"
 
 std::ofstream log_out;
 std::string prefix;
