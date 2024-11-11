@@ -1,11 +1,14 @@
 config = ./urb_100ms_4n.conf
-min_lifespan=8000
+min_lifespan=3000
 procedures = {
     0 = [
         sleep 1000;
         "URB - perda de pacote" -> *;
     ],
-    1 = [],
+    1 = [
+        sleep 2000;
+        kill;
+    ],
     2= [],
     3 = [
         fault drop 0/0b 1x;

@@ -1,13 +1,14 @@
-config = ./urb_100ms.conf
+config = ./urb_100ms_4n.conf
+min_lifespan=8000
 procedures = {
- 0 = [
-    "URB - morte do receptor" -> *;
-  ],
-  1 = [
-    sleep 8000;
-  ],
-  2 = [
-    sleep 300;
-    kill;
-  ]
+    0 = [
+        sleep 1000;
+        "URB - morte do receptor" -> *;
+    ],
+    1 = [],
+    2 = [],
+    3 = [
+        sleep 1200;
+        kill;
+    ]
 }

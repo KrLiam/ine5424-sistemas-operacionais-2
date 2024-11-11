@@ -1,14 +1,13 @@
-config = ./urb_100ms.conf
-min_lifespan=10000
+config = ./urb_100ms_4n.conf
+min_lifespan=5000
 procedures = {
- 0 = [
-    sleep 5000;
-    "URB - perda de um ACK" -> *;
-  ],
- 1 = [
-  ],
-  2 = [
-    sleep 5000;
-    fault drop 0/0b ack 4x;
-  ]
+    0 = [
+        sleep 1000;
+        "URB - perda de um ACK" -> *;
+    ],
+    1 = [],
+    2 = [],
+    3 = [
+        fault drop 0/0b ack 4x;
+    ]
 }
