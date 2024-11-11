@@ -335,8 +335,9 @@ void BroadcastConnection::retransmit_fragment(Packet& packet)
 {
     const PacketHeader& header = packet.data.header;
     const MessageIdentity& id = header.id;
-    // TODO isso da problema no AB
-    // if (id.origin == local_node.get_address()) return;
+
+    const Transmission* active = dispatcher.get_active();
+    if (active && id == active->message.id) return;
 
     if (is_delivered(id, message_type::is_atomic(packet.data.header.get_message_type()))) return;
 
