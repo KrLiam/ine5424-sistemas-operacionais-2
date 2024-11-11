@@ -157,7 +157,8 @@ void tail_dir(const std::string& log_directory, const std::string& case_file_pat
     std::array<char, 128> buffer;
     std::string result;
 
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"), pclose);
+    auto pclose_f = [](FILE* fp) { pclose(fp); };
+    std::unique_ptr<FILE, decltype(pclose_f)> pipe(popen(command.c_str(), "r"), pclose_f);
     if (!pipe) return;
 
     std::ostringstream oss;
