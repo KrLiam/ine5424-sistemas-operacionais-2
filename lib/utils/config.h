@@ -121,7 +121,6 @@ struct IntRange {
 };
 
 struct FaultConfig {
-    std::vector<int> faults;
     IntRange delay = {0, 0};
     double lose_chance = 0;
     double corrupt_chance = 0;

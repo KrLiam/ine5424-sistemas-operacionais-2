@@ -36,7 +36,6 @@ std::string get_available_flags(const char* program_name) {
 
     result += BOLD_CYAN "\nAvailable flags:\n" COLOR_RESET;
     result += YELLOW "  -s " H_BLACK "'" WHITE "<commands>" H_BLACK "'" COLOR_RESET ": Executes commands at process start.\n";
-    result += YELLOW "  -f " H_BLACK "<" WHITE "fault-list" H_BLACK ">" COLOR_RESET ": Defines faults for packet reception based on a fault list.\n";
 
     return result;
 }
@@ -152,8 +151,8 @@ void Runner::run() {
 }
 
 
-void tail_dir(const char* dir) {
-    std::string command = format("clear -x && tail -n 5 %s/*", dir);
+void tail_dir(const std::string& log_directory, const std::string& case_file_path) {
+    std::string command = format("tail -n 5 %s/*", log_directory.c_str());
 
     std::array<char, 128> buffer;
     std::string result;
@@ -161,21 +160,25 @@ void tail_dir(const char* dir) {
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"), pclose);
     if (!pipe) return;
 
+    std::ostringstream oss;
+
+    oss << CLEAR_SCREEN << "Case file: " << case_file_path << std::endl << std::endl;
     while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        std::cout << buffer.data();
+        oss << buffer.data();
     }
+    std::cout << oss.str() << std::flush;
 }
 
-pid_t create_tail_process(std::string directory) {
+pid_t create_tail_process(std::string log_directory, std::string case_file_path) {
     pid_t pid = fork();
     if (pid != 0) return pid;
 
-    tail_dir(directory.c_str());
+    tail_dir(log_directory, case_file_path);
 
     int inotifyFd = inotify_init();
     if (inotifyFd < 0) exit(EXIT_FAILURE);
 
-    int watchDescriptor = inotify_add_watch(inotifyFd, directory.c_str(), IN_MODIFY);
+    int watchDescriptor = inotify_add_watch(inotifyFd, log_directory.c_str(), IN_MODIFY);
     if (watchDescriptor < 0) {
         close(inotifyFd);
         exit(EXIT_FAILURE);
@@ -194,7 +197,7 @@ pid_t create_tail_process(std::string directory) {
             if ((event->mask & IN_MODIFY) && (event->len > 0)) {
                 std::string filename = event->name;
                 if (filename.size() >= 4 && filename.substr(filename.size() - 4) == ".log") {
-                    tail_dir(directory.c_str());
+                    tail_dir(log_directory, case_file_path);
                 }
             }
 
@@ -248,7 +251,7 @@ void Runner::run_test(const std::string& case_path_str) {
         log_info("Created node ", id, " (pid=", pid, ").");
     }
 
-    pid_t tail_pid = create_tail_process(case_dir_path);
+    pid_t tail_pid = create_tail_process(case_dir_path, case_path);
 
     for (auto [id, pid] : pids) {
         int status;
@@ -256,7 +259,7 @@ void Runner::run_test(const std::string& case_path_str) {
     }
 
     if (tail_pid > 0) kill(tail_pid, 15);
-    tail_dir(case_dir_path.c_str());
+    tail_dir(case_dir_path, case_path);
 
     log_print("");
     log_info("Test completed.");

@@ -71,3 +71,5 @@
 //Reset
 #define RESET "\e[0m"
 #define COLOR_RESET "\e[0m"
+
+#define CLEAR_SCREEN "\033[2J\033[H"

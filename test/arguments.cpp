@@ -1,35 +1,5 @@
 #include "arguments.h"
 
-std::vector<int> parse_fault_list(Reader& reader) {
-    std::vector<int> values;
-
-    reader.expect('[');
-
-    while (!reader.eof()) {
-        char ch = reader.peek();
-
-        if (ch == ']') break;
-
-        if (ch == 'l' || ch == 'L') {
-            reader.advance();
-            values.push_back(INT_MAX);
-        }
-        else if (isdigit(ch)) {
-            int value = reader.read_int();
-            values.push_back(value);
-        }
-        else throw std::invalid_argument(
-            format("Invalid character '%c' at pos %i", ch, reader.get_pos())
-        );
-
-        if (!reader.read(',')) break;
-    }
-
-    reader.expect(']');
-
-    return values;
-}
-
 Arguments parse_arguments(int argc, char* argv[]) {
     Arguments args;
 
@@ -77,10 +47,7 @@ Arguments parse_arguments(int argc, char* argv[]) {
             format("Missing flag name after - at pos %s", reader.get_pos())
         );
 
-        if (flag == "f") {
-            args.faults = parse_fault_list(reader);
-        }
-        else if (flag == "s") {
+        if (flag == "s") {
             args.send_commands = parse_commands(reader);
         }
         else {
