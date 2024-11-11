@@ -1,0 +1,207 @@
+config = ./ab_100ms_50n.conf
+auto_init=0
+min_lifespan=40000
+procedures = {
+    0 = [
+        init;
+        sleep 5000;
+
+        "Olá" -> *;
+    ],
+    1 = [
+        sleep 2000;
+        init;
+    ],
+    2 = [
+        sleep 2000;
+        init;
+    ],
+    3 = [
+        sleep 2000;
+        init;
+    ],
+    4 = [
+        sleep 2000;
+        init;
+    ],
+    5 = [
+        sleep 2000;
+        init;
+    ],
+    6 = [
+        sleep 2000;
+        init;
+    ],
+    7 = [
+        sleep 2000;
+        init;
+    ],
+    8 = [
+        sleep 2000;
+        init;
+    ],
+    9 = [
+        sleep 2000;
+        init;
+    ],
+    10 = [
+        sleep 2000;
+        init;
+    ],
+    11 = [
+        sleep 2000;
+        init;
+    ],
+    12 = [
+        sleep 2000;
+        init;
+    ],
+    13 = [
+        sleep 2000;
+        init;
+    ],
+    14 = [
+        sleep 2000;
+        init;
+    ],
+    15 = [
+        sleep 2000;
+        init;
+    ],
+    16 = [
+        sleep 2000;
+        init;
+    ],
+    17 = [
+        sleep 2000;
+        init;
+    ],
+    18 = [
+        sleep 2000;
+        init;
+    ],
+    19 = [
+        sleep 2000;
+        init;
+    ],
+    20 = [
+        sleep 2000;
+        init;
+    ],
+    21 = [
+        sleep 2000;
+        init;
+    ],
+    22 = [
+        sleep 2000;
+        init;
+    ],
+    23 = [
+        sleep 2000;
+        init;
+    ],
+    24 = [
+        sleep 2000;
+        init;
+    ],
+    25 = [
+        sleep 2000;
+        init;
+    ],
+    26 = [
+        sleep 2000;
+        init;
+    ],
+    27 = [
+        sleep 2000;
+        init;
+    ],
+    28 = [
+        sleep 2000;
+        init;
+    ],
+    29 = [
+        sleep 2000;
+        init;
+    ],
+    30 = [
+        sleep 2000;
+        init;
+    ],
+    31 = [
+        sleep 2000;
+        init;
+    ],
+    32 = [
+        sleep 2000;
+        init;
+    ],
+    33 = [
+        sleep 2000;
+        init;
+    ],
+    34 = [
+        sleep 2000;
+        init;
+    ],
+    35 = [
+        sleep 2000;
+        init;
+    ],
+    36 = [
+        sleep 2000;
+        init;
+    ],
+    37 = [
+        sleep 2000;
+        init;
+    ],
+    38 = [
+        sleep 2000;
+        init;
+    ],
+    39 = [
+        sleep 2000;
+        init;
+    ],
+    40 = [
+        sleep 2000;
+        init;
+    ],
+    41 = [
+        sleep 2000;
+        init;
+    ],
+    42 = [
+        sleep 2000;
+        init;
+    ],
+    43 = [
+        sleep 2000;
+        init;
+    ],
+    44 = [
+        sleep 2000;
+        init;
+    ],
+    45 = [
+        sleep 2000;
+        init;
+    ],
+    46 = [
+        sleep 2000;
+        init;
+    ],
+    47 = [
+        sleep 2000;
+        init;
+    ],
+    48 = [
+        sleep 2000;
+        init;
+    ],
+    49 = [
+        sleep 2000;
+        init;
+    ],
+}
