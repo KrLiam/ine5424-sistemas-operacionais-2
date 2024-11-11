@@ -14,6 +14,8 @@ struct Arguments {
 
     bool test = false;
     std::string case_path;
+
+    bool specified_log_tail = false;
     bool log_tail = true;
 };
 

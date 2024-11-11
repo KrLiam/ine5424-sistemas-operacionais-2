@@ -32,7 +32,6 @@ TEST_DEPS = $(TEST_OBJECTS:.o=.d)
 # argumentos do programa de testes
 id = 0
 cases_dir = ./test/cases
-log_tail = 1
 
 .PHONY: default_target
 default_target: release
@@ -116,7 +115,7 @@ shell: dirs $(BIN_PATH)/$(TEST_BIN_FILENAME)
 .PHONY: test
 test: export CXXFLAGS := $(CXXFLAGS) $(COMPILE_FLAGS)
 test: dirs $(BIN_PATH)/$(TEST_BIN_FILENAME)
-	./$(BIN_PATH)/$(TEST_BIN_FILENAME) test $(case) -log-tail $(log_tail)
+	./$(BIN_PATH)/$(TEST_BIN_FILENAME) test $(case) $(if $(log_tail),-log-tail $(log_tail),)
 
 .PHONY: test-all
 test-all:

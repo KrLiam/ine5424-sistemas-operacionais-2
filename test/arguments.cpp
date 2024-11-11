@@ -51,6 +51,7 @@ Arguments parse_arguments(int argc, char* argv[]) {
             args.send_commands = parse_commands(reader);
         }
         else if (flag == "log-tail") {
+            args.specified_log_tail = true;
             args.log_tail = reader.read_int();
         }
         else {

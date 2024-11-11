@@ -256,15 +256,25 @@ void Runner::run_test(const std::string& case_path_str) {
         log_info("Created node ", id, " (pid=", pid, ").");
     }
 
+    bool log_tail = args.log_tail;
+    if (pids.size() > 5 && args.log_tail && !args.specified_log_tail) {
+        log_tail = false;
+        log_warn(
+            "Log tail is disabled by default for large groups, "
+            "use ./program case ... -log-tail 1 or make test case=... log_tail=1 "
+            "to explicitly enable it."
+        );
+    }
+
     pid_t tail_pid;
-    if (args.log_tail) tail_pid = create_tail_process(case_dir_path, case_path);
+    if (log_tail) tail_pid = create_tail_process(case_dir_path, case_path);
 
     for (auto [id, pid] : pids) {
         int status;
         waitpid(pid, &status, 0);
     }
 
-    if (args.log_tail) {
+    if (log_tail) {
         if (tail_pid > 0) kill(tail_pid, 15);
         tail_dir(case_dir_path, case_path);
     }
