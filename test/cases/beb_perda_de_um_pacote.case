@@ -1,14 +1,13 @@
-config = ./beb_100ms.conf
+config = ./beb_100ms_4n.conf
+min_lifespan=5000
 procedures = {
- 0 = [
-    sleep 1000;
-    "BEB - perda de um pacote" -> *;
-  ],
-  1 = [
-    sleep 5000;
-  ],
-  2 = [
-    fault drop 0/0b 1x;
-    sleep 5000;
-  ]
+    0 = [
+        sleep 1000;
+        "BEB - perda de um pacote" -> *;
+    ],
+    1 = [],
+    2 = [],
+    3 = [
+        fault drop 0/0b 1x;
+    ]
 }

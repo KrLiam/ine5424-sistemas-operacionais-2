@@ -1,16 +1,15 @@
-config = ./beb_100ms.conf
+config = ./beb_100ms_4n.conf
+min_lifespan=8000
 procedures = {
- 0 = [
-    sleep 10;
-    async "BEB - morte do emissor" -> *;
-    sleep 300;
-    kill;
-  ],
-  1 = [
-    sleep 8000;
-  ],
-  2 = [
-    fault drop 0/0b 1x;
-    sleep 8000;
-  ]
+    0 = [
+        sleep 1000;
+        async "BEB - morte do emissor" -> *;
+        sleep 500;
+        kill;
+    ],
+    1 = [],
+    2 = [],
+    3 = [
+        fault drop 0/0b 1x;
+    ]
 }
