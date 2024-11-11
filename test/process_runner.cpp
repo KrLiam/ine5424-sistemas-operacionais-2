@@ -26,20 +26,24 @@ std::string get_available_flags(const char* program_name) {
     result += " <node_id> [flags]\n";
 
     result += BOLD_CYAN "Available commands:\n" COLOR_RESET;
-    result += YELLOW "  text " H_BLACK "<" WHITE "message" H_BLACK ">" COLOR_RESET " -> " H_BLACK "<" WHITE "id" H_BLACK ">" COLOR_RESET ": Send a message to the node with id <id>.\n";
+    result += YELLOW "  text " H_BLACK "<" WHITE "message" H_BLACK ">" COLOR_RESET " -> " H_BLACK "<" WHITE "id" H_BLACK ">" COLOR_RESET ": Send a message to the node with id <id>. The keyword 'text' is optional.\n";
     result += YELLOW "  file " H_BLACK "<" WHITE "path" H_BLACK ">" COLOR_RESET " -> " H_BLACK "<" WHITE "id" H_BLACK ">" COLOR_RESET ": Send a file to the node with id <id>.\n";
-    result += YELLOW "  dummy " H_BLACK "<" WHITE "size" H_BLACK "> <" WHITE "count" H_BLACK ">" COLOR_RESET " -> " H_BLACK "<" WHITE "id" H_BLACK ">" COLOR_RESET ": Send <count> dummy messages of size <size> to the node with id <id>.\n";
+    result += YELLOW "  dummy " H_BLACK "<" WHITE "size" H_BLACK ">" COLOR_RESET " -> " H_BLACK "<" WHITE "id" H_BLACK ">" COLOR_RESET ": Send a dummy message of <size> bytes to the node with id <id>.\n";
     result += YELLOW "  kill: " COLOR_RESET "Kills the local node.\n";
-    result += YELLOW "  init: " COLOR_RESET "Initializes the local node.\n";
-    result += YELLOW "  help: " COLOR_RESET "Show the help message.\n";
-    result += YELLOW "  exit: " COLOR_RESET "Exits session.\n";
+    result += YELLOW "  init: " COLOR_RESET "Initializes the local node if not already active.\n";
+    result += YELLOW "  sleep " H_BLACK "<" WHITE "ms" H_BLACK ">" COLOR_RESET ": Makes the node sleep for <ms> milliseconds.\n";
+    result += YELLOW "  repeat " H_BLACK "<" WHITE "n" H_BLACK "> <" WHITE "subcommand" H_BLACK ">" COLOR_RESET ": Repeats a subcommand <n> times.\n";
+    result += YELLOW "  [<subcommand_1>, ..., <subcommand_n>]: " COLOR_RESET "Executes commands sequentially.\n";
+    result += YELLOW "  async <subcommand>: " COLOR_RESET "Executes a subcommand in parallel.\n";
+    result += YELLOW "  fault {drop <number>/<fragment>[u|b|a] [<n>% | <n>x],}: " COLOR_RESET "Injects failures in the local node.\n";
+    result += YELLOW "  exit: " COLOR_RESET "Exits the process.\n";
+    result += YELLOW "  help: " COLOR_RESET "Displays this help message.\n";
 
     result += BOLD_CYAN "\nAvailable flags:\n" COLOR_RESET;
     result += YELLOW "  -s " H_BLACK "'" WHITE "<commands>" H_BLACK "'" COLOR_RESET ": Executes commands at process start.\n";
 
     return result;
 }
-
 
 CaseFile CaseFile::parse_file(const std::string& path) {
     return  CaseFile::parse(read_file(path));
