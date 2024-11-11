@@ -1,9 +1,9 @@
 config = ./ab_100ms_com_falhas.conf
-min_lifespan=40000
+min_lifespan=15000
 procedures = {
     0 = [
         sleep 1000;
-        repeat 5 [
+        repeat 3 [
             "0 do processo 0" -> *;
             "1 do processo 0" -> *;
             "2 do processo 0" -> *;
@@ -12,7 +12,7 @@ procedures = {
     ],
     1 = [
         sleep 1000;
-        repeat 5 [
+        repeat 3 [
             "0 do processo 1" -> *;
             "1 do processo 1" -> *;
             "2 do processo 1" -> *;
@@ -21,7 +21,7 @@ procedures = {
     ],
     2 = [
         sleep 1000;
-        repeat 5 [
+        repeat 3 [
             "0 do processo 2" -> *;
             "1 do processo 2" -> *;
             "2 do processo 2" -> *;

@@ -1,15 +1,20 @@
 config = ./ab_100ms.conf
+min_lifespan=10000
+auto_init=0
 procedures = {
- 0 = [
-    sleep 1000;
-    "AB - recebimento fora de ordem [1]" -> *;
-    "AB - recebimento fora de ordem [2]" -> *;
-  ],
-  1 = [
-    sleep 8000;
-  ],
-  2 = [
-    fault drop 0/0a ack 1x;
-    sleep 8000;
-  ]
+    0 = [
+        init;
+        sleep 5000;
+        "AB - recebimento fora de ordem [1]" -> *;
+        "AB - recebimento fora de ordem [2]" -> *;
+    ],
+    1 = [
+        sleep 2000;
+        init;
+    ],
+    2 = [
+        sleep 2000;
+        init;
+        fault drop 0a ack from 0 1x;
+    ]
 }

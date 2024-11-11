@@ -1,14 +1,18 @@
 config = ./ab_100ms.conf
+min_lifespan=8000
+auto_init=0
 procedures = {
- 0 = [
-    sleep 1000;
-    "AB - perda de um pacote" -> *;
-  ],
-  1 = [
-    sleep 8000;
-  ],
-  2 = [
-    fault drop 0/0a 1x;
-    sleep 8000;
-  ]
+    0 = [
+        init;
+        "AB - perda de um pacote" -> *;
+    ],
+    1 = [
+        sleep 2000;
+        init;
+    ],
+    2 = [
+        sleep 2000;
+        init;
+        fault drop 0/0a 1x;
+    ]
 }
