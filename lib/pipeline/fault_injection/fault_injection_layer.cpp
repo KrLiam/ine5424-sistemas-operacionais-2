@@ -99,7 +99,7 @@ void FaultInjectionLayer::receive(Packet packet) {
     [[maybe_unused]] unsigned int fragment_num = packet.data.header.fragment_num;
 
     if (!packet.silent()) {
-        log_debug(
+        log_warn(
             "Reception of packet ",
             msg_num,
             "/",
