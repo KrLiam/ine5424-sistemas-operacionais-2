@@ -337,7 +337,9 @@ void BroadcastConnection::retransmit_fragment(Packet& packet)
     const MessageIdentity& id = header.id;
 
     const Transmission* active = dispatcher.get_active();
+    const Transmission* ab_active = ab_dispatcher.get_active();
     if (active && id == active->message.id) return;
+    if (ab_active && id == ab_active->message.id) return;
 
     if (is_delivered(id, message_type::is_atomic(packet.data.header.get_message_type()))) return;
 
