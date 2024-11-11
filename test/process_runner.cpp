@@ -253,14 +253,14 @@ void Runner::run_test(const std::string& case_path_str) {
     }
 
     pid_t tail_pid;
-    if (args.log_trail) tail_pid = create_tail_process(case_dir_path, case_path);
+    if (args.log_tail) tail_pid = create_tail_process(case_dir_path, case_path);
 
     for (auto [id, pid] : pids) {
         int status;
         waitpid(pid, &status, 0);
     }
 
-    if (args.log_trail) {
+    if (args.log_tail) {
         if (tail_pid > 0) kill(tail_pid, 15);
         tail_dir(case_dir_path, case_path);
     }

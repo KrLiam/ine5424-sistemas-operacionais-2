@@ -14,7 +14,7 @@ struct Arguments {
 
     bool test = false;
     std::string case_path;
-    bool log_trail = true;
+    bool log_tail = true;
 };
 
 Arguments parse_arguments(int argc, char* argv[]);

@@ -50,8 +50,8 @@ Arguments parse_arguments(int argc, char* argv[]) {
         if (flag == "s") {
             args.send_commands = parse_commands(reader);
         }
-        else if (flag == "log-trail") {
-            args.log_trail = reader.read_int();
+        else if (flag == "log-tail") {
+            args.log_tail = reader.read_int();
         }
         else {
             throw std::invalid_argument(
