@@ -19,7 +19,7 @@ FaultInjectionLayer::FaultInjectionLayer(
 {
     if (config.lose_chance > 0) {
         DropFaultRule rule{
-            pattern: {number: IntRange::full(), fragment: IntRange::full(), sequence_types: {'u','b','a','h'}, flags: 0, source: "*"},
+            pattern: {number: IntRange::full(), fragment: IntRange::full(), sequence_types: {'u','b','a','h'}, flags: 0, source: ""},
             chance: config.lose_chance,
             count: UINT32_MAX,
         };
