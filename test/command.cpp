@@ -122,7 +122,7 @@ FaultRule parse_fault_rule(Reader& reader) {
 
     if (type == "drop") {
         DropFaultRule rule{
-            pattern: {number: IntRange::full(), fragment: IntRange::full(), flags: 0, source: "*"},
+            pattern: {number: IntRange::full(), fragment: IntRange::full(), flags: 0, source: ""},
             chance: 1.0,
             count: UINT32_MAX,
         };
