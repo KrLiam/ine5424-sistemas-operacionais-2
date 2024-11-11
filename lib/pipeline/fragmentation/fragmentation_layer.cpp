@@ -4,7 +4,7 @@
 using namespace std::placeholders;
 
 FragmentationLayer::FragmentationLayer(PipelineHandler handler, EventBus &event_bus)
-    : event_bus(event_bus), PipelineStep(handler)
+    : PipelineStep(handler), event_bus(event_bus)
 {
 }
 

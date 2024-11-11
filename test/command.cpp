@@ -122,7 +122,7 @@ FaultRule parse_fault_rule(Reader& reader) {
 
     if (type == "drop") {
         DropFaultRule rule{
-            pattern: {number: IntRange::full(), fragment: IntRange::full(), flags: 0, source: ""},
+            pattern: {number: IntRange::full(), fragment: IntRange::full(), sequence_types: {'u','b','a','h'}, flags: 0, source: ""},
             chance: 1.0,
             count: UINT32_MAX,
         };
@@ -143,7 +143,6 @@ FaultRule parse_fault_rule(Reader& reader) {
         {
             Override ovr = reader.override_whitespace(false);
 
-            rule.pattern.sequence_types = {'u','b','a','h'};
             char ch = reader.peek();
             if (ch_map.contains(ch)) {
                 reader.advance();
@@ -210,7 +209,6 @@ std::shared_ptr<Command> parse_command(Reader& reader) {
     }
     if (keyword == "dummy") {
         int size = reader.read_int();
-        size_t count = reader.read_int();
         std::string send_id = parse_destination(reader);
         return std::make_shared<DummyCommand>(size, send_id);
     }

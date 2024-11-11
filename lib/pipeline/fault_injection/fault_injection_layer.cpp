@@ -137,7 +137,7 @@ void FaultInjectionLayer::corrupt(Packet& packet) {
 
     char new_header[sizeof(packet.data.header)];
     memcpy(new_header, &packet.data.header, sizeof(new_header));
-    for (int i = 0; i < sizeof(packet.data.header); i++) {
+    for (size_t i = 0; i < sizeof(packet.data.header); i++) {
         char mask = corruption_mask_dis(rc_random::gen);
         new_header[i] = new_header[i] ^ mask;
     }
