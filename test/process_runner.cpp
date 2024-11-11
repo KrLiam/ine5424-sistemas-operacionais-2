@@ -292,7 +292,7 @@ void Runner::run_node(
     uint32_t min_lifespan
 ) {
     uint64_t start_time = DateUtils::now();
-    Process proc(id, Message::MAX_SIZE, !args.test, config);
+    Process proc(id, Message::MAX_SIZE, config);
 
     if (auto_init) {
         proc.init();
