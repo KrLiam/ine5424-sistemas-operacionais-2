@@ -17,14 +17,14 @@ Arguments parse_arguments(int argc, char* argv[]) {
         if (args.case_path.empty()) throw std::invalid_argument(
             format("Missing case file path. Usage:\n%s test <case>", argv[0])
         );
-        return args;
     }
+    else {
+        args.node_id = reader.read_word();
 
-    args.node_id = reader.read_word();
-
-    if (!args.node_id.length()) throw std::invalid_argument(
-        format("Missing node id argument. Usage:\n%s <id-int>", argv[0])
-    );
+        if (!args.node_id.length()) throw std::invalid_argument(
+            format("Missing node id argument. Usage:\n%s <id-int>", argv[0])
+        );
+    }
 
     while (!reader.eof()) {
         char ch = reader.peek();
@@ -49,6 +49,9 @@ Arguments parse_arguments(int argc, char* argv[]) {
 
         if (flag == "s") {
             args.send_commands = parse_commands(reader);
+        }
+        else if (flag == "log-trail") {
+            args.log_trail = reader.read_int();
         }
         else {
             throw std::invalid_argument(

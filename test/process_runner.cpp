@@ -252,15 +252,18 @@ void Runner::run_test(const std::string& case_path_str) {
         log_info("Created node ", id, " (pid=", pid, ").");
     }
 
-    pid_t tail_pid = create_tail_process(case_dir_path, case_path);
+    pid_t tail_pid;
+    if (args.log_trail) tail_pid = create_tail_process(case_dir_path, case_path);
 
     for (auto [id, pid] : pids) {
         int status;
         waitpid(pid, &status, 0);
     }
 
-    if (tail_pid > 0) kill(tail_pid, 15);
-    tail_dir(case_dir_path, case_path);
+    if (args.log_trail) {
+        if (tail_pid > 0) kill(tail_pid, 15);
+        tail_dir(case_dir_path, case_path);
+    }
 
     log_print("");
     log_info("Test completed.");
@@ -290,6 +293,8 @@ void Runner::run_node(
     // forçar o nó a permanecer vivo por um tempo mínimo determinado
     uint64_t end_time = DateUtils::now();
     uint64_t lifespan = end_time - start_time;
+
+    log_info("Node lifespan was ", lifespan, ", waiting for ", min_lifespan - lifespan);
     if (lifespan < min_lifespan) {
         std::this_thread::sleep_for(std::chrono::milliseconds(min_lifespan - lifespan));
     }
