@@ -122,14 +122,30 @@ void Connection::close()
 
 void Connection::set_timeout()
 {
+    mutex_timer.lock();
+    cancel_timeout();
     handshake_timer_id = TIMER.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
+    mutex_timer.unlock();
+}
+
+void Connection::cancel_timeout()
+{
+    if (handshake_timer_id != -1)
+    {
+        TIMER.cancel(handshake_timer_id);
+        handshake_timer_id = -1;
+    }
 }
 
 void Connection::connection_timeout()
 {
     log_warn("Unable to establish connection with node ", remote_node.get_id());
     change_state(CLOSED);
+
+    mutex_timer.lock();
     handshake_timer_id = -1;
+    mutex_timer.unlock();
+
     cancel_transmissions();
 }
 
@@ -484,11 +500,9 @@ void Connection::change_state(ConnectionState new_state)
     state = new_state;
     state_change.notify_all();
 
-    if (handshake_timer_id != -1)
-    {
-        TIMER.cancel(handshake_timer_id);
-        handshake_timer_id = -1;
-    }
+    mutex_timer.lock();
+    cancel_timeout();
+    mutex_timer.unlock();
 
     if (state == ConnectionState::ESTABLISHED)
     {

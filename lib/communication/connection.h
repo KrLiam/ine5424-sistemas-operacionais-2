@@ -65,6 +65,7 @@ private:
 
     std::mutex mutex;
     std::mutex mutex_dispatched_packets;
+    std::mutex mutex_timer;
 
     const std::map<ConnectionState, std::function<void(Packet)>> packet_receive_handlers = {
         {ESTABLISHED, std::bind(&Connection::established, this, _1)},
@@ -110,6 +111,7 @@ private:
     bool resync_broadcast_on_syn(Packet p);
 
     void set_timeout();
+    void cancel_timeout();
     void connection_timeout();
 
     void reset_message_numbers();
