@@ -419,6 +419,14 @@ void BroadcastConnection::transmission_complete(const TransmissionComplete& even
     const MessageIdentity& id = event.id;
     const UUID &uuid = event.uuid;
 
+    if (retransmissions.contains(id)) {
+        RetransmissionEntry& entry = retransmissions.at(id);
+        entry.received_all_acks = true;
+        log_debug("All ACKs from URB retransmission were received.", entry.message_received ? "" : " Still missing message.");
+
+        try_deliver(id);
+    }
+
     const Transmission* ab_active = ab_dispatcher.get_active();
     if (ab_active && uuid == ab_active->uuid)
     {
@@ -428,14 +436,6 @@ void BroadcastConnection::transmission_complete(const TransmissionComplete& even
             if (ab_transmissions.contains(ab_id)) ab_transmissions.erase(ab_id);
         }
         if (delayed_ab_number > ab_sequence_number.next_number) synchronize_ab_number(delayed_ab_number);
-    }
-
-    if (retransmissions.contains(id)) {
-        RetransmissionEntry& entry = retransmissions.at(id);
-        entry.received_all_acks = true;
-        log_debug("All ACKs from URB retransmission were received.", entry.message_received ? "" : " Still missing message.");
-
-        try_deliver(id);
     }
 
     const Transmission* active = dispatcher.get_active();

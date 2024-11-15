@@ -112,7 +112,7 @@ void Process::receive(ThreadArgs* args) {
             "."
         );
 
-        if (!save_message_files) return;
+        if (!save_message_files) continue;
 
         mkdir(DATA_DIR, S_IRWXU);
         mkdir(DATA_DIR "/messages", S_IRWXU);
@@ -148,7 +148,7 @@ void Process::deliver(ThreadArgs* args) {
 
         log_print("[Broadcast] Received '", message_data.c_str(), "' (", result.length, " bytes) from ", result.sender_id);
 
-        if (!save_message_files) return;
+        if (!save_message_files) continue;
 
         mkdir(DATA_DIR, S_IRWXU);
         mkdir(DATA_DIR "/messages", S_IRWXU);
