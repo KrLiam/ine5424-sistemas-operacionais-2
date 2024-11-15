@@ -4,8 +4,16 @@
 
 #include "process.h"
 
-Process::Process(const std::string& node_id, int buffer_size, const Config& config)
-    : node_id(node_id), buffer_size(buffer_size), config(config) {};
+Process::Process(
+    const std::string& node_id,
+    int buffer_size,
+    bool save_message_files,
+    const Config& config
+) :
+    node_id(node_id),
+    buffer_size(buffer_size),
+    save_message_files(save_message_files),
+    config(config) {};
 
 Process::~Process() {
     if (initialized()) kill();
@@ -96,18 +104,22 @@ void Process::receive(ThreadArgs* args) {
             message_data = message_data.substr(0, 100) + "...";
         }
 
-        mkdir(DATA_DIR, S_IRWXU);
-        mkdir(DATA_DIR "/messages", S_IRWXU);
-        std::string output_filename = DATA_DIR "/messages/" + UUID().as_string();
-
-        std::ofstream file(output_filename);
-        file.write(buffer, result.length);
         log_print(
             "Received '",
             message_data.c_str(),
             "' (", result.length, " bytes) from ",
             result.sender_id,
-            ".\nSaved message to file [", output_filename, "].");
+            "."
+        );
+
+        if (!save_message_files) return;
+
+        mkdir(DATA_DIR, S_IRWXU);
+        mkdir(DATA_DIR "/messages", S_IRWXU);
+        std::string output_filename = DATA_DIR "/messages/" + UUID().as_string();
+        std::ofstream file(output_filename);
+        file.write(buffer, result.length);
+        log_print("Saved message to file [", output_filename, "].");
     }
 
     log_debug("Closed application receiver thread.");
@@ -135,6 +147,8 @@ void Process::deliver(ThreadArgs* args) {
         }
 
         log_print("[Broadcast] Received '", message_data.c_str(), "' (", result.length, " bytes) from ", result.sender_id);
+
+        if (!save_message_files) return;
 
         mkdir(DATA_DIR, S_IRWXU);
         mkdir(DATA_DIR "/messages", S_IRWXU);
