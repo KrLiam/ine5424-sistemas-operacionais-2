@@ -1,7 +1,7 @@
 #include "pipeline/checksum/checksum_layer.h"
 #include "utils/log.h"
 
-ChecksumLayer::ChecksumLayer(PipelineHandler handler) : PipelineStep(handler) {}
+ChecksumLayer::ChecksumLayer(PipelineHandler handler, Node& local_node) : PipelineStep(handler), local_node(local_node) {}
 
 ChecksumLayer::~ChecksumLayer() {}
 
@@ -12,6 +12,7 @@ void ChecksumLayer::send(Packet packet)
     }
 
     PacketData &data = packet.data;
+    strncpy(packet.data.header.uuid, local_node.get_uuid().as_string().c_str(), UUID::MAX_SIZE);
 
     char buffer[PacketData::MAX_PACKET_SIZE];
     prepare_packet_buffer(data, packet.meta.message_length, buffer);

@@ -40,8 +40,6 @@ ForwardDefragmentedMessage::ForwardDefragmentedMessage(Packet& packet) : packet(
 
 PipelineCleanup::PipelineCleanup(const MessageIdentity& id, const SocketAddress& destination) : id(id), destination(destination) {}
 
-HeartbeatReceived::HeartbeatReceived(Node& remote_node, Packet& packet) : remote_node(remote_node), packet(packet) {}
-
 NodeDeath::NodeDeath(const Node& remote_node) : remote_node(remote_node) {}
 
 LeaderElected::LeaderElected() {}

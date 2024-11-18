@@ -7,8 +7,10 @@
 
 class ChecksumLayer : public PipelineStep
 {
+    Node& local_node;
+
 public:
-    ChecksumLayer(PipelineHandler handler);
+    ChecksumLayer(PipelineHandler handler, Node& local_node);
 
     ~ChecksumLayer();
 

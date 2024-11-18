@@ -101,9 +101,7 @@ void FaultInjectionLayer::receive(Packet packet) {
     if (!packet.silent()) {
         log_warn(
             "Reception of packet ",
-            msg_num,
-            "/",
-            fragment_num,
+            packet.to_string(PacketFormat::RECEIVED),
             " is delayed by ",
             delay,
             " ms."

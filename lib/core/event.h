@@ -18,7 +18,6 @@ enum EventType {
     PIPELINE_CLEANUP = 8,
     CONNECTION_ESTABLISHED = 9,
     CONNECTION_FAIL = 10,
-    HEARTBEAT_RECEIVED = 11,
     NODE_DEATH = 12,
     FRAGMENT_RECEIVED = 13,
     UNICAST_MESSAGE_RECEIVED = 14,
@@ -159,15 +158,6 @@ struct PipelineCleanup : public Event {
     const SocketAddress& destination;
 
     PipelineCleanup(const MessageIdentity& id, const SocketAddress& destination);
-};
-
-struct HeartbeatReceived : public Event {
-    static EventType type() { return EventType::HEARTBEAT_RECEIVED; }
-
-    Node& remote_node;
-    Packet& packet;
-
-    HeartbeatReceived(Node& remote_node, Packet& packet);
 };
 
 struct NodeDeath: public Event {

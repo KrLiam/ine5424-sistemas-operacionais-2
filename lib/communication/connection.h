@@ -168,5 +168,5 @@ public:
 
     void dispatch_to_sender(Packet);
 
-    void heartbeat(const UUID& local_uuid);
+    void heartbeat();
 };

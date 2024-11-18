@@ -560,11 +560,7 @@ void Connection::send(Packet packet)
 
 void Connection::receive(Packet packet)
 {
-    if (packet.data.header.get_message_type() == MessageType::HEARTBEAT)
-    {
-        pipeline.notify(HeartbeatReceived(remote_node, packet)); // TODO: arrumar o lugar disso. o heartbeatreceived não tem nada a ver com o pipeline
-        return;
-    }
+    if (packet.data.header.get_message_type() == MessageType::HEARTBEAT) return;
 
     packet_receive_handlers.at(state)(packet);
 }
@@ -609,12 +605,9 @@ void Connection::dispatch_to_sender(Packet p)
     request_update();
 }
 
-void Connection::heartbeat(const UUID& local_uuid)
+void Connection::heartbeat()
 {
     // log_trace("Heartbeating to ", remote_node.get_address().to_string(), ".");
-
-    HeartbeatData hb_data;
-    strcpy(hb_data.uuid, local_uuid.as_string().c_str());
 
     uint8_t flags = local_node.is_leader() ? LDR : 0;
 
@@ -628,15 +621,15 @@ void Connection::heartbeat(const UUID& local_uuid)
         },
         fragment_num: 0,
         checksum: 0,
-        flags: flags
+        flags: flags,
+        uuid: {0}
     };
-    memcpy(data.message_data, &hb_data, sizeof(HeartbeatData));
 
     PacketMetadata meta = {
         transmission_uuid : UUID(""),
         origin : local_node.get_address(),
         destination : remote_node.get_address(),
-        message_length : sizeof(HeartbeatData),
+        message_length : 0,
         expects_ack : 0,
         silent : 1
     };

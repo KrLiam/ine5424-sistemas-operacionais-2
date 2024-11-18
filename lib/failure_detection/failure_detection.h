@@ -14,7 +14,6 @@
 
 class FailureDetection
 {
-    UUID uuid;
 
     std::map<std::string, uint64_t> last_alive;
 
@@ -32,13 +31,13 @@ class FailureDetection
 
     Observer<ConnectionEstablished> obs_connection_established;
     Observer<ConnectionClosed> obs_connection_closed;
-    Observer<HeartbeatReceived> obs_heartbeat_received;
+    Observer<PacketReceived> obs_packet_received;
 
     void connection_established(const ConnectionEstablished &event);
 
     void connection_closed(const ConnectionClosed &event);
 
-    void heartbeat_received(const HeartbeatReceived &event);
+    void packet_received(const PacketReceived &event);
 
     void failure_detection_routine();
 

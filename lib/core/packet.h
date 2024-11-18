@@ -17,6 +17,7 @@ struct PacketHeader
     uint32_t fragment_num;
     uint16_t checksum;
     uint8_t flags;
+    char uuid[UUID::MAX_SIZE];
 
     uint32_t get_message_number() const
     {
@@ -182,10 +183,6 @@ struct Packet
 struct SynData {
     uint32_t broadcast_number;
     uint32_t ab_number;
-};
-
-struct HeartbeatData {
-    char uuid[36];
 };
 
 struct RequestVoteData {

@@ -2,7 +2,7 @@
 #include "utils/date.h"
 
 FailureDetection::FailureDetection(std::shared_ptr<GroupRegistry> gr, EventBus &event_bus, unsigned int alive)
-    : uuid(UUID()), gr(gr), event_bus(event_bus), alive(alive), keep_alive(alive * MAX_HEARTBEAT_TRIES), running(true)
+    : gr(gr), event_bus(event_bus), alive(alive), keep_alive(alive * MAX_HEARTBEAT_TRIES), running(true)
 {
     attach();
     timer_id = TIMER.add(alive, [this]() { failure_detection_routine(); });
@@ -28,14 +28,14 @@ void FailureDetection::connection_closed(const ConnectionClosed &event)
     last_alive.erase(event.node.get_id());
 }
 
-void FailureDetection::heartbeat_received(const HeartbeatReceived &event)
+void FailureDetection::packet_received(const PacketReceived &event)
 {
-    Node& node = event.remote_node;
+    Packet& packet = event.packet;
+    Node& node = gr->get_nodes().get_node(packet.meta.origin);
 
-    log_trace("Received ", event.packet.to_string(), " (node ", node.get_id(), ").");
+    log_trace("Received ", packet.to_string(), " (node ", node.get_id(), ").");
 
-    HeartbeatData* data = reinterpret_cast<HeartbeatData*>(event.packet.data.message_data);
-    const UUID uuid = UUID(std::string(data->uuid));
+    const UUID uuid = UUID(std::string(event.packet.data.header.uuid));
 
     mtx.lock();
     if (node.is_alive() && uuid != node.get_uuid())
@@ -97,7 +97,7 @@ void FailureDetection::failure_detection_routine()
         mtx.unlock();
 
         Connection &conn = gr->get_connection(node);
-        conn.heartbeat(uuid);
+        conn.heartbeat();
     }
 
     timer_id = TIMER.add(alive, [this]() { failure_detection_routine(); });
@@ -107,8 +107,8 @@ void FailureDetection::attach()
 {
     obs_connection_established.on(std::bind(&FailureDetection::connection_established, this, _1));
     obs_connection_closed.on(std::bind(&FailureDetection::connection_closed, this, _1));
-    obs_heartbeat_received.on(std::bind(&FailureDetection::heartbeat_received, this, _1));
+    obs_packet_received.on(std::bind(&FailureDetection::packet_received, this, _1));
     event_bus.attach(obs_connection_established);
     event_bus.attach(obs_connection_closed);
-    event_bus.attach(obs_heartbeat_received);
+    event_bus.attach(obs_packet_received);
 }
