@@ -4,6 +4,7 @@
 #include <thread>
 #include <atomic>
 #include <memory>
+#include <mutex>
 
 #include "pipeline/pipeline_step.h"
 #include "pipeline/transmission/transmission_queue.h"
@@ -33,6 +34,7 @@ private:
     NodeMap &nodes;
 
     std::unordered_map<TransmissionKey, std::shared_ptr<TransmissionQueue>> queue_map;
+    std::mutex queue_mutex;
 
     Observer<PacketAckReceived> obs_ack_received;
     void ack_received(const PacketAckReceived& event);

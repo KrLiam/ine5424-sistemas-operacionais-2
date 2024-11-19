@@ -37,7 +37,9 @@ TransmissionQueue& TransmissionLayer::get_queue(const TransmissionKey& key) {
     return *queue_map.at(key);
 }
 void TransmissionLayer::clear_queue(const TransmissionKey& key) {
+    queue_mutex.lock();
     queue_map.erase(key);
+    queue_mutex.unlock();
     // log_info("Cleared queue to ", id.origin.to_string(), " ", id.msg_num, " ", id.sequence_type);
 
 }
@@ -70,8 +72,11 @@ void TransmissionLayer::send(Packet packet)
     }
 
     TransmissionKey key = create_key(header.id, meta.destination);
+
+    queue_mutex.lock();
     TransmissionQueue& queue = get_queue(key);
     queue.add_packet(packet);
+    queue_mutex.unlock();
 }
 
 void TransmissionLayer::ack_received(const PacketAckReceived& event) {    
@@ -80,10 +85,12 @@ void TransmissionLayer::ack_received(const PacketAckReceived& event) {
     const MessageIdentity& id = packet.data.header.id;
     TransmissionKey key = create_key(id, packet.meta.origin);
 
+    queue_mutex.lock();
     if (has_queue(key)) {
         TransmissionQueue& queue = get_queue(key);
         queue.receive_ack(packet);
     }
+    queue_mutex.unlock();
 }
 
 void TransmissionLayer::pipeline_cleanup(const PipelineCleanup& event) {    

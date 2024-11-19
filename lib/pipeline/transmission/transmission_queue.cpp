@@ -12,12 +12,21 @@ TransmissionQueue::TransmissionQueue(PipelineHandler& handler, NodeMap& nodes)
 }
 
 TransmissionQueue::~TransmissionQueue() {
+    mutex_timeout.lock();
     for (auto& [_, entry] : entries) {
         if (entry.timeout_id != -1) TIMER.cancel(entry.timeout_id);
     }
+    mutex_timeout.unlock();
 }
 
 void TransmissionQueue::send(uint32_t num) {
+    mutex_timeout.lock();
+
+    if (!entries.contains(num)) {
+        mutex_timeout.unlock();
+        return;
+    }
+
     QueueEntry& entry = entries.at(num);
     Packet& packet = entry.packet;
     const SocketAddress& receiver_address = packet.meta.destination;
@@ -37,6 +46,7 @@ void TransmissionQueue::send(uint32_t num) {
                     packet.to_string(PacketFormat::SENT),
                     " because destination is unknown."
                 );
+                mutex_timeout.unlock();
                 fail();
                 return;
             } 
@@ -46,6 +56,7 @@ void TransmissionQueue::send(uint32_t num) {
                 log_warn("Cannot transmit ",
                     packet.to_string(PacketFormat::SENT),
                     " because destination is dead.");
+                mutex_timeout.unlock();
                 fail();
                 return;
             }
@@ -58,12 +69,12 @@ void TransmissionQueue::send(uint32_t num) {
     entry.timeout_id = TIMER.add(Config::ACK_TIMEOUT, [this, num]() { timeout(num); });
 
     // não transmite o fragmento na primeira tentativa
-    if (packet.meta.urb_retransmission && entry.tries == 1) return;
+    if (packet.meta.urb_retransmission && entry.tries == 1) {
+        mutex_timeout.unlock();
+        return;
+    }
 
     Packet p = packet;
-
-    // evitar que a receiver thread apague um receiver enquanto a timeout thread tenta enviar para ele
-    mutex_timeout.lock();
 
     for (const Node* receiver : entry.pending_receivers) {
         p.meta.destination = receiver->get_address();
@@ -77,6 +88,8 @@ void TransmissionQueue::fail()
 {
     std::unordered_set<const Packet*> faulty_packets;
     std::unordered_set<const Node*> faulty_receivers;
+
+    mutex_timeout.lock();
 
     for (auto& [_, entry] : entries) {
         if (entry.pending_receivers.empty()) continue;
@@ -101,6 +114,8 @@ void TransmissionQueue::fail()
     );
 
     reset();
+    mutex_timeout.unlock();
+
     handler.notify(TransmissionFail(uuid, id, faulty_packets, faulty_receivers));
 }
 
@@ -189,7 +204,10 @@ void TransmissionQueue::add_packet(const Packet& packet)
         return;
     }
     
+    mutex_timeout.lock();
     entries.emplace(num, QueueEntry(packet));
+    mutex_timeout.unlock();
+
     send(num);
 
     if (packet.data.header.is_end())
@@ -240,19 +258,27 @@ void TransmissionQueue::receive_ack(const Packet& ack_packet)
 
     if (msg_num != message_num) return;
 
-    if (!entries.contains(frag_num)) return;
+    mutex_timeout.lock();
+
+    if (!entries.contains(frag_num)) {
+        mutex_timeout.unlock();
+        return;
+    }
     QueueEntry& entry = entries.at(frag_num);
 
-    if (!nodes.contains(receiver_address)) return;
+    if (!nodes.contains(receiver_address)) {
+        mutex_timeout.unlock();
+        return;
+    }
     const Node& receiver = nodes.get_node(receiver_address);
 
-    // evitar que a receiver thread apague um receiver enquanto a timeout thread tenta enviar para ele
-    mutex_timeout.lock();
     entry.pending_receivers.erase(&receiver);
-    mutex_timeout.unlock();
 
     // log_info("Removing pending ack ", frag_num, " of remote ", receiver_address.to_string(), ". over: ", !entry.pending_receivers.size());
-    if (entry.pending_receivers.size()) return;
+    if (entry.pending_receivers.size()) {
+        mutex_timeout.unlock();
+        return;
+    }
 
     pending.erase(frag_num);
     // log_info("Completed: ", completed());
@@ -262,11 +288,13 @@ void TransmissionQueue::receive_ack(const Packet& ack_packet)
         TIMER.cancel(entry.timeout_id);
         entry.timeout_id = -1;
     }
+    mutex_timeout.unlock();
 
     try_complete();
 }
 
 void TransmissionQueue::discard_node(const Node& node) {
+    mutex_timeout.lock();
     for (auto& [_, entry] : entries) {
         if (!message_type::is_broadcast(entry.packet.data.header.get_message_type())) continue;
 
@@ -277,6 +305,7 @@ void TransmissionQueue::discard_node(const Node& node) {
         if (entry.pending_receivers.empty())
             pending.erase(entry.packet.data.header.fragment_num);
     }
+    mutex_timeout.unlock();
     
     try_complete();
 }

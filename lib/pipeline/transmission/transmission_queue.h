@@ -3,7 +3,7 @@
 #include <mutex>
 #include <vector>
 #include <unordered_set>
-#include <map>
+#include <unordered_map>
 
 #include "core/packet.h"
 #include "core/node.h"
@@ -27,7 +27,7 @@ private:
     PipelineHandler& handler;
     NodeMap& nodes;
 
-    std::map<uint32_t, QueueEntry> entries;
+    std::unordered_map<uint32_t, QueueEntry> entries;
     std::unordered_set<uint32_t> pending;
 
     uint32_t message_num = UINT32_MAX;
