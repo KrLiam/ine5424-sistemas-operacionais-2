@@ -347,9 +347,9 @@ void Connection::established(Packet p)
             message_number,
             " is higher than the expected ",
             number,
-            "; ignoring it."
+            "; jumping sequence number."
         );
-        return;
+        expected_number = message_number;
     }
 
     if (message_type::is_application(p.data.header.get_message_type()) && !application_buffer.can_produce())
