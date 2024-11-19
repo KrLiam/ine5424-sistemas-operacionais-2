@@ -26,8 +26,16 @@ class Override
     T previous_value;
 
 public:
-    Override(T *ref, T value);
-    ~Override();
+    Override(T *ref, T value) : ref(ref), value(value)
+    {
+        previous_value = *ref;
+        *ref = value;
+    }
+
+    ~Override()
+    {
+        *ref = previous_value;
+    }
 };
 
 class Reader

@@ -35,19 +35,6 @@ std::string read_file(const std::string &filename)
     return buffer;
 }
 
-template <typename T>
-Override<T>::Override(T *ref, T value) : ref(ref), value(value)
-{
-    previous_value = *ref;
-    *ref = value;
-}
-
-template <typename T>
-Override<T>::~Override()
-{
-    *ref = previous_value;
-}
-
 Reader::Reader(std::string string) : str(string) {}
 
 Reader Reader::from_file(const std::string &path)
