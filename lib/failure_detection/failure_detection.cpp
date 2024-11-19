@@ -74,12 +74,10 @@ void FailureDetection::failure_detection_routine()
 {
     if (!running) return;
 
-    uint64_t now = DateUtils::now();
-
     for (auto &[id, node] : gr->get_nodes())
     {
         mtx.lock();
-        if (node.is_alive() && now - last_alive[node.get_id()] > keep_alive)
+        if (node.is_alive() && DateUtils::now() - last_alive[node.get_id()] > keep_alive)
         {
             node.set_alive(false);
             
