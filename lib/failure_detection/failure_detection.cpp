@@ -47,11 +47,9 @@ void FailureDetection::packet_received(const PacketReceived &event)
         node.set_alive(false);
         event_bus.notify(NodeDeath(node));
     }
-    mtx.unlock();
 
     last_alive[node.get_id()] = DateUtils::now();
 
-    mtx.lock();
     if (!node.is_alive())
     {
         node.set_uuid(uuid);
