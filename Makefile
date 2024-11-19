@@ -5,7 +5,7 @@ LIB_NAME = communication
 CXX ?= g++
 LOG_LEVEL = 2
 APP_FLAGS = -DLOG_LEVEL=$(LOG_LEVEL)
-COMPILE_FLAGS = -std=c++20 -Wall -Wextra -g $(APP_FLAGS)
+COMPILE_FLAGS = -std=c++20 -O3 -Wall -Wextra -g $(APP_FLAGS)
 INCLUDES = -I include/ -I lib/ -I /usr/local/include
 
 # caminhos
