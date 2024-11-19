@@ -34,10 +34,10 @@ int Timer::add(int interval_ms, std::function<void()> callback) {
     uint64_t now = DateUtils::now();
     uint64_t date = now + interval_ms;
 
-    current_id++;
-    auto timer = std::make_shared<TimerEntry>(current_id, date, callback);
-
     timers_mutex.lock();
+
+    int timer_id = ++current_id;
+    auto timer = std::make_shared<TimerEntry>(current_id, date, callback);
 
     size_t insert_i = timers.size();
     for (int i=timers.size() - 1; i >= 0; i--) {
@@ -54,7 +54,7 @@ int Timer::add(int interval_ms, std::function<void()> callback) {
     var.notify_all();
     has_timers_sem.release();
 
-    return current_id;
+    return timer_id;
 }
 
 bool Timer::cancel(int id) {
@@ -94,6 +94,10 @@ void Timer::routine() {
 
         timers_mutex.lock();
 
+        if (!timers.size()) {
+            timers_mutex.unlock();
+            continue;
+        }
         std::shared_ptr<TimerEntry> next_timer = timers.at(0);
 
         uint64_t timer_date = next_timer->date;
