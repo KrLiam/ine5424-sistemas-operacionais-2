@@ -18,6 +18,7 @@ enum EventType {
     PIPELINE_CLEANUP = 8,
     CONNECTION_ESTABLISHED = 9,
     CONNECTION_FAIL = 10,
+    PACKET_SENT = 11,
     NODE_DEATH = 12,
     FRAGMENT_RECEIVED = 13,
     UNICAST_MESSAGE_RECEIVED = 14,
@@ -66,6 +67,14 @@ struct PacketReceived : public Event {
     Packet& packet;
 
     PacketReceived(Packet& packet);
+};
+
+struct PacketSent : public Event {
+    static EventType type() { return EventType::PACKET_SENT; }
+
+    Packet& packet;
+
+    PacketSent(Packet& packet);
 };
 
 struct FragmentReceived : public Event {

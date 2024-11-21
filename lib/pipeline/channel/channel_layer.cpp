@@ -3,10 +3,10 @@
 #include "pipeline/channel/channel_layer.h"
 #include "utils/log.h"
 
-ChannelLayer::ChannelLayer(PipelineHandler handler, SocketAddress local_address, const NodeMap& nodes)
+ChannelLayer::ChannelLayer(PipelineHandler handler, SocketAddress local_address, const NodeMap& nodes, EventBus& event_bus)
     : PipelineStep(handler), nodes(nodes)
 {
-    channel = std::make_unique<Channel>(local_address);
+    channel = std::make_unique<Channel>(local_address, event_bus);
     receiver_thread = std::thread([this]()
                                   { receiver(); });
 }

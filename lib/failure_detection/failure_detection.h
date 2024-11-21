@@ -3,7 +3,7 @@
 #include <chrono>
 #include <functional>
 #include <thread>
-#include <map>
+#include <unordered_map>
 #include <memory>
 #include <mutex>
 #include "communication/group_registry.h"
@@ -15,7 +15,9 @@
 class FailureDetection
 {
 
-    std::map<std::string, uint64_t> last_alive;
+    std::unordered_map<std::string, uint64_t> last_alive;
+    std::unordered_map<std::string, uint64_t> last_sent;
+    std::mutex mtx;
 
     std::shared_ptr<GroupRegistry> gr;
 
@@ -27,17 +29,15 @@ class FailureDetection
 
     bool running;
 
-    std::mutex mtx;
-
     Observer<ConnectionEstablished> obs_connection_established;
     Observer<ConnectionClosed> obs_connection_closed;
     Observer<PacketReceived> obs_packet_received;
+    Observer<PacketSent> obs_packet_sent;
 
     void connection_established(const ConnectionEstablished &event);
-
     void connection_closed(const ConnectionClosed &event);
-
     void packet_received(const PacketReceived &event);
+    void packet_sent(const PacketSent &event);
 
     void failure_detection_routine();
 
