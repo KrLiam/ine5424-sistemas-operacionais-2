@@ -106,7 +106,7 @@ void FailureDetection::failure_detection_routine()
             conn.heartbeat();
             continue;
         }
-    
+
         mtx.unlock();
     }
 

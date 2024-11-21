@@ -36,6 +36,8 @@ private:
     std::mutex mutex_packets;
     std::mutex mutex_timeout;
 
+    std::atomic<bool> destroyed;
+
     void send(uint32_t num);
 
     void timeout(uint32_t num);

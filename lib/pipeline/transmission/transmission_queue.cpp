@@ -7,11 +7,12 @@ QueueEntry::QueueEntry(const Packet& packet) : packet(packet) {}
 
 
 TransmissionQueue::TransmissionQueue(PipelineHandler& handler, NodeMap& nodes)
-    : handler(handler), nodes(nodes)
+    : handler(handler), nodes(nodes), destroyed(false)
 {
 }
 
 TransmissionQueue::~TransmissionQueue() {
+    destroyed = true;
     mutex_timeout.lock();
     for (auto& [_, entry] : entries) {
         if (entry.timeout_id != -1) TIMER.cancel(entry.timeout_id);
@@ -121,6 +122,7 @@ void TransmissionQueue::fail()
 
 void TransmissionQueue::timeout(uint32_t num)
 {
+    if (destroyed) return;
     mutex_timeout.lock();
 
     if (!entries.contains(num))
