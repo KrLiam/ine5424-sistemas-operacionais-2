@@ -12,12 +12,7 @@ void ChecksumLayer::send(Packet packet)
     }
 
     PacketData &data = packet.data;
-
-    // pre-processamento do pacote antes de enviar, a principio isso n tem nada a ver com a checksum layer
-    // e deveria estar em outro lugar
     strncpy(packet.data.header.uuid, local_node.get_uuid().as_string().c_str(), UUID::MAX_SIZE);
-    if (local_node.is_leader()) packet.data.header.flags |= LDR;
-    else packet.data.header.flags &= ~LDR;
 
     char buffer[PacketData::MAX_PACKET_SIZE];
     prepare_packet_buffer(data, packet.meta.message_length, buffer);

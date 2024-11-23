@@ -1,6 +1,6 @@
 #include "channels/channel.h"
 
-Channel::Channel(const SocketAddress local_address, EventBus& event_bus) : address(local_address), event_bus(event_bus)
+Channel::Channel(const SocketAddress local_address) : address(local_address)
 {
     open_socket();
 }
@@ -82,7 +82,6 @@ void Channel::send(Packet packet)
     }
     if (!packet.silent()) {
         log_info("Sent packet ", packet.to_string(PacketFormat::SENT), " (", bytes_sent, " bytes).");
-        event_bus.notify(PacketSent(packet));
     }
 }
 

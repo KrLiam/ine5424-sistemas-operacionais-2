@@ -12,21 +12,31 @@
 #include "utils/format.h"
 #include "core/message.h"
 
+enum NodeState {
+    NOT_INITIALIZED = 0,
+    ACTIVE = 1,
+    SUSPECT = 2,
+    FAULTY = 3,
+};
+
 class Node
 {
 private:
     std::string id;
     UUID uuid;
+
     SocketAddress address;
     bool remote;
-    bool alive;
+
+    NodeState state;
+
     bool leader;
 
     // Indica se está atualmente recebendo pacotes AB. Somente para o nodo local.
     bool receiving_ab_broadcast;
 
 public:
-    Node(std::string id, SocketAddress address, bool _remote);
+    Node(std::string id, SocketAddress address, NodeState state, bool remote);
     ~Node();
 
     const std::string &get_id() const;
@@ -35,11 +45,16 @@ public:
 
     bool is_alive() const
     {
-        return alive;
+        return state == ACTIVE || state == SUSPECT;
     };
-    void set_alive(bool alive)
+
+    NodeState get_state()
     {
-        this->alive = alive;
+        return state;
+    }
+    void set_state(NodeState state)
+    {
+        this->state = state;
     }
 
     bool is_leader() const
@@ -101,6 +116,7 @@ public:
     std::map<std::string, Node>::const_iterator end() const;
 
     void clear();
+    std::size_t size();
 };
 
 class connection_error : std::exception

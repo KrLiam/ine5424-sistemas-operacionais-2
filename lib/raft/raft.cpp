@@ -184,14 +184,14 @@ void RaftManager::packet_received(const PacketReceived &event) {
     Packet &packet = event.packet;
     MessageType type = packet.data.header.get_message_type();
 
-    // if (type != MessageType::RAFT && type != MessageType::HEARTBEAT) return;
+    if (type != MessageType::RAFT && type != MessageType::HEARTBEAT) return;
 
     if (!packet.silent()) {
         log_trace("Packet ", packet.to_string(PacketFormat::RECEIVED),
                   " received by raft manager.");
     }
 
-    if (type == MessageType::RAFT && packet.data.header.is_ack()) event_bus.notify(PacketAckReceived(packet));
+    if (packet.data.header.is_ack()) event_bus.notify(PacketAckReceived(packet));
 
     packet_receive_handlers.at(state)(packet);
 }

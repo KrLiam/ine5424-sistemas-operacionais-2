@@ -2,6 +2,7 @@
 
 #include <arpa/inet.h>
 #include <stdint.h>
+#include <cstring>
 #include <iostream>
 #include <fstream>
 #include <algorithm>
@@ -64,12 +65,29 @@ const IPv4 BROADCAST_ADDRESS = {255, 255, 255, 255};
 
 struct SocketAddress
 {
+    static const int SERIALIZED_SIZE = 6;
+
     IPv4 address;
     uint16_t port;
 
     std::string to_string() const;
 
     static SocketAddress from(sockaddr_in& address);
+
+    std::string serialize();
+    static SocketAddress deserialize(const char *serialized)
+    {
+        unsigned char a = serialized[0];
+        unsigned char b = serialized[1];
+        unsigned char c = serialized[2];
+        unsigned char d = serialized[3];
+        IPv4 address = {a, b, c, d};
+
+        uint16_t port = 0;
+        memcpy(&port, &serialized[4], 2);
+
+        return SocketAddress{address, port};
+    }
 
     bool operator==(const SocketAddress& other) const
     {
