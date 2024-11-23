@@ -605,14 +605,26 @@ void Connection::dispatch_to_sender(Packet p)
     request_update();
 }
 
-void Connection::heartbeat()
+void Connection::heartbeat(std::unordered_set<SocketAddress> &suspicions)
 {
     // log_trace("Heartbeating to ", remote_node.get_address().to_string(), ".");
+
+    HeartbeatData hb_data = {
+        suspicions: {0}
+    };
+
+    int total_size = 0;
+    for (SocketAddress suspicion : suspicions) {
+        if (total_size + SocketAddress::SERIALIZED_SIZE > PacketData::MAX_MESSAGE_SIZE) break;
+        memcpy(&hb_data.suspicions[total_size], suspicion.serialize().c_str(), SocketAddress::SERIALIZED_SIZE);
+        total_size += SocketAddress::SERIALIZED_SIZE;
+    }
 
     uint8_t flags = local_node.is_leader() ? LDR : 0;
 
     PacketData data;
     memset(&data, 0, sizeof(PacketData));
+    memcpy(data.message_data, &hb_data, sizeof(hb_data));
     data.header = {
         id : {
             origin : local_node.get_address(),
@@ -629,7 +641,7 @@ void Connection::heartbeat()
         transmission_uuid : UUID(""),
         origin : local_node.get_address(),
         destination : remote_node.get_address(),
-        message_length : 0,
+        message_length : total_size,
         expects_ack : 0,
         silent : 1
     };

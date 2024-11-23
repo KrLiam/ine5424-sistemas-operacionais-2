@@ -1,7 +1,7 @@
 #include "core/node.h"
 
-Node::Node(std::string id, SocketAddress address, bool remote)
-    : id(id), uuid(UUID()), address(address), remote(remote), alive(false), leader(false), receiving_ab_broadcast(false) {};
+Node::Node(std::string id, SocketAddress address, NodeState state, bool remote)
+    : id(id), uuid(UUID()), address(address), remote(remote), state(state), leader(false), receiving_ab_broadcast(false) {};
 
 Node::~Node()
 {
@@ -101,4 +101,8 @@ std::map<std::string, Node>::const_iterator NodeMap::end() const {
 
 void NodeMap::clear() {
     nodes.clear();
+}
+
+std::size_t NodeMap::size() {
+    return nodes.size();
 }

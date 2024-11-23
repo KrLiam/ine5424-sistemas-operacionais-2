@@ -189,6 +189,10 @@ struct RequestVoteData {
     bool granted;
 };
 
+struct HeartbeatData {
+    char suspicions[PacketData::MAX_MESSAGE_SIZE];
+};
+
 
 Packet create_ack(const Packet& packet);
 Packet create_ack(const Packet& packet, SocketAddress destination);

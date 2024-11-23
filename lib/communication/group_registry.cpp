@@ -34,7 +34,7 @@ void GroupRegistry::read_nodes_from_configuration(std::string local_id, Config c
     for (NodeConfig node_config : config.nodes)
     {
         bool is_remote = local_id != node_config.id;
-        Node node(node_config.id, node_config.address, is_remote);
+        Node node(node_config.id, node_config.address, NOT_INITIALIZED, is_remote);
         nodes.add(node);
     }
 }

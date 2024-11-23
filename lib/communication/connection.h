@@ -168,5 +168,5 @@ public:
 
     void dispatch_to_sender(Packet);
 
-    void heartbeat();
+    void heartbeat(std::unordered_set<SocketAddress> &suspicions);
 };
