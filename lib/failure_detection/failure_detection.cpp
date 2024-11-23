@@ -151,11 +151,14 @@ void FailureDetection::failure_detection_routine()
 
     mtx.lock();
 
-    std::unordered_set<SocketAddress> &suspicions = get_suspicions(gr->get_local_node().get_id());
+    Node& local_node = gr->get_local_node();
+    std::unordered_set<SocketAddress> &suspicions = get_suspicions(local_node.get_id());
     suspicions.clear();
 
     for (auto &[id, node] : gr->get_nodes())
     {
+        if (node.get_address() == local_node.get_address()) continue;
+
         NodeState state = node.get_state();
         if (state == ACTIVE && DateUtils::now() - last_alive[node.get_id()] > alive)
         {
