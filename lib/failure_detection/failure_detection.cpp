@@ -65,14 +65,7 @@ void FailureDetection::packet_received(const PacketReceived &event)
         // TODO: dá pra lançar um evento NodeAlive aqui caso seja necessário futuramente
     }
     mtx.unlock();
-}
 
-void FailureDetection::packet_sent(const PacketSent &event) {
-    Node& node = gr->get_nodes().get_node(event.packet.meta.destination);
-
-    mtx.lock();
-    last_sent[node.get_id()] = DateUtils::now();
-    mtx.unlock();
 }
 
 void FailureDetection::failure_detection_routine()
@@ -82,15 +75,13 @@ void FailureDetection::failure_detection_routine()
     for (auto &[id, node] : gr->get_nodes())
     {
         mtx.lock();
-        uint64_t now = DateUtils::now();
-
-        if (node.is_alive() && now - last_alive[id] > keep_alive)
+        if (node.is_alive() && DateUtils::now() - last_alive[node.get_id()] > keep_alive)
         {
             node.set_alive(false);
             
             log_warn(
                 "No heartbeat from node '",
-                id,
+                node.get_id(),
                 "' (",
                 node.get_address().to_string(),
                 ") in the last ",
@@ -99,15 +90,10 @@ void FailureDetection::failure_detection_routine()
             );
             event_bus.notify(NodeDeath(node));
         }
-
-        if (!last_sent.contains(id) || now - last_sent[id] >= alive) {
-            mtx.unlock();
-            Connection &conn = gr->get_connection(node);
-            conn.heartbeat();
-            continue;
-        }
-
         mtx.unlock();
+
+        Connection &conn = gr->get_connection(node);
+        conn.heartbeat();
     }
 
     timer_id = TIMER.add(alive, [this]() { failure_detection_routine(); });
@@ -118,9 +104,7 @@ void FailureDetection::attach()
     obs_connection_established.on(std::bind(&FailureDetection::connection_established, this, _1));
     obs_connection_closed.on(std::bind(&FailureDetection::connection_closed, this, _1));
     obs_packet_received.on(std::bind(&FailureDetection::packet_received, this, _1));
-    obs_packet_sent.on(std::bind(&FailureDetection::packet_sent, this, _1));
     event_bus.attach(obs_connection_established);
     event_bus.attach(obs_connection_closed);
     event_bus.attach(obs_packet_received);
-    event_bus.attach(obs_packet_sent);
 }
