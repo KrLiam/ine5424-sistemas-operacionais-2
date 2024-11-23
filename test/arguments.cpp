@@ -54,6 +54,9 @@ Arguments parse_arguments(int argc, char* argv[]) {
             args.specified_log_tail = true;
             args.log_tail = reader.read_int();
         }
+        else if (flag == "log-level") {
+            args.log_level = LogLevel::parse(reader);
+        }
         else {
             throw std::invalid_argument(
                 format("Unknown flag '%s' at pos %i", flag.c_str(), reader.get_pos() - flag.length())

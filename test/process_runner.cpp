@@ -73,6 +73,9 @@ CaseFile CaseFile::parse(const std::string& value) {
         else if (target == "auto_init") {
             f.auto_init = reader.read_int();
         }
+        else if (target == "log_level") {
+            f.log_level = LogLevel::parse(reader);
+        }
         else if (target == "procedures") {
             reader.expect('{');
 
@@ -144,6 +147,8 @@ void Runner::client(Process& proc) {
 }
 
 void Runner::run() {
+    Logger::set_level(args.log_level);
+
     if (args.test) {
         run_test(args.case_path);
         return;
@@ -246,6 +251,7 @@ void Runner::run_test(const std::string& case_path_str) {
             Logger::set_colored(false);
             Logger::show_files(false);
             Logger::set_output_file(format("%s/%s.log", case_dir_path.c_str(), id.c_str()));
+            if (f.log_level) Logger::set_level(*f.log_level);
 
             run_node(id, command, config, false, f.auto_init, f.min_lifespan);
             return;

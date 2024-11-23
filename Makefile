@@ -3,7 +3,7 @@ LIB_NAME = communication
 
 # flags
 CXX ?= g++
-LOG_LEVEL = 2
+LOG_LEVEL = 0
 APP_FLAGS = -DLOG_LEVEL=$(LOG_LEVEL)
 COMPILE_FLAGS = -std=c++20 -O3 -Wall -Wextra -g $(APP_FLAGS)
 INCLUDES = -I include/ -I lib/ -I /usr/local/include
@@ -32,6 +32,7 @@ TEST_DEPS = $(TEST_OBJECTS:.o=.d)
 # argumentos do programa de testes
 id = 0
 cases_dir = ./test/cases
+log_level = info
 
 .PHONY: default_target
 default_target: release
@@ -107,7 +108,7 @@ $(BIN_PATH)/$(TEST_BIN_FILENAME): $(LIB_PATH)/$(LIB_FILENAME) $(TEST_OBJECTS)
 .PHONY: shell
 shell: export CXXFLAGS := $(CXXFLAGS) $(COMPILE_FLAGS)
 shell: dirs $(BIN_PATH)/$(TEST_BIN_FILENAME)
-	./$(BIN_PATH)/$(TEST_BIN_FILENAME) $(id)
+	./$(BIN_PATH)/$(TEST_BIN_FILENAME) $(id) -log-level $(log_level)
 
 # make test case=...
 #
@@ -115,8 +116,8 @@ shell: dirs $(BIN_PATH)/$(TEST_BIN_FILENAME)
 .PHONY: test
 test: export CXXFLAGS := $(CXXFLAGS) $(COMPILE_FLAGS)
 test: dirs $(BIN_PATH)/$(TEST_BIN_FILENAME)
-	./$(BIN_PATH)/$(TEST_BIN_FILENAME) test $(case) $(if $(log_tail),-log-tail $(log_tail),)
+	./$(BIN_PATH)/$(TEST_BIN_FILENAME) test $(case) $(if $(log_tail),-log-tail $(log_tail),) -log-level $(log_level)
 
 .PHONY: test-all
 test-all:
-	$(foreach file, $(wildcard $(cases_dir)/*.case), $(MAKE) test case=$(file) log_tail=$(log_tail);)
+	$(foreach file, $(wildcard $(cases_dir)/*.case), $(MAKE) test case=$(file) log_tail=$(log_tail);) log_level=$(log_level)

@@ -1,6 +1,7 @@
 config = ./ab_0ms_com_falhas.conf
 auto_init=0
 min_lifespan=60000
+log_level=error
 procedures = {
     0 = [
 	init;

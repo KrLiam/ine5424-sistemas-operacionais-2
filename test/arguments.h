@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "utils/reader.h"
+#include "utils/log.h"
 
 #include "command.h"
 
@@ -15,6 +16,7 @@ struct Arguments {
     bool test = false;
     std::string case_path;
 
+    LogLevel::Type log_level  = LogLevel::INFO;
     bool specified_log_tail = false;
     bool log_tail = true;
 };

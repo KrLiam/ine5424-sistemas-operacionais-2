@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include <memory>
+#include <optional>
 #include "communication/reliable_communication.h"
 
 #include "arguments.h"
@@ -15,6 +16,7 @@ struct CaseFile {
     std::unordered_map<std::string, std::shared_ptr<Command>> procedures;
     bool auto_init = true;
     uint32_t min_lifespan = 0;
+    std::optional<LogLevel::Type> log_level;
 
     static CaseFile parse_file(const std::string& path);
     static CaseFile parse(const std::string& value);
