@@ -50,7 +50,8 @@ void FailureDetection::packet_received(const PacketReceived &event)
 
     last_alive[node.get_id()] = DateUtils::now();
 
-    if (!node.is_alive())
+    NodeState state = node.get_state();
+    if (state != ACTIVE)
     {
         node.set_uuid(uuid);
         node.set_state(ACTIVE);
@@ -65,7 +66,7 @@ void FailureDetection::packet_received(const PacketReceived &event)
             node.get_id(),
             "). Marking it as active."
         );
-        // TODO: dá pra lançar um evento NodeAlive aqui caso seja necessário futuramente
+        if (state == NOT_INITIALIZED || state == FAULTY) event_bus.notify(NodeUp(node));
     }
 
     if (packet.data.header.get_message_type() == MessageType::HEARTBEAT) process_heartbeat_data(packet);

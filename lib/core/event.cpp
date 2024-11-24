@@ -42,6 +42,8 @@ PipelineCleanup::PipelineCleanup(const MessageIdentity& id, const SocketAddress&
 
 NodeDeath::NodeDeath(const Node& remote_node) : remote_node(remote_node) {}
 
+NodeUp::NodeUp(const Node& remote_node) : remote_node(remote_node) {}
+
 LeaderElected::LeaderElected() {}
 
 AtomicMapping::AtomicMapping(const MessageIdentity& request_id, const MessageIdentity& atomic_id) : request_id(request_id), atomic_id(atomic_id) {}

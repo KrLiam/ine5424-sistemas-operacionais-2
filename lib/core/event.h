@@ -23,7 +23,8 @@ enum EventType {
     UNICAST_MESSAGE_RECEIVED = 14,
     RECEIVE_SYNCHRONIZATION = 15,
     LEADER_ELECTED = 16,
-    ATOMIC_MAPPING = 17
+    ATOMIC_MAPPING = 17,
+    NODE_UP = 18,
 };
     
 struct Event {
@@ -166,6 +167,14 @@ struct NodeDeath: public Event {
     const Node& remote_node;
 
     NodeDeath(const Node& remote_node);
+};
+
+struct NodeUp: public Event {
+    static EventType type() { return EventType::NODE_UP; }
+
+    const Node& remote_node;
+
+    NodeUp(const Node& remote_node);
 };
 
 struct LeaderElected: public Event {

@@ -48,7 +48,7 @@ public:
         return state == ACTIVE || state == SUSPECT;
     };
 
-    NodeState get_state()
+    NodeState get_state() const
     {
         return state;
     }

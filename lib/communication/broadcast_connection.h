@@ -69,6 +69,7 @@ class BroadcastConnection {
     Observer<PacketReceived> obs_packet_received;
     Observer<NodeDeath> obs_node_death;
     Observer<AtomicMapping> obs_atomic_mapping;
+    Observer<NodeUp> obs_node_up;
 
     void receive_synchronization(const ReceiveSynchronization& event);
     void connection_established(const ConnectionEstablished& event);
@@ -80,6 +81,7 @@ class BroadcastConnection {
     void packet_received(const PacketReceived &event);
     void node_death(const NodeDeath &event);
     void atomic_mapping(const AtomicMapping &event);
+    void node_up(const NodeUp &event);
 
     void send_rst(Packet&);
 

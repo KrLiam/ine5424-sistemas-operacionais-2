@@ -40,6 +40,7 @@ void BroadcastConnection::observe_pipeline() {
     obs_transmission_fail.on(std::bind(&BroadcastConnection::transmission_fail, this, _1));
     obs_transmission_complete.on(std::bind(&BroadcastConnection::transmission_complete, this, _1));
     obs_atomic_mapping.on(std::bind(&BroadcastConnection::atomic_mapping, this, _1));
+    obs_node_up.on(std::bind(&BroadcastConnection::node_up, this, _1));
     pipeline.attach(obs_receive_synchronization);
     pipeline.attach(obs_connection_established);
     // pipeline.attach(obs_connection_closed);
@@ -49,6 +50,7 @@ void BroadcastConnection::observe_pipeline() {
     pipeline.attach(obs_transmission_complete);
     pipeline.attach(obs_transmission_fail);
     pipeline.attach(obs_atomic_mapping);
+    pipeline.attach(obs_node_up);
 }
 
 SequenceNumber* BroadcastConnection::get_sequence(const MessageIdentity& id) {
@@ -103,6 +105,10 @@ void BroadcastConnection::node_death(const NodeDeath& event) {
             retransmissions.erase(id);
         }
     }
+}
+
+void BroadcastConnection::node_up(const NodeUp& event) {
+    request_update();
 }
 
 void BroadcastConnection::atomic_mapping(const AtomicMapping& event) {
@@ -476,7 +482,12 @@ bool BroadcastConnection::establish_all_connections() {
 
     for (auto& [node_id, connection] : connections) {
         const Node& node = nodes.get_node(node_id);
-        if (!node.is_alive()) continue;
+        if (node.get_state() == NOT_INITIALIZED) {
+            log_warn("Node ", node.get_id(), " is not initialized; broadcast will hang.");
+            established = false;
+            continue;
+        }
+        if (node.get_state() == FAULTY) continue;
 
         ConnectionState state = connection.get_state();
  
