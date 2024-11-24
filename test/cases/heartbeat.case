@@ -1,0 +1,19 @@
+config = ./beb_100ms.conf
+min_lifespan=10000
+auto_init=0
+procedures = {
+ 0 = [
+	init;
+  ],
+  1 = [
+	init;
+	sleep 4000;
+	kill;
+  ],
+  2 = [
+	init;
+	"Mensagem qualquer contando como heartbeat" -> 0;
+	kill;
+	init;
+  ]
+}
