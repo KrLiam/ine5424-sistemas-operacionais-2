@@ -311,11 +311,11 @@ void Runner::run_node(
     }
 
     // forçar o nó a permanecer vivo por um tempo mínimo determinado
-    int64_t end_time = DateUtils::now();
-    int64_t lifespan = end_time - start_time;
+    uint64_t end_time = DateUtils::now();
+    uint64_t lifespan = end_time - start_time;
 
-    log_info("Node lifespan was ", lifespan, ", waiting for ", min_lifespan - lifespan);
     if (lifespan < min_lifespan) {
+        log_info("Node lifespan was ", lifespan, ", waiting for ", min_lifespan - lifespan);
         std::this_thread::sleep_for(std::chrono::milliseconds(min_lifespan - lifespan));
     }
 }
