@@ -125,7 +125,7 @@ void FailureDetection::check_for_faulty_nodes()
     for (auto &[address, count] : suspicion_count) {
         if (count < quorum) continue;
 
-        Node &node = nodes.get_node(address);
+        Node &node = nodes.get_node(address); // TODO: (grupos dinâmicos) tratar se o local não conhece o nó em questão
         if (node.get_state() == FAULTY) continue;
 
         log_warn(
