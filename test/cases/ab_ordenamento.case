@@ -1,5 +1,5 @@
 config = ./ab_100ms_com_falhas.conf
-min_lifespan=15000
+min_lifespan=30000
 procedures = {
     0 = [
         sleep 1000;
