@@ -98,17 +98,16 @@ void FaultInjectionLayer::receive(Packet packet) {
     [[maybe_unused]] unsigned int msg_num = packet.data.header.id.msg_num;
     [[maybe_unused]] unsigned int fragment_num = packet.data.header.fragment_num;
 
-    if (!packet.silent()) {
-        log_warn(
-            "Reception of packet ",
-            packet.to_string(PacketFormat::RECEIVED),
-            " is delayed by ",
-            delay,
-            " ms."
-        );
-    }
-
     if (delay > 0) {
+        if (!packet.silent()) {
+            log_warn(
+                "Reception of packet ",
+                packet.to_string(PacketFormat::RECEIVED),
+                " is delayed by ",
+                delay,
+                " ms."
+            );
+        }
         int id = TIMER.add(delay, [this, packet]() {
             proceed_receive(packet);
         });
