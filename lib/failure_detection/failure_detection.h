@@ -14,8 +14,13 @@
 
 class FailureDetection
 {
+    static const int ALIVE_TOLERANCE = 6;
+
     std::unordered_map<std::string, uint64_t> last_alive;
     std::mutex mtx;
+
+    std::unordered_map<std::string, int> hb_timers;
+    std::mutex hb_timers_mtx;
 
     std::unordered_map<std::string, std::unordered_set<SocketAddress>> suspicion_map;
 
@@ -38,14 +43,16 @@ class FailureDetection
     Observer<ConnectionEstablished> obs_connection_established;
     Observer<ConnectionClosed> obs_connection_closed;
     Observer<PacketReceived> obs_packet_received;
+    Observer<PacketSent> obs_packet_sent;
 
     void connection_established(const ConnectionEstablished &event);
-
     void connection_closed(const ConnectionClosed &event);
-
     void packet_received(const PacketReceived &event);
+    void packet_sent(const PacketSent &event);
 
     void failure_detection_routine();
+
+    void schedule_heartbeat(const Node& node);
 
 public:
     FailureDetection(std::shared_ptr<GroupRegistry> gr, EventBus &event_bus, unsigned int alive);
@@ -55,4 +62,6 @@ public:
     void terminate();
 
     void attach();
+
+    void heartbeat(const Node& node);
 };

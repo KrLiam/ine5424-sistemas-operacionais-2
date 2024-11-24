@@ -14,7 +14,7 @@ class ChannelLayer : public PipelineStep {
 
     void receiver();
 public:
-    ChannelLayer(PipelineHandler handler, SocketAddress local_address, const NodeMap& nodes);
+    ChannelLayer(PipelineHandler handler, SocketAddress local_address, const NodeMap& nodes, EventBus& event_bus);
 
     ~ChannelLayer();
 

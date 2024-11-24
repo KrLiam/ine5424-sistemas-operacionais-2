@@ -12,6 +12,8 @@ ConnectionClosed::ConnectionClosed(const Node& node) : node(node) {}
 
 PacketReceived::PacketReceived(Packet& packet) : packet(packet) {}
 
+PacketSent::PacketSent(Packet& packet) : packet(packet) {}
+
 FragmentReceived::FragmentReceived(Packet& packet) : packet(packet) {}
 
 PacketAckReceived::PacketAckReceived(Packet& ack_packet) : ack_packet(ack_packet) {}
