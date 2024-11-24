@@ -52,6 +52,7 @@ class FailureDetection
 
     void failure_detection_routine();
 
+    void heartbeat(const Node& node);
     void schedule_heartbeat(const Node& node);
 
 public:
@@ -62,6 +63,4 @@ public:
     void terminate();
 
     void attach();
-
-    void heartbeat(const Node& node);
 };
