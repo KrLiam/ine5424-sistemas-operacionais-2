@@ -52,7 +52,7 @@ void TransmissionQueue::send(uint32_t num) {
                 return;
             } 
             const Node& receiver = nodes.get_node(receiver_address);
-            if (!receiver.is_alive())
+            /*if (receiver.get_state())
             {
                 log_warn("Cannot transmit ",
                     packet.to_string(PacketFormat::SENT),
@@ -60,7 +60,7 @@ void TransmissionQueue::send(uint32_t num) {
                 mutex_timeout.unlock();
                 fail();
                 return;
-            }
+            }*/
             entry.pending_receivers.emplace(&receiver);
         }
     }
