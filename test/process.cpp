@@ -204,28 +204,6 @@ bool Process::send_message(
     return success;
 }
 
-// void parallelize(Process& proc, const std::vector<std::shared_ptr<Command>>& commands) {
-//     int thread_num = commands.size();
-//
-//     if (thread_num == 1) {
-//         SenderThreadArgs args = {&proc, commands[0]};
-//         send_thread(&args);
-//         return;
-//     }
-//
-//     std::vector<std::unique_ptr<std::thread>> threads;
-//     auto thread_args = std::make_unique<SenderThreadArgs[]>(thread_num);
-//
-//     for (int i=0; i < thread_num; i++) {
-//         thread_args[i] = {&proc, commands[i]};
-//         threads.push_back(std::make_unique<std::thread>(send_thread, &thread_args[i]));
-//     }
-//
-//     for (std::unique_ptr<std::thread>& thread : threads) {
-//         thread->join();
-//     }
-// }
-
 void Process::execute(const Command& command) {
     ExecutionContext ctx;
 
