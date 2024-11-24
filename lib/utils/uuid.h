@@ -3,11 +3,13 @@
 #include <random>
 #include <sstream>
 #include <string.h>
+#include <unordered_set>
 
 #include "utils/random.h"
 
 struct UUID {
     static const int MAX_SIZE = 36;
+    static const int SERIALIZED_SIZE = 32;
 
     UUID();
 
@@ -16,6 +18,29 @@ struct UUID {
     bool operator ==(const UUID& other) const;
 
     std::string as_string() const;
+
+    std::string serialize() {
+        std::string serialized = as_string();
+        std::erase(serialized, '-');
+        return serialized;
+    }
+    static UUID deserialize(const char *serialized)
+    {
+        std::string deserialized;
+
+        int pos = 0;
+        std::unordered_set<int> dash_positions = {8, 13, 18, 23};
+        for (int i = 0; i < UUID::MAX_SIZE; i++) {
+            if (dash_positions.contains(i)) {
+                deserialized += '-';
+                continue;
+            }
+            deserialized += serialized[pos];
+            pos++;
+        }
+
+        return UUID(deserialized);
+    }
 
 private:
     std::string uuid;

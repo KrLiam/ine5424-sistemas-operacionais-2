@@ -17,7 +17,7 @@ struct PacketHeader
     uint32_t fragment_num;
     uint16_t checksum;
     uint8_t flags;
-    char uuid[UUID::MAX_SIZE];
+    char process_uuid[UUID::SERIALIZED_SIZE];
 
     uint32_t get_message_number() const
     {

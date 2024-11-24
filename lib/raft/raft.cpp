@@ -95,7 +95,7 @@ void RaftManager::send_request_vote() {
         fragment_num : 0,
         checksum : 0,
         flags : RVO | END,
-        uuid: {0}
+        process_uuid: {0}
     };
 
     PacketMetadata meta = {

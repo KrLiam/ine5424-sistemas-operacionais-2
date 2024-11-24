@@ -42,7 +42,7 @@ void FailureDetection::packet_received(const PacketReceived &event)
 
     log_trace("Received ", packet.to_string(), " (node ", node.get_id(), ").");
 
-    const UUID uuid = UUID(std::string(event.packet.data.header.uuid));
+    const UUID uuid = UUID::deserialize(event.packet.data.header.process_uuid);
 
     mtx.lock();
     if (node.is_alive() && uuid != node.get_uuid())

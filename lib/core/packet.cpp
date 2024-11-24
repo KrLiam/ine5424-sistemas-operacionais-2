@@ -20,7 +20,7 @@ Packet create_ack(const Packet& packet, SocketAddress destination)
         fragment_num : packet.data.header.fragment_num,
         checksum : 0,
         flags : ACK,
-        uuid: {0}
+        process_uuid: {0}
     };
     PacketMetadata meta = {
         transmission_uuid : UUID(""),

@@ -634,7 +634,7 @@ void Connection::heartbeat(std::unordered_set<SocketAddress> &suspicions)
         fragment_num: 0,
         checksum: 0,
         flags: flags,
-        uuid: {0}
+        process_uuid: {0}
     };
 
     PacketMetadata meta = {
