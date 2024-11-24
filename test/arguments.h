@@ -13,6 +13,7 @@ struct Arguments {
     std::string node_id;
     std::vector<std::shared_ptr<Command>> send_commands;
 
+    bool verbose = false;
     bool test = false;
     std::string case_path;
 

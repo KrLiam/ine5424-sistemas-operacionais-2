@@ -5,6 +5,7 @@
 ReliableCommunication::ReliableCommunication(
     std::string local_id,
     std::size_t user_buffer_size,
+    bool verbose,
     const Config& config
 ) :
     config(config),
@@ -14,7 +15,7 @@ ReliableCommunication::ReliableCommunication(
     deliver_buffer(INTERMEDIARY_BUFFER_ITEMS)
 {
     const NodeConfig& node_config = config.get_node(local_id);
-    log_info("Initializing node ", node_config.id, " (", node_config.address.to_string(), ")."); 
+    log_info("Initializing node ", node_config.id, " (", node_config.address.to_string(), ").");
 
     gr = std::make_shared<GroupRegistry>(local_id, config, event_bus);
     pipeline = std::make_unique<Pipeline>(gr, event_bus, config.faults);
@@ -29,7 +30,9 @@ ReliableCommunication::ReliableCommunication(
         connection_update_buffer,
         config.alive
     );
-    failure_detection = std::make_unique<FailureDetection>(gr, event_bus, config.alive);
+    failure_detection = std::make_unique<FailureDetection>(
+        gr, event_bus, config.alive, verbose
+    );
 }
 
 ReliableCommunication::~ReliableCommunication()

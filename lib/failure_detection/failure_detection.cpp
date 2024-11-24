@@ -1,8 +1,13 @@
 #include "failure_detection.h"
 #include "utils/date.h"
 
-FailureDetection::FailureDetection(std::shared_ptr<GroupRegistry> gr, EventBus &event_bus, unsigned int alive)
-    : gr(gr), event_bus(event_bus), alive(alive), running(true)
+FailureDetection::FailureDetection(
+    std::shared_ptr<GroupRegistry> gr,
+    EventBus &event_bus,
+    unsigned int alive,
+    bool verbose
+)
+    : gr(gr), event_bus(event_bus), alive(alive), running(true), verbose(verbose)
 {
     attach();
 
@@ -84,10 +89,15 @@ void FailureDetection::packet_sent(const PacketSent &event) {
 
 void FailureDetection::process_heartbeat_data(const Packet& packet)
 {
+    Node& remote = gr->get_nodes().get_node(packet.meta.origin);
+
+    if (verbose) {
+        log_info("Received heartbeat from ", remote.get_id(), " (", packet.meta.origin.to_string(), ")");
+    }
+
     int num_of_suspicions = packet.meta.message_length / SocketAddress::SERIALIZED_SIZE;
     if (num_of_suspicions == 0) return;
 
-    Node& remote = gr->get_nodes().get_node(packet.meta.origin);
 
     std::unordered_set<SocketAddress> &remote_suspicions = get_suspicions(remote.get_id());
     remote_suspicions.clear();

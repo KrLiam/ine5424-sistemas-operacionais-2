@@ -14,24 +14,21 @@
 
 class FailureDetection
 {
+    std::shared_ptr<GroupRegistry> gr;
+    EventBus &event_bus;
+    unsigned int alive;
+    bool verbose;
+
     static const int ALIVE_TOLERANCE = 6;
 
     std::unordered_map<std::string, uint64_t> last_alive;
-    std::mutex mtx;
-
-    std::unordered_map<std::string, int> hb_timers;
-    std::mutex hb_timers_mtx;
-
     std::unordered_map<std::string, std::unordered_set<SocketAddress>> suspicion_map;
-
-    std::shared_ptr<GroupRegistry> gr;
-
-    EventBus &event_bus;
-
-    unsigned int alive;
+    std::unordered_map<std::string, int> hb_timers;
+    bool running;
     int timer_id = -1;
 
-    bool running;
+    std::mutex hb_timers_mtx;
+    std::mutex mtx;
 
     void process_heartbeat_data(const Packet& packet);
 
@@ -56,7 +53,12 @@ class FailureDetection
     void schedule_heartbeat(const Node& node);
 
 public:
-    FailureDetection(std::shared_ptr<GroupRegistry> gr, EventBus &event_bus, unsigned int alive);
+    FailureDetection(
+        std::shared_ptr<GroupRegistry> gr,
+        EventBus &event_bus,
+        unsigned int alive,
+        bool verbose
+    );
 
     ~FailureDetection();
 

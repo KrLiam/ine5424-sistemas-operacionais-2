@@ -19,10 +19,12 @@ Nosso projeto usa Makefile. Os comandos disponíveis são:
 
 ## Como testar
 
+### Executar o shell
+
 Primeiro, compile o programa de testes
 
 ```
-make test
+make program
 ```
 
 Isso criará um executável `program`. Cada nó é representado por um processo diferente. Por exemplo,

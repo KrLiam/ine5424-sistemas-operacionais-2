@@ -108,7 +108,7 @@ $(BIN_PATH)/$(TEST_BIN_FILENAME): $(LIB_PATH)/$(LIB_FILENAME) $(TEST_OBJECTS)
 .PHONY: shell
 shell: export CXXFLAGS := $(CXXFLAGS) $(COMPILE_FLAGS)
 shell: dirs $(BIN_PATH)/$(TEST_BIN_FILENAME)
-	./$(BIN_PATH)/$(TEST_BIN_FILENAME) $(id) -log-level $(log_level)
+	./$(BIN_PATH)/$(TEST_BIN_FILENAME) $(id) --log-level $(log_level)
 
 # make test case=...
 #
@@ -116,7 +116,7 @@ shell: dirs $(BIN_PATH)/$(TEST_BIN_FILENAME)
 .PHONY: test
 test: export CXXFLAGS := $(CXXFLAGS) $(COMPILE_FLAGS)
 test: dirs $(BIN_PATH)/$(TEST_BIN_FILENAME)
-	./$(BIN_PATH)/$(TEST_BIN_FILENAME) test $(case) $(if $(log_tail),-log-tail $(log_tail),) -log-level $(log_level)
+	./$(BIN_PATH)/$(TEST_BIN_FILENAME) test $(case) $(if $(log_tail),--log-tail $(log_tail),) --log-level $(log_level)
 
 .PHONY: test-all
 test-all:

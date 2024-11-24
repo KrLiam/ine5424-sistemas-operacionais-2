@@ -23,6 +23,7 @@ struct Process {
     std::string node_id;
     int buffer_size;
     bool save_message_files;
+    bool verbose;
     Config config;
 
     std::unique_ptr<ReliableCommunication> comm;
@@ -30,7 +31,7 @@ struct Process {
     std::thread server_receive_thread;
     std::thread server_deliver_thread;
 
-    Process(const std::string& node_id, int buffer_size, bool save_message_files, const Config& config);
+    Process(const std::string& node_id, int buffer_size, bool save_message_files, bool verbose, const Config& config);
 
     ~Process();
 

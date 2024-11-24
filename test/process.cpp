@@ -8,11 +8,13 @@ Process::Process(
     const std::string& node_id,
     int buffer_size,
     bool save_message_files,
+    bool verbose,
     const Config& config
 ) :
     node_id(node_id),
     buffer_size(buffer_size),
     save_message_files(save_message_files),
+    verbose(verbose),
     config(config) {};
 
 Process::~Process() {
@@ -24,7 +26,7 @@ bool Process::initialized() { return comm.get(); }
 void Process::init() {
     if (initialized()) return;
 
-    comm = std::make_unique<ReliableCommunication>(node_id, buffer_size, config);
+    comm = std::make_unique<ReliableCommunication>(node_id, buffer_size, verbose, config);
 
     thread_args = { comm.get() };
     server_receive_thread = std::thread(std::bind(&Process::receive, this, _1), &thread_args);

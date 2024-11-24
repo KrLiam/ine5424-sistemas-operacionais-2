@@ -30,7 +30,12 @@ struct ReceiveResult {
 class ReliableCommunication
 {
 public:
-    ReliableCommunication(std::string local_id, std::size_t user_buffer_size, const Config& config);
+    ReliableCommunication(
+        std::string local_id,
+        std::size_t user_buffer_size,
+        bool verbose_hearbeat,
+        const Config& config
+    );
     ~ReliableCommunication();
 
     void add_fault_rule(const FaultRule& rule);
