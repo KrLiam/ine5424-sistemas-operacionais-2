@@ -607,7 +607,7 @@ void Connection::dispatch_to_sender(Packet p)
 
 void Connection::heartbeat(std::unordered_set<SocketAddress> &suspicions)
 {
-    // log_trace("Heartbeating to ", remote_node.get_address().to_string(), ".");
+    log_trace("Heartbeating to ", remote_node.get_address().to_string(), ".");
 
     HeartbeatData hb_data = {
         suspicions: {0}
