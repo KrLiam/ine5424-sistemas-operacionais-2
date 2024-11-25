@@ -49,18 +49,18 @@ Arguments parse_arguments(int argc, char* argv[]) {
             format("Missing flag name after - at pos %s", reader.get_pos())
         );
 
-        if (!long_arg && flag == "s" || long_arg && flag=="send") {
+        if ((!long_arg && flag == "s") || (long_arg && flag=="send")) {
             args.send_commands = parse_commands(reader);
         }
-        else if (!long_arg && flag=="v" || long_arg && flag=="verbose") {
+        else if ((!long_arg && flag=="v") || (long_arg && flag=="verbose")) {
             log_print("peeking '", reader.peek(), "', is digit ", isdigit(reader.peek()));
             args.verbose = isdigit(reader.peek()) ? reader.read_int() : true;
         }
-        else if (!long_arg && flag=="t" || long_arg && flag=="log-tail") {
+        else if ((!long_arg && flag=="t") || (long_arg && flag=="log-tail")) {
             args.specified_log_tail = true;
             args.log_tail = isdigit(reader.peek()) ? reader.read_int() : true;
         }
-        else if (!long_arg && flag=="l" || long_arg && flag == "log-level") {
+        else if ((!long_arg && flag=="l") || (long_arg && flag == "log-level")) {
             args.log_level = LogLevel::parse(reader);
         }
         else {

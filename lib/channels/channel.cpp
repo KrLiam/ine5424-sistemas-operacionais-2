@@ -1,6 +1,7 @@
 #include "channels/channel.h"
 
-Channel::Channel(const SocketAddress local_address, EventBus& event_bus) : address(local_address), event_bus(event_bus)
+Channel::Channel(const SocketAddress local_address, EventBus& event_bus)
+    : event_bus(event_bus), address(local_address)
 {
     open_socket();
 }

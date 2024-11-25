@@ -17,14 +17,14 @@ class FailureDetection
     std::shared_ptr<GroupRegistry> gr;
     EventBus &event_bus;
     unsigned int alive;
-    bool verbose;
+    bool verbose = false;
 
     static const int ALIVE_TOLERANCE = 6;
 
     std::unordered_map<std::string, uint64_t> last_alive;
     std::unordered_map<std::string, std::unordered_set<SocketAddress>> suspicion_map;
     std::unordered_map<std::string, int> hb_timers;
-    bool running;
+    bool running = true;
     int timer_id = -1;
 
     std::mutex hb_timers_mtx;

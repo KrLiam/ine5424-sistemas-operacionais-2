@@ -107,7 +107,7 @@ void BroadcastConnection::node_death(const NodeDeath& event) {
     }
 }
 
-void BroadcastConnection::node_up(const NodeUp& event) {
+void BroadcastConnection::node_up(const NodeUp&) {
     request_update();
 }
 

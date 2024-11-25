@@ -7,7 +7,7 @@ FailureDetection::FailureDetection(
     unsigned int alive,
     bool verbose
 )
-    : gr(gr), event_bus(event_bus), alive(alive), running(true), verbose(verbose)
+    : gr(gr), event_bus(event_bus), alive(alive), verbose(verbose)
 {
     attach();
 
