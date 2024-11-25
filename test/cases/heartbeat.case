@@ -3,6 +3,7 @@ min_lifespan=10000
 auto_init=0
 procedures = {
  0 = [
+	fault drop 0/0h from 2 1x;
 	init;
   ],
   1 = [
