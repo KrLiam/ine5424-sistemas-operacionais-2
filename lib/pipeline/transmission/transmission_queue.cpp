@@ -32,41 +32,8 @@ void TransmissionQueue::send(uint32_t num) {
     Packet& packet = entry.packet;
     const SocketAddress& receiver_address = packet.meta.destination;
 
-    if (entry.tries == 0) {
-        if (receiver_address == BROADCAST_ADDRESS) {
-            for (const auto& [_, node] : nodes) {
-                if (node.get_address() == BROADCAST_ADDRESS) continue;
-                if (!node.is_alive()) continue;
-                entry.pending_receivers.emplace(&node);
-            }
-        }
-        else {
-            if (!nodes.contains(receiver_address)) {
-                log_warn(
-                    "Cannot transmit ",
-                    packet.to_string(PacketFormat::SENT),
-                    " because destination is unknown."
-                );
-                mutex_timeout.unlock();
-                fail();
-                return;
-            } 
-            const Node& receiver = nodes.get_node(receiver_address);
-            /*if (receiver.get_state())
-            {
-                log_warn("Cannot transmit ",
-                    packet.to_string(PacketFormat::SENT),
-                    " because destination is dead.");
-                mutex_timeout.unlock();
-                fail();
-                return;
-            }*/
-            entry.pending_receivers.emplace(&receiver);
-        }
-    }
-
     entry.tries++;
-    pending.emplace(num);
+    pending_frags.emplace(num);
     entry.timeout_id = TIMER.add(Config::ACK_TIMEOUT, [this, num]() { timeout(num); });
 
     // não transmite o fragmento na primeira tentativa
@@ -135,7 +102,7 @@ void TransmissionQueue::timeout(uint32_t num)
     const Packet& packet = entry.packet;
 
     if (entry.pending_receivers.empty()) {
-        pending.erase(num);
+        pending_frags.erase(num);
         mutex_timeout.unlock();
         try_complete();
         return;
@@ -165,7 +132,7 @@ void TransmissionQueue::reset() {
         }
     }
 
-    pending.clear();
+    pending_frags.clear();
     entries.clear();
     message_num = UINT32_MAX;
     end_fragment_num = UINT32_MAX;
@@ -180,15 +147,31 @@ uint32_t TransmissionQueue::get_total_bytes() {
     return sum;
 }
 
-bool TransmissionQueue::completed()
+bool TransmissionQueue::pending()
 {
-    return !pending.size() && end_fragment_num != UINT32_MAX;
+    return !pending_frags.size() && end_fragment_num != UINT32_MAX;
+}
+bool TransmissionQueue::done()
+{
+    bool has_uninitialized_receivers = false;
+    for (const auto& [frag_num, entry] : entries) {
+        if (entry.uninitialized_receivers.size()) {
+            has_uninitialized_receivers = true;
+            break;
+        }
+    }
+
+    return !pending() && !has_uninitialized_receivers;
 }
 
 void TransmissionQueue::add_packet(const Packet& packet)
 {
     uint32_t msg_num = packet.data.header.get_message_number();
     uint32_t num = packet.data.header.get_fragment_number();
+    MessageType type = packet.data.header.get_message_type();
+    const SocketAddress& receiver_address = packet.meta.destination;
+    const SocketAddress& origin_address = packet.data.header.id.origin;
+    const SocketAddress& local_address = nodes.get_local()->get_address();
 
     if (message_num == UINT32_MAX)
     {
@@ -210,6 +193,42 @@ void TransmissionQueue::add_packet(const Packet& packet)
     entries.emplace(num, QueueEntry(packet));
     mutex_timeout.unlock();
 
+    QueueEntry& entry = entries.at(num);
+
+    if (receiver_address == BROADCAST_ADDRESS) {
+        for (const auto& [_, node] : nodes) {
+            if (node.get_address() == BROADCAST_ADDRESS) continue;
+
+            if (node.is_alive()) {
+                entry.pending_receivers.emplace(&node);
+            }
+            // apenas armazenar a mensagem para ser enviada para nós não-inicializados
+            // se foi o nó local que enviou (e.g pro urb, apenas a origem inicial que irá armazenar)
+            else if (
+                origin_address == local_address
+                && node.get_state() == NOT_INITIALIZED
+                && message_type::is_broadcast(type)
+                && type != MessageType::RAFT
+            ) {
+                entry.uninitialized_receivers.emplace(&node);
+            }
+        }
+    }
+    else {
+        if (!nodes.contains(receiver_address)) {
+            log_warn(
+                "Cannot transmit ",
+                packet.to_string(PacketFormat::SENT),
+                " because destination is unknown."
+            );
+            mutex_timeout.unlock();
+            fail();
+            return;
+        } 
+        const Node& receiver = nodes.get_node(receiver_address);
+        entry.pending_receivers.emplace(&receiver);
+    }
+
     send(num);
 
     if (packet.data.header.is_end())
@@ -228,8 +247,9 @@ bool TransmissionQueue::try_complete()
         return false;
     }
 
-    bool success = completed();
-    if (success) {
+    bool success = pending();
+    if (success && !completed) {
+        completed = true;
         const QueueEntry& entry = entries.begin()->second;
         const Packet& packet = entry.packet;
         const UUID& uuid = packet.meta.transmission_uuid;
@@ -237,9 +257,12 @@ bool TransmissionQueue::try_complete()
         [[maybe_unused]] uint32_t msg_num = packet.data.header.get_message_number();
         TransmissionComplete event(uuid, packet.data.header.id, packet.data.header.id.origin, remote_address);
 
+        int notinit_amount = entry.uninitialized_receivers.size();
+
         log_info(
             "Transmission ", remote_address.to_string(), " / ", msg_num, " is completed. Sent ",
-            end_fragment_num + 1, " fragments, ", get_total_bytes(), " bytes total."
+            end_fragment_num + 1, " fragments, ", get_total_bytes(), " bytes total.",
+            notinit_amount ? format(" %i not-initialized nodes will receive message later.", notinit_amount) : ""
         );
 
         reset();
@@ -282,8 +305,8 @@ void TransmissionQueue::receive_ack(const Packet& ack_packet)
         return;
     }
 
-    pending.erase(frag_num);
-    // log_info("Completed: ", completed());
+    pending_frags.erase(frag_num);
+    // log_info("Completed: ", pending());
 
     if (entry.timeout_id != -1)
     {
@@ -304,7 +327,7 @@ void TransmissionQueue::discard_node(const Node& node) {
 
 
         if (entry.pending_receivers.empty())
-            pending.erase(entry.packet.data.header.fragment_num);
+            pending_frags.erase(entry.packet.data.header.fragment_num);
     }
     mutex_timeout.unlock();
     

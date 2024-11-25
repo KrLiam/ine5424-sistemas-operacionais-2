@@ -2,7 +2,7 @@
 #include "pipeline/pipeline.h"
 
 GroupRegistry::GroupRegistry(std::string local_id, Config config, EventBus& event_bus)
-    : event_bus(event_bus), local_id(local_id)
+    : event_bus(event_bus), local_id(local_id), nodes(local_id)
 {
     attach_observers();
     read_nodes_from_configuration(local_id, config);

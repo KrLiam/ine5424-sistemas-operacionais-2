@@ -482,11 +482,6 @@ bool BroadcastConnection::establish_all_connections() {
 
     for (auto& [node_id, connection] : connections) {
         const Node& node = nodes.get_node(node_id);
-        if (node.get_state() == NOT_INITIALIZED) {
-            log_warn("Node ", node.get_id(), " is not initialized; broadcast will hang.");
-            established = false;
-            continue;
-        }
         if (node.get_state() == FAULTY) continue;
 
         ConnectionState state = connection.get_state();

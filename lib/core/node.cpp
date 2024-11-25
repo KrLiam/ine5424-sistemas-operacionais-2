@@ -32,9 +32,10 @@ bool Node::operator==(const Node& other) const
     return address == other.address;
 }
 
-NodeMap::NodeMap() : nodes() {}
+NodeMap::NodeMap(std::string local_id) : local_id(local_id) {}
 
-NodeMap::NodeMap(std::map<std::string, Node> nodes) : nodes(nodes) {}
+NodeMap::NodeMap(std::string local_id, std::map<std::string, Node> nodes)
+    : local_id(local_id), nodes(nodes) {}
 
 Node &NodeMap::get_node(std::string id)
 {
@@ -65,6 +66,11 @@ Node *NodeMap::get_leader() {
     }
     
     return nullptr;
+}
+
+Node *NodeMap::get_local() {
+    if (!nodes.contains(local_id)) return nullptr;
+    return &nodes.at(local_id);
 }
 
 bool NodeMap::contains(const SocketAddress& address) const

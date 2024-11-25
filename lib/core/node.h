@@ -96,15 +96,17 @@ template<> struct std::hash<Node&> {
 };
 
 class NodeMap {
+    std::string local_id;
     std::map<std::string, Node> nodes;
 public:
-    NodeMap();
-    NodeMap(std::map<std::string, Node> nodes);
+    NodeMap(std::string local_id);
+    NodeMap(std::string local_id, std::map<std::string, Node> nodes);
 
     Node &get_node(std::string id);
     Node &get_node(const SocketAddress& address);
 
     Node *get_leader();
+    Node *get_local();
 
     bool contains(const SocketAddress& address) const;
 

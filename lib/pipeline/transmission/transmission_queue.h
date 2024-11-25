@@ -16,6 +16,7 @@ struct QueueEntry {
     int timeout_id = -1;
     int tries = 0;
     std::unordered_set<const Node*> pending_receivers;
+    std::unordered_set<const Node*> uninitialized_receivers;
 
     QueueEntry(const Packet& packet);
 };
@@ -28,7 +29,7 @@ private:
     NodeMap& nodes;
 
     std::unordered_map<uint32_t, QueueEntry> entries;
-    std::unordered_set<uint32_t> pending;
+    std::unordered_set<uint32_t> pending_frags;
 
     uint32_t message_num = UINT32_MAX;
     uint32_t end_fragment_num = UINT32_MAX;
@@ -36,6 +37,7 @@ private:
     std::mutex mutex_packets;
     std::mutex mutex_timeout;
 
+    bool completed = false;
     std::atomic<bool> destroyed;
 
     void send(uint32_t num);
@@ -52,7 +54,8 @@ public:
 
     uint32_t get_total_bytes();
 
-    bool completed();
+    bool pending();
+    bool done();
 
     void add_packet(const Packet& packet);
 

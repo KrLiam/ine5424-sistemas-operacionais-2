@@ -89,6 +89,10 @@ void TransmissionLayer::ack_received(const PacketAckReceived& event) {
     if (has_queue(key)) {
         TransmissionQueue& queue = get_queue(key);
         queue.receive_ack(packet);
+
+        if (queue.done()) {
+            clear_queue(key);
+        }
     }
     queue_mutex.unlock();
 }
