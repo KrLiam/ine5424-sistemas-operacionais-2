@@ -30,7 +30,7 @@ Packet Fragmenter::create_packet() {
             fragment_num : i,
             checksum : 0,
             flags : static_cast<uint8_t>(last_fragment ? END : 0),
-            process_uuid: {0}
+            pid: {0}
         },
         message_data : 0
     };

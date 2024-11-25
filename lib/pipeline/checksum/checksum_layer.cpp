@@ -15,7 +15,7 @@ void ChecksumLayer::send(Packet packet)
 
     // pre-processamento do pacote antes de enviar, a principio isso n tem nada a ver com a checksum layer
     // e deveria estar em outro lugar
-    strncpy(packet.data.header.process_uuid, local_node.get_uuid().serialize().c_str(), sizeof(packet.data.header.process_uuid));
+    packet.data.header.pid = local_node.get_pid();
     if (local_node.is_leader()) packet.data.header.flags |= LDR;
     else packet.data.header.flags &= ~LDR;
 

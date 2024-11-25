@@ -95,7 +95,7 @@ void RaftManager::send_request_vote() {
         fragment_num : 0,
         checksum : 0,
         flags : RVO | END,
-        process_uuid: {0}
+        pid: {0}
     };
 
     PacketMetadata meta = {
@@ -203,7 +203,7 @@ void RaftManager::on_follower() {
     set_election_timer();
 }
 
-void RaftManager::follower_timeout() { 
+void RaftManager::follower_timeout() {
     if (leader != nullptr) leader->set_leader(false);
     change_state(CANDIDATE);
 }

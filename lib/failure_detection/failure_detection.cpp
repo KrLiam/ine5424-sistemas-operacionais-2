@@ -42,10 +42,10 @@ void FailureDetection::packet_received(const PacketReceived &event)
 
     log_trace("Received ", packet.to_string(), " (node ", node.get_id(), ").");
 
-    const UUID uuid = UUID::deserialize(event.packet.data.header.process_uuid);
+    const uint32_t pid = event.packet.data.header.pid;
 
     mtx.lock();
-    if (node.is_alive() && uuid != node.get_uuid())
+    if (node.is_alive() && pid != node.get_pid())
     {
         log_info(
             "Node ",
@@ -60,7 +60,7 @@ void FailureDetection::packet_received(const PacketReceived &event)
     NodeState state = node.get_state();
     if (state != ACTIVE)
     {
-        node.set_uuid(uuid);
+        node.set_pid(pid);
         node.set_state(ACTIVE);
 
         std::unordered_set<SocketAddress> &suspicions = get_suspicions(gr->get_local_node().get_id());

@@ -23,7 +23,7 @@ class Node
 {
 private:
     std::string id;
-    UUID uuid;
+    uint32_t pid;
 
     SocketAddress address;
     bool remote;
@@ -75,13 +75,13 @@ public:
         this->receiving_ab_broadcast = receiving_ab_broadcast;
     }
 
-    UUID get_uuid() const
+    uint32_t get_pid() const
     {
-        return uuid;
+        return pid;
     }
-    void set_uuid(UUID uuid)
+    void set_pid(uint32_t pid)
     {
-        this->uuid = uuid;
+        this->pid = pid;
     }
 
     std::string to_string() const;
