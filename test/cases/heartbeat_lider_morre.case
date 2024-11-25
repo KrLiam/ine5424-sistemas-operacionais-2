@@ -1,0 +1,18 @@
+config = ./beb_100ms.conf
+min_lifespan=18000
+auto_init=0
+procedures = {
+ 0 = [
+	init;
+	sleep 8000;
+	kill;
+  ],
+  1 = [
+	sleep 5000;
+	init;
+  ],
+  2 = [
+	sleep 5000;
+	init;
+  ]
+}

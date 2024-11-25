@@ -1,0 +1,14 @@
+config = ./beb_100ms.conf
+min_lifespan=10000
+procedures = {
+	0 = [
+		sleep 2000;
+	],
+	1 = [
+		sleep 2000;
+	],
+	2 = [
+		sleep 2000;
+		repeat 20 "oi" -> *;
+	]
+}
