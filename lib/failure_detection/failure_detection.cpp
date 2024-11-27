@@ -38,11 +38,17 @@ void FailureDetection::connection_closed(const ConnectionClosed &event)
 void FailureDetection::packet_received(const PacketReceived &event)
 {
     Packet& packet = event.packet;
+    const uint32_t pid = packet.data.header.pid;
+
+    if (!gr->contains(packet.meta.origin))
+    {
+        log_info("New node discovered at ", packet.meta.origin.to_string());
+        Node& node = gr->add(packet.meta.origin);
+        heartbeat(node);
+    }
     Node& node = gr->get_nodes().get_node(packet.meta.origin);
 
     log_trace("Received ", packet.to_string(), " (node ", node.get_id(), ").");
-
-    const uint32_t pid = event.packet.data.header.pid;
 
     mtx.lock();
     if (node.is_alive() && pid != node.get_pid())
@@ -138,7 +144,7 @@ void FailureDetection::check_for_faulty_nodes()
         node.set_state(FAULTY);
 
         std::unordered_set<SocketAddress> &local_suspicions = get_suspicions(gr->get_local_node().get_id());
-        local_suspicions.erase(node.get_address());
+        // local_suspicions.erase(node.get_address());
 
         event_bus.notify(NodeDeath(node));
     }
@@ -218,7 +224,7 @@ void FailureDetection::heartbeat(const Node& node)
     conn.heartbeat(suspicions);
     mtx.unlock();
 
-    schedule_heartbeat(node);
+    schedule_heartbeat(node); // TODO: fazer só mandar msgs por um tempo pra quem nao ta inicializado
 }
 
 void FailureDetection::schedule_heartbeat(const Node& node)

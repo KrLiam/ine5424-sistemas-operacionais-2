@@ -1,11 +1,16 @@
 #include "communication/group_registry.h"
 #include "pipeline/pipeline.h"
 
-GroupRegistry::GroupRegistry(std::string local_id, Config config, EventBus& event_bus)
-    : event_bus(event_bus), local_id(local_id)
+GroupRegistry::GroupRegistry(std::string local_id, Config config, EventBus& event_bus) :
+    event_bus(event_bus),
+    local_id(local_id),
+    connection_update_buffer("connection_update"),
+    application_buffer(INTERMEDIARY_BUFFER_ITEMS),
+    deliver_buffer(INTERMEDIARY_BUFFER_ITEMS),
+    config(config)
 {
     attach_observers();
-    read_nodes_from_configuration(local_id, config);
+    read_nodes_from_configuration(local_id);
 }
 
 GroupRegistry::~GroupRegistry()
@@ -28,7 +33,7 @@ Node &GroupRegistry::get_local_node()
     return nodes.get_node(local_id);
 }
 
-void GroupRegistry::read_nodes_from_configuration(std::string local_id, Config config)
+void GroupRegistry::read_nodes_from_configuration(std::string local_id)
 {
     nodes.clear();
     for (NodeConfig node_config : config.nodes)
@@ -94,35 +99,71 @@ void GroupRegistry::update(std::string id) {
 }
 
 
-void GroupRegistry::establish_connections(
-    Pipeline &pipeline,
-    Buffer<Message> &application_buffer,
-    Buffer<Message> &deliver_buffer,
-    BufferSet<std::string> &connection_update_buffer,
-    unsigned int alive
-) {
+void GroupRegistry::establish_connections() {
     Node& local_node = get_local_node();
 
     broadcast_connection =  std::make_unique<BroadcastConnection>(
-        nodes, local_node, connections, connection_update_buffer, deliver_buffer, pipeline
+        nodes, local_node, connections, connection_update_buffer, deliver_buffer, *pipeline
     );
 
-    for (auto &[id, node] : nodes)
-        connections.emplace(
-            std::piecewise_construct,
-            std::forward_as_tuple(id),
-            std::forward_as_tuple(
-                local_node,
-                node,
-                pipeline,
-                application_buffer,
-                connection_update_buffer,
-                broadcast_connection->get_dispatcher(),
-                broadcast_connection->get_ab_dispatcher()
-            )
-        );
+    for (auto &[id, node] : nodes) establish_connection(local_node, node);
     
     raft = std::make_unique<RaftManager>(
-        *broadcast_connection, connections, nodes, local_node, event_bus, alive
+        *broadcast_connection, connections, nodes, local_node, event_bus, config.alive
     );
+}
+
+bool GroupRegistry::contains(const SocketAddress& address) const
+{
+    return nodes.contains(address);   
+}
+
+Node &GroupRegistry::add(SocketAddress& address)
+{
+    std::string id = std::to_string(std::hash<SocketAddress>{}(address));
+    Node node(id, address, ACTIVE, true);
+    nodes.add(node);
+
+    Node& remote_node = nodes.get_node(id);
+    Node& local_node = get_local_node();
+    establish_connection(local_node, remote_node);
+
+    return remote_node;
+}
+
+void GroupRegistry::establish_connection(Node& local_node, Node& remote_node)
+{
+    connections.emplace(
+        std::piecewise_construct,
+        std::forward_as_tuple(remote_node.get_id()),
+        std::forward_as_tuple(
+            local_node,
+            remote_node,
+            *pipeline,
+            application_buffer,
+            connection_update_buffer,
+            broadcast_connection->get_dispatcher(),
+            broadcast_connection->get_ab_dispatcher()
+        )
+    );
+}
+
+BufferSet<std::string> &GroupRegistry::get_connection_update_buffer()
+{
+    return connection_update_buffer;
+}
+
+Buffer<Message> &GroupRegistry::get_application_buffer()
+{
+    return application_buffer;
+}
+
+Buffer<Message> &GroupRegistry::get_deliver_buffer()
+{
+    return deliver_buffer;
+}
+
+void GroupRegistry::set_pipeline(std::shared_ptr<Pipeline> pipeline)
+{
+    this->pipeline = pipeline;
 }

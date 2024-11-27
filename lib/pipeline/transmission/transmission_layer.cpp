@@ -109,11 +109,11 @@ void TransmissionLayer::receive(Packet packet)
         log_trace("Packet [", packet.to_string(PacketFormat::RECEIVED), "] received on transmission layer.");
     }
 
-    if (!nodes.contains(packet.meta.origin))
+    /*if (!nodes.contains(packet.meta.origin))
     {
         log_debug("Packet ", packet.to_string(PacketFormat::RECEIVED), " does not originate from group; dropping.");
         return;
-    }
+    }*/
 
     handler.forward_receive(packet);
 }

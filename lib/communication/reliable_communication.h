@@ -48,7 +48,7 @@ public:
     std::shared_ptr<GroupRegistry> get_group_registry();
 
 private:
-    std::unique_ptr<Pipeline> pipeline;
+    std::shared_ptr<Pipeline> pipeline;
     std::shared_ptr<GroupRegistry> gr;
     std::unique_ptr<FailureDetection> failure_detection;
     
@@ -57,11 +57,7 @@ private:
     Config config;
 
     std::thread sender_thread;
-    BufferSet<std::string> connection_update_buffer;
-
     std::size_t user_buffer_size;
-    Buffer<Message> application_buffer{"application receive"};
-    Buffer<Message> deliver_buffer{"deliver receive"};
 
     ReceiveResult message_to_buffer(Message &message, char *m);
 

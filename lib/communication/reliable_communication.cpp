@@ -9,27 +9,20 @@ ReliableCommunication::ReliableCommunication(
     const Config& config
 ) :
     config(config),
-    connection_update_buffer("connection_update"),
-    user_buffer_size(user_buffer_size),
-    application_buffer(INTERMEDIARY_BUFFER_ITEMS),
-    deliver_buffer(INTERMEDIARY_BUFFER_ITEMS)
+    user_buffer_size(user_buffer_size)
 {
     const NodeConfig& node_config = config.get_node(local_id);
     log_info("Initializing node ", node_config.id, " (", node_config.address.to_string(), ").");
 
     gr = std::make_shared<GroupRegistry>(local_id, config, event_bus);
-    pipeline = std::make_unique<Pipeline>(gr, event_bus, config.faults);
+    pipeline = std::make_shared<Pipeline>(gr, event_bus, config.faults);
 
     sender_thread = std::thread([this]()
                                 { send_routine(); });
 
-    gr->establish_connections(
-        *pipeline,
-        application_buffer,
-        deliver_buffer,
-        connection_update_buffer,
-        config.alive
-    );
+    gr->set_pipeline(pipeline);
+    gr->establish_connections();
+
     failure_detection = std::make_unique<FailureDetection>(
         gr, event_bus, config.alive, verbose
     );
@@ -40,12 +33,12 @@ ReliableCommunication::~ReliableCommunication()
     Node& node = gr->get_local_node();
     log_info("Killing node ", node.get_id(), " (", node.get_address().to_string(), ")."); 
 
-    application_buffer.terminate();
-    deliver_buffer.terminate();
+    gr->get_application_buffer().terminate();
+    gr->get_deliver_buffer().terminate();
     
     failure_detection->terminate();
 
-    connection_update_buffer.terminate();
+    gr->get_connection_update_buffer().terminate();
     if (sender_thread.joinable())
         sender_thread.join();
 }
@@ -80,13 +73,13 @@ ReceiveResult ReliableCommunication::message_to_buffer(Message &message, char *m
 
 ReceiveResult ReliableCommunication::receive(char *m)
 {
-    Message message = application_buffer.consume();
+    Message message = gr->get_application_buffer().consume();
     return message_to_buffer(message, m);
 }
 
 ReceiveResult ReliableCommunication::deliver(char *m)
 {
-    Message message = deliver_buffer.consume();
+    Message message = gr->get_deliver_buffer().consume();
     return message_to_buffer(message, m);
 }
 
@@ -193,7 +186,7 @@ void ReliableCommunication::send_routine()
     {
         try
         {
-            id = connection_update_buffer.consume();
+            id = gr->get_connection_update_buffer().consume();
         }
         catch (const buffer_termination &e)
         {

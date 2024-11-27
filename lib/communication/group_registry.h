@@ -5,6 +5,7 @@
 
 #include "communication/connection.h"
 #include "communication/broadcast_connection.h"
+#include "core/buffer.h"
 #include "core/node.h"
 #include "core/message.h"
 #include "core/packet.h"
@@ -54,13 +55,17 @@ public:
 
     void update(std::string id);
 
-    void establish_connections(
-        Pipeline& pipeline,
-        Buffer<Message> &application_buffer,
-        Buffer<Message> &deliver_buffer,
-        BufferSet<std::string> &connection_update_buffer,
-        unsigned int alive
-    );
+    void establish_connections();
+
+    bool contains(const SocketAddress& address) const;
+    Node& add(SocketAddress& address);
+
+    BufferSet<std::string>& get_connection_update_buffer();
+
+    Buffer<Message>& get_application_buffer();
+    Buffer<Message>& get_deliver_buffer();
+
+    void set_pipeline(std::shared_ptr<Pipeline> pipeline);
 
 private:
     std::string local_id;
@@ -70,7 +75,18 @@ private:
     std::unique_ptr<BroadcastConnection> broadcast_connection;
     std::unique_ptr<RaftManager> raft;
 
+    std::shared_ptr<Pipeline> pipeline;
+
     std::queue<Transmission*> leader_transmissions;
 
-    void read_nodes_from_configuration(std::string local_id, Config config);
+    BufferSet<std::string> connection_update_buffer;
+
+    Buffer<Message> application_buffer{"application receive"};
+    Buffer<Message> deliver_buffer{"deliver receive"};
+
+    Config config;
+
+    void read_nodes_from_configuration(std::string local_id);
+
+    void establish_connection(Node& local_node, Node& remote_node);
 };
