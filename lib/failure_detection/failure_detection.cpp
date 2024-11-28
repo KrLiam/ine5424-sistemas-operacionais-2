@@ -278,6 +278,7 @@ void FailureDetection::send_discover(const Node& node)
 
     int total_size = 0;
     for (auto &[id, node] : gr->get_nodes()) {
+        if (!node.is_alive()) continue;
         if (total_size + SocketAddress::SERIALIZED_SIZE > PacketData::MAX_MESSAGE_SIZE) break;
         memcpy(&dv_data.nodes[total_size], node.get_address().serialize().c_str(), SocketAddress::SERIALIZED_SIZE);
         total_size += SocketAddress::SERIALIZED_SIZE;
