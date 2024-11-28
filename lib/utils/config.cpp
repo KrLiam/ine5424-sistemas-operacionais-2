@@ -283,16 +283,16 @@ Config ConfigReader::parse()
     return config;
 }
 
-std::string SocketAddress::serialize()
-    {
-        std::string serialized;
-        serialized += address.a;
-        serialized += address.b;
-        serialized += address.c;
-        serialized += address.d;
-        serialized += (port) & 0xff;
-        serialized += (port >> 8) & 0xff;
-        return serialized;
-    }
+std::string SocketAddress::serialize() const
+{
+    std::string serialized;
+    serialized += address.a;
+    serialized += address.b;
+    serialized += address.c;
+    serialized += address.d;
+    serialized += (port) & 0xff;
+    serialized += (port >> 8) & 0xff;
+    return serialized;
+}
 
 int Config::ACK_TIMEOUT = 100;

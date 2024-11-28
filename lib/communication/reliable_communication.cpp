@@ -26,6 +26,8 @@ ReliableCommunication::ReliableCommunication(
     failure_detection = std::make_unique<FailureDetection>(
         gr, event_bus, config.alive, verbose
     );
+
+    gr->start_raft();
 }
 
 ReliableCommunication::~ReliableCommunication()

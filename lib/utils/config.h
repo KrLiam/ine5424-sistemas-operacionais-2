@@ -74,7 +74,7 @@ struct SocketAddress
 
     static SocketAddress from(sockaddr_in& address);
 
-    std::string serialize();
+    std::string serialize() const;
     static SocketAddress deserialize(const char *serialized)
     {
         unsigned char a = serialized[0];

@@ -560,7 +560,9 @@ void Connection::send(Packet packet)
 
 void Connection::receive(Packet packet)
 {
-    if (packet.data.header.get_message_type() == MessageType::HEARTBEAT) return;
+    MessageType& type = packet.data.header.id.msg_type;
+    if (type == MessageType::HEARTBEAT) return;
+    else if (type == MessageType::DISCOVER) return;
 
     packet_receive_handlers.at(state)(packet);
 }

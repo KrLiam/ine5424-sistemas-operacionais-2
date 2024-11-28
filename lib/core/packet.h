@@ -193,6 +193,10 @@ struct HeartbeatData {
     char suspicions[PacketData::MAX_MESSAGE_SIZE];
 };
 
+struct DiscoverData {
+    char nodes[PacketData::MAX_MESSAGE_SIZE];
+};
+
 
 Packet create_ack(const Packet& packet);
 Packet create_ack(const Packet& packet, SocketAddress destination);

@@ -58,7 +58,7 @@ public:
     void establish_connections();
 
     bool contains(const SocketAddress& address) const;
-    Node& add(SocketAddress& address);
+    Node& add(const SocketAddress& address);
 
     BufferSet<std::string>& get_connection_update_buffer();
 
@@ -66,6 +66,8 @@ public:
     Buffer<Message>& get_deliver_buffer();
 
     void set_pipeline(std::shared_ptr<Pipeline> pipeline);
+
+    void start_raft();
 
 private:
     std::string local_id;

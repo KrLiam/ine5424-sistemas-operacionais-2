@@ -107,10 +107,6 @@ void GroupRegistry::establish_connections() {
     );
 
     for (auto &[id, node] : nodes) establish_connection(local_node, node);
-    
-    raft = std::make_unique<RaftManager>(
-        *broadcast_connection, connections, nodes, local_node, event_bus, config.alive
-    );
 }
 
 bool GroupRegistry::contains(const SocketAddress& address) const
@@ -118,10 +114,10 @@ bool GroupRegistry::contains(const SocketAddress& address) const
     return nodes.contains(address);   
 }
 
-Node &GroupRegistry::add(SocketAddress& address)
+Node &GroupRegistry::add(const SocketAddress& address)
 {
     std::string id = std::to_string(std::hash<SocketAddress>{}(address));
-    Node node(id, address, ACTIVE, true);
+    Node node(id, address, NOT_INITIALIZED, true);
     nodes.add(node);
 
     Node& remote_node = nodes.get_node(id);
@@ -166,4 +162,11 @@ Buffer<Message> &GroupRegistry::get_deliver_buffer()
 void GroupRegistry::set_pipeline(std::shared_ptr<Pipeline> pipeline)
 {
     this->pipeline = pipeline;
+}
+
+void GroupRegistry::start_raft()
+{
+    raft = std::make_unique<RaftManager>(
+        *broadcast_connection, connections, nodes, get_local_node(), event_bus, config.alive
+    );
 }

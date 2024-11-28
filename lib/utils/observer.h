@@ -1,7 +1,9 @@
 #pragma once
 
+#include <algorithm>
 #include <vector>
 #include <functional>
+#include <iterator>
 #include "utils/log.h"
 
 
@@ -48,7 +50,12 @@ public:
     }
 
     void notify(const T& value) {
-        for (Observer<T>* observer : observers) {
+        // Iterar sobre uma cópia do vetor de observadores
+        // Se isso não for feito, pode ser que o callback altere o vetor de observadores, lançando uma exceção
+        std::vector<Observer<T>*> vec;
+        copy(observers.begin(), observers.end(), back_inserter(vec));
+
+        for (Observer<T>* observer : vec) {
             observer->notify(value);
         }
     }

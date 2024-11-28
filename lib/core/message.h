@@ -21,6 +21,7 @@ enum class MessageType : uint8_t
 
     // Mensagens da lib
     CONTROL    = 0b00000000,
+    DISCOVER   = 0b00010000,
     HEARTBEAT  = 0b00001000,
     RAFT       = 0b00000100,
     AB_REQUEST = 0b00000010,
@@ -40,7 +41,8 @@ namespace message_type {
         {MessageType::SEND, "SEND"},
         {MessageType::BEB, "BEB"},
         {MessageType::URB, "URB"},
-        {MessageType::AB_URB, "AB_URB"}
+        {MessageType::AB_URB, "AB_URB"},
+        {MessageType::DISCOVER, "DISCOVER"}
     };
 
     MessageType from_broadcast_type(BroadcastType type);

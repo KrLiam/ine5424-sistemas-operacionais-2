@@ -19,7 +19,7 @@ struct UUID {
 
     std::string as_string() const;
 
-    std::string serialize() {
+    std::string serialize() const {
         std::string serialized = as_string();
         std::erase(serialized, '-');
         return serialized;
