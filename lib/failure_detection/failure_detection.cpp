@@ -12,7 +12,12 @@ FailureDetection::FailureDetection(
     attach();
 
     timer_id = TIMER.add(alive, [this]() { failure_detection_routine(); });
-    for (auto& [id, node] : gr->get_nodes()) heartbeat(node);
+    for (auto& [id, node] : gr->get_nodes())
+    {
+        mtx.lock();
+        heartbeat(node);
+        mtx.unlock();
+    }
 }
 
 FailureDetection::~FailureDetection()
@@ -127,9 +132,9 @@ void FailureDetection::check_for_faulty_nodes()
 
     for (auto &[address, count] : suspicion_count) {
         if (count < quorum) continue;
-
         if (!nodes.contains(address)) continue;
-        Node &node = nodes.get_node(address); // TODO: (grupos dinâmicos) tratar se o local não conhece o nó em questão
+
+        Node &node = nodes.get_node(address);
         if (node.get_state() == FAULTY) continue;
 
         log_warn(
@@ -202,11 +207,11 @@ void FailureDetection::failure_detection_routine()
         else if (state == SUSPECT) suspicions.insert(node.get_address());
     }
 
-    mtx.unlock();
-
     if (!suspicions.empty()) {
         for (auto &[_, node] : gr->get_nodes()) heartbeat(node);
     }
+
+    mtx.unlock();
 
 
     timer_id = TIMER.add(alive, [this]() { failure_detection_routine(); });
@@ -216,11 +221,9 @@ void FailureDetection::heartbeat(const Node& node)
 {
     if (!running) return;
 
-    mtx.lock();
     std::unordered_set<SocketAddress> &suspicions = get_suspicions(gr->get_local_node().get_id());
     Connection &conn = gr->get_connection(node);
     conn.heartbeat(suspicions);
-    mtx.unlock();
 
     schedule_heartbeat(node); // TODO: fazer só mandar msgs por um tempo pra quem nao ta inicializado
 }
@@ -231,7 +234,12 @@ void FailureDetection::schedule_heartbeat(const Node& node)
 
     hb_timers_mtx.lock();
     if (hb_timers.contains(id)) TIMER.cancel(hb_timers[id]);
-    hb_timers[id] = TIMER.add(alive, [this, node]() { heartbeat(node); });
+    hb_timers[id] = TIMER.add(alive, [this, node]()
+    {
+        mtx.lock();
+        heartbeat(node);
+        mtx.unlock();
+    });
     hb_timers_mtx.unlock();
 }
 
