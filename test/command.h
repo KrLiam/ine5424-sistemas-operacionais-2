@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include "utils/reader.h"
 #include "pipeline/fault_injection/fault_injection_layer.h"
 
