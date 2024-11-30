@@ -217,13 +217,12 @@ std::string format_group(const GroupInfo& g) {
     );
 }
 void Process::execute_group_list() {
-    auto [joined, available] = comm->get_groups();
-
     std::string out;
 
+    auto joined = comm->get_joined_groups();
     if (joined.size()) {
         out += format("Showing %u joined group(s).\n", joined.size());
-        for (const GroupInfo& g : joined) {
+        for (const auto& [_, g] : joined) {
             out += format_group(g);
         }
     }
@@ -231,9 +230,10 @@ void Process::execute_group_list() {
         out += "Did not join any group yet.\n";
     }
 
+    auto available = comm->get_available_groups();
     if (available.size()) {
         out += format("Showing %u available group(s).\n", available.size());
-        for (const GroupInfo& g : available) {
+        for (const auto& [_, g] : available) {
             out += format_group(g);
         }
     }
@@ -315,6 +315,40 @@ void Process::execute(const Command& command, ExecutionContext& ctx) {
 
         if (command.type == CommandType::group_list) {
             execute_group_list();
+            return;
+        }
+
+        if (command.type == CommandType::group_join) {
+            const GroupJoinCommand* cmd = static_cast<const GroupJoinCommand*>(&command);
+
+            auto joined_groups = comm->get_joined_groups();
+            if (joined_groups.contains(cmd->id)) throw std::invalid_argument(
+                format("Already joined group '%s'.", cmd->id.c_str())
+            );
+
+            auto available_groups = comm->get_available_groups();
+            if (!available_groups.contains(cmd->id)) {
+                if (!cmd->key.has_value()) throw std::invalid_argument(format(
+                    "Group '%s' is not registered and no key was provided.", cmd->id.c_str()
+                ));
+                comm->register_group(cmd->id, *cmd->key);
+            }
+
+            comm->join_group(cmd->id);
+
+            return;
+        }
+
+        if (command.type == CommandType::group_leave) {
+            const GroupLeaveCommand* cmd = static_cast<const GroupLeaveCommand*>(&command);
+
+            auto joined_groups = comm->get_joined_groups();
+            if (!joined_groups.contains(cmd->id)) throw std::invalid_argument(
+                format("Cannot leave group '%s'.", cmd->id.c_str())
+            );
+
+            comm->leave_group(cmd->id);
+
             return;
         }
 

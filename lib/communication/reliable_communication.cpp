@@ -207,7 +207,7 @@ bool ReliableCommunication::register_group(std::string id, ByteArray key) {
     return true;
 }
 
-uint64_t ReliableCommunication::join_group(std::string id)
+bool ReliableCommunication::join_group(std::string id)
 {
     if (!config.groups.contains(id)) throw std::invalid_argument(
         format("Group '%s' is not registered.", id.c_str())
@@ -215,6 +215,8 @@ uint64_t ReliableCommunication::join_group(std::string id)
 
     const ByteArray& key = config.groups.at(id);
     event_bus.notify(JoinGroup(id, key));
+
+    return true;
 }
 
 bool ReliableCommunication::leave_group(std::string id)
@@ -231,20 +233,25 @@ bool ReliableCommunication::leave_group(std::string id)
     return true;
 }
 
-std::pair<std::vector<GroupInfo>, std::vector<GroupInfo>> ReliableCommunication::get_groups() {
+std::unordered_map<std::string, GroupInfo> ReliableCommunication::get_joined_groups() {
     auto& group_map = pipeline->get_encryption_layer().get_groups();
-    std::vector<GroupInfo> joined;
-    for (const auto& [_, group] : group_map) {
-        joined.push_back(group);
-    }
 
-    std::vector<GroupInfo> available;
+    std::unordered_map<std::string, GroupInfo> joined;
+    for (const auto& [_, group] : group_map) {
+        joined.emplace(group.id, group);
+    }
+    return joined;
+}
+std::unordered_map<std::string, GroupInfo> ReliableCommunication::get_available_groups() {
+    auto& group_map = pipeline->get_encryption_layer().get_groups();
+
+    std::unordered_map<std::string, GroupInfo> available;
     for (const auto& [id, key] : config.groups) {
         GroupInfo group(id, key);
         if (group_map.contains(group.hash)) continue;
 
-        available.push_back(group);
+        available.emplace(group.id, group);
     }
 
-    return {joined, available};
+    return available;
 }

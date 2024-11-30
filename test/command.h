@@ -16,7 +16,9 @@ enum class CommandType : char {
     async = 8,
     sleep = 9,
     repeat = 10,
-    group_list = 11
+    group_list = 11,
+    group_join = 12,
+    group_leave = 13
 };
 
 struct Command {
@@ -117,6 +119,23 @@ struct RepeatCommand : public Command {
 
 struct GroupListCommand : public Command {
     GroupListCommand();
+
+    virtual std::string name() const;
+};
+
+struct GroupJoinCommand : public Command {
+    GroupJoinCommand(std::string id, std::optional<ByteArray> key);
+
+    std::string id;
+    std::optional<ByteArray> key;
+
+    virtual std::string name() const;
+};
+
+struct GroupLeaveCommand : public Command {
+    GroupLeaveCommand(std::string name);
+
+    std::string id;
 
     virtual std::string name() const;
 };

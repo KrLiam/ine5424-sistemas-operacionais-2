@@ -46,9 +46,10 @@ public:
     ReceiveResult receive(char *m);
     ReceiveResult deliver(char *m);
 
-    std::pair<std::vector<GroupInfo>, std::vector<GroupInfo>> get_groups();
+    std::unordered_map<std::string, GroupInfo> get_joined_groups();
+    std::unordered_map<std::string, GroupInfo> get_available_groups();
     bool register_group(std::string id, ByteArray key);
-    uint64_t join_group(std::string id);
+    bool join_group(std::string id);
     bool leave_group(std::string id);
 
     std::shared_ptr<GroupRegistry> get_group_registry();

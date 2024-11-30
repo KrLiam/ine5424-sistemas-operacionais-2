@@ -67,6 +67,16 @@ GroupListCommand::GroupListCommand() : Command(CommandType::group_list) {}
 
 std::string GroupListCommand::name() const { return "group list"; }
 
+GroupJoinCommand::GroupJoinCommand(std::string id, std::optional<ByteArray> key)
+    : Command(CommandType::group_join), id(id), key(key) {}
+
+std::string GroupJoinCommand::name() const { return "group join"; }
+
+GroupLeaveCommand::GroupLeaveCommand(std::string id)
+    : Command(CommandType::group_leave), id(id) {}
+
+std::string GroupLeaveCommand::name() const { return "group leave"; }
+
 
 std::string parse_string(Reader& reader) {
     reader.expect('"');
@@ -249,7 +259,21 @@ std::shared_ptr<Command> parse_command(Reader& reader) {
         std::string action = reader.read_word();
 
         if (action == "list") return std::make_shared<GroupListCommand>();
-        
+        if (action == "join") {
+            std::string id = reader.read_word();
+
+            std::optional<ByteArray> key =
+                (reader.peek() == ';' || reader.eof()) ?
+                std::nullopt :
+                std::optional(Aes256::parse_hex_key(reader));
+
+            return std::make_shared<GroupJoinCommand>(id, key);
+        }
+        if (action == "leave") {
+            std::string id = reader.read_word();
+            return std::make_shared<GroupLeaveCommand>(id);
+        }
+
         throw parse_error(format("Invalid group command at pos %i", pos));
     }
 

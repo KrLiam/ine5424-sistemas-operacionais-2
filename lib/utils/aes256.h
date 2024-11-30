@@ -30,9 +30,10 @@
 typedef std::vector<unsigned char> ByteArray;
 
 template<> struct std::hash<ByteArray> {
-    std::size_t operator()(const ByteArray& value) const {
-        std::string str(value.begin(), value.end());
-        return std::hash<std::string>()(str);
+    std::size_t operator()(const ByteArray &value) {
+        const char* data = reinterpret_cast<const char*>(value.data());
+        std::size_t size = value.size() * sizeof(value[0]);
+        return std::hash<std::string_view>()(std::string_view(data, size));
     }
 };
 
