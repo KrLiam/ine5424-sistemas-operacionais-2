@@ -26,6 +26,8 @@ enum EventType {
     LEADER_ELECTED = 16,
     ATOMIC_MAPPING = 17,
     NODE_UP = 18,
+    JOIN_GROUP = 19,
+    LEAVE_GROUP = 20,
 };
     
 struct Event {
@@ -198,3 +200,21 @@ struct AtomicMapping: public Event {
 
     AtomicMapping(const MessageIdentity& request_id, const MessageIdentity& atomic_id);
 };
+
+struct JoinGroup: public Event {
+    static EventType type() { return EventType::JOIN_GROUP; }
+
+    const uint64_t &key_hash;
+    const char *key;
+
+    JoinGroup(const uint64_t &key_hash, const char *key);
+};
+
+struct LeaveGroup: public Event {
+    static EventType type() { return EventType::LEAVE_GROUP; }
+
+    const uint64_t &key_hash;
+
+    LeaveGroup(const uint64_t &key_hash);
+};
+

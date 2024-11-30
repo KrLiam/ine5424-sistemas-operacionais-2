@@ -198,3 +198,15 @@ void ReliableCommunication::send_routine()
         gr->update(id);
     }
 }
+
+uint64_t ReliableCommunication::join_group(const char key[32])
+{
+    uint64_t key_hash = std::hash<std::string_view>{}(key);
+    event_bus.notify(JoinGroup(key_hash, key));
+}
+
+bool ReliableCommunication::leave_group(uint64_t key_hash)
+{
+    event_bus.notify(LeaveGroup(key_hash));
+    return true; // TODO
+}

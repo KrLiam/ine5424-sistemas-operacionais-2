@@ -11,6 +11,7 @@
 #include "core/message.h"
 #include "core/packet.h"
 #include "core/node.h"
+#include "core/event.h"
 #include "communication/group_registry.h"
 #include "pipeline/pipeline.h"
 #include "utils/format.h"
@@ -44,6 +45,9 @@ public:
     bool broadcast(MessageData data);
     ReceiveResult receive(char *m);
     ReceiveResult deliver(char *m);
+
+    uint64_t join_group(const char key[32]);
+    bool leave_group(uint64_t key_hash);
 
     std::shared_ptr<GroupRegistry> get_group_registry();
 

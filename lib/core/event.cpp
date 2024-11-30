@@ -49,3 +49,7 @@ NodeUp::NodeUp(const Node& remote_node) : remote_node(remote_node) {}
 LeaderElected::LeaderElected() {}
 
 AtomicMapping::AtomicMapping(const MessageIdentity& request_id, const MessageIdentity& atomic_id) : request_id(request_id), atomic_id(atomic_id) {}
+
+JoinGroup::JoinGroup(const uint64_t &key_hash, const char *key) : key_hash(key_hash), key(key) {}
+
+LeaveGroup::LeaveGroup(const uint64_t &key_hash) : key_hash(key_hash) {}

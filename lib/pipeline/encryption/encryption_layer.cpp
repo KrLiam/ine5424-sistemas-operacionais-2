@@ -1,16 +1,19 @@
 #include "pipeline/encryption/encryption_layer.h"
 #include "utils/log.h"
 
-EncryptionLayer::EncryptionLayer(PipelineHandler handler) : PipelineStep(handler)
-{
-    unsigned char test_key[32] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
-                                   0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f };
+using namespace std::placeholders;
 
-    ByteArray key(test_key_2, test_key_2 + sizeof(test_key_2));
-    keys.emplace(1, key);
-}
+EncryptionLayer::EncryptionLayer(PipelineHandler handler) : PipelineStep(handler) {}
 
 EncryptionLayer::~EncryptionLayer() {}
+
+void EncryptionLayer::attach(EventBus &bus)
+{
+    obs_join_group.on(std::bind(&EncryptionLayer::join_group, this, _1));
+    obs_leave_group.on(std::bind(&EncryptionLayer::leave_group, this, _1));
+    bus.attach(obs_join_group);
+    bus.attach(obs_leave_group);
+}
 
 void EncryptionLayer::send(Packet packet)
 {
@@ -18,7 +21,7 @@ void EncryptionLayer::send(Packet packet)
         log_trace("Packet ", packet.to_string(PacketFormat::SENT), " sent to encryption layer.");
     }
 
-    uint64_t key_hash = 1;
+    uint64_t key_hash = 0;
 
     if (key_hash != 0) {
         ByteArray key = keys.at(key_hash);
@@ -59,9 +62,27 @@ void EncryptionLayer::receive(Packet packet)
 
         memcpy(&packet.data.header.id, &dec[0], dec_len);
         packet.meta.message_length = dec_len - sizeof(PacketHeader) + sizeof(key_hash);
-        packet.meta.silent = packet.data.header.get_message_type() == MessageType::HEARTBEAT;
     }
+    packet.meta.silent = packet.data.header.get_message_type() == MessageType::HEARTBEAT;
 
     handler.forward_receive(packet);
 }
 
+void EncryptionLayer::join_group(const JoinGroup& event)
+{
+    const uint64_t key_hash = event.key_hash;
+    const char* key = event.key;
+
+    mtx_keys.lock();
+    keys.emplace(key_hash, ByteArray(key, key + sizeof(key)));
+    mtx_keys.unlock();
+}
+
+void EncryptionLayer::leave_group(const LeaveGroup& event)
+{
+    const uint64_t key_hash = event.key_hash;
+
+    mtx_keys.lock();
+    if (keys.contains(key_hash)) keys.erase(key_hash);
+    mtx_keys.unlock();
+}
