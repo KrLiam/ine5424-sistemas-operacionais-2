@@ -6,9 +6,9 @@ ReliableCommunication::ReliableCommunication(
     std::string local_id,
     std::size_t user_buffer_size,
     bool verbose,
-    const Config& config
+    const Config& cfg
 ) :
-    config(config),
+    config(cfg),
     user_buffer_size(user_buffer_size)
 {
     const NodeConfig& node_config = config.get_node(local_id);
@@ -199,14 +199,52 @@ void ReliableCommunication::send_routine()
     }
 }
 
-uint64_t ReliableCommunication::join_group(const char key[32])
-{
-    uint64_t key_hash = std::hash<std::string_view>{}(key);
-    event_bus.notify(JoinGroup(key_hash, key));
+
+bool ReliableCommunication::register_group(std::string id, ByteArray key) {
+    if (config.groups.contains(id)) return false;
+    config.groups.emplace(id, key);
+
+    return true;
 }
 
-bool ReliableCommunication::leave_group(uint64_t key_hash)
+uint64_t ReliableCommunication::join_group(std::string id)
 {
+    if (!config.groups.contains(id)) throw std::invalid_argument(
+        format("Group '%s' is not registered.", id.c_str())
+    );
+
+    const ByteArray& key = config.groups.at(id);
+    event_bus.notify(JoinGroup(id, key));
+}
+
+bool ReliableCommunication::leave_group(std::string id)
+{
+    if (!config.groups.contains(id)) throw std::invalid_argument(
+        format("Group '%s' is not registered.", id.c_str())
+    );
+
+    const ByteArray& key = config.groups.at(id);
+    uint64_t key_hash = std::hash<ByteArray>()(key);
+
     event_bus.notify(LeaveGroup(key_hash));
-    return true; // TODO
+
+    return true;
+}
+
+std::pair<std::vector<GroupInfo>, std::vector<GroupInfo>> ReliableCommunication::get_groups() {
+    auto& group_map = pipeline->get_encryption_layer().get_groups();
+    std::vector<GroupInfo> joined;
+    for (const auto& [_, group] : group_map) {
+        joined.push_back(group);
+    }
+
+    std::vector<GroupInfo> available;
+    for (const auto& [id, key] : config.groups) {
+        GroupInfo group(id, key);
+        if (group_map.contains(group.hash)) continue;
+
+        available.push_back(group);
+    }
+
+    return {joined, available};
 }

@@ -204,10 +204,10 @@ struct AtomicMapping: public Event {
 struct JoinGroup: public Event {
     static EventType type() { return EventType::JOIN_GROUP; }
 
-    const uint64_t &key_hash;
-    const char *key;
+    std::string id;
+    const ByteArray key;
 
-    JoinGroup(const uint64_t &key_hash, const char *key);
+    JoinGroup(const std::string& id, const ByteArray &key);
 };
 
 struct LeaveGroup: public Event {

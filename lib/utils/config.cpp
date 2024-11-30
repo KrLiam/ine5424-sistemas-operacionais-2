@@ -252,13 +252,17 @@ std::unordered_map<std::string, ByteArray> ConfigReader::parse_groups() {
         char ch = peek();
         if (!ch || ch == '}') break;
 
+        expect('{');
+
         std::string id = read_word();
-        expect('=');
+        expect(',');
         ByteArray key = Aes256::parse_hex_key(*this);
 
         if (groups.contains(id)) throw parse_error(format("Duplicated group entry of id '%s' in config file.", id.c_str()));
         groups.emplace(id, key);
 
+        expect('}');
+        
         if (!read(',')) break;
     }
 

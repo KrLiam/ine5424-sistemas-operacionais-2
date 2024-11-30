@@ -51,6 +51,8 @@ struct Process {
         [[maybe_unused]] std::string data_description
     );
 
+    void execute_group_list();
+
     void execute(const Command& command);
     void execute(std::vector<std::shared_ptr<Command>> commands);
 

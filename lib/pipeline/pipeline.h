@@ -21,6 +21,8 @@ private:
 
     std::vector<PipelineStep *> layers;
     FaultInjectionLayer* fault_layer;
+    EncryptionLayer* encryption_layer;
+
     EventBus& event_bus;
 
     friend PipelineHandler;
@@ -57,6 +59,7 @@ public:
     ~Pipeline();
 
     FaultInjectionLayer& get_fault_layer();
+    EncryptionLayer& get_encryption_layer();
 
     template <typename T>
     void attach(Observer<T>& observer) {

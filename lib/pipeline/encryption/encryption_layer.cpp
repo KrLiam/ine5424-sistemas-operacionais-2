@@ -3,9 +3,14 @@
 
 using namespace std::placeholders;
 
+GroupInfo::GroupInfo(const std::string &id, const ByteArray &key)
+    : id(id), key(key), hash(std::hash<ByteArray>()(key)) {}
+
 EncryptionLayer::EncryptionLayer(PipelineHandler handler) : PipelineStep(handler) {}
 
 EncryptionLayer::~EncryptionLayer() {}
+
+const std::unordered_map<uint64_t, GroupInfo> EncryptionLayer::get_groups() const { return groups; }
 
 void EncryptionLayer::attach(EventBus &bus)
 {
@@ -24,7 +29,8 @@ void EncryptionLayer::send(Packet packet)
     uint64_t key_hash = 0;
 
     if (key_hash != 0) {
-        ByteArray key = keys.at(key_hash);
+        const GroupInfo& group = groups.at(key_hash);
+        ByteArray key = group.key;
 
         char* start = reinterpret_cast<char*> (&packet.data.header.id);
         int encryption_size = sizeof(packet.data.header) - sizeof(packet.data.header.key_hash) + packet.meta.message_length;
@@ -50,8 +56,9 @@ void EncryptionLayer::receive(Packet packet)
     uint64_t key_hash = packet.data.header.key_hash;
 
     if (key_hash != 0) {
-        if (!keys.contains(key_hash)) return;
-        ByteArray key = keys.at(key_hash);
+        if (!groups.contains(key_hash)) return;
+        const GroupInfo& group = groups.at(key_hash);
+        ByteArray key = group.key;
 
         char* start = reinterpret_cast<char*> (&packet.data.header.id);
         int encryption_size = sizeof(packet.data.header) - sizeof(packet.data.header.key_hash) + packet.meta.message_length;
@@ -70,19 +77,18 @@ void EncryptionLayer::receive(Packet packet)
 
 void EncryptionLayer::join_group(const JoinGroup& event)
 {
-    const uint64_t key_hash = event.key_hash;
-    const char* key = event.key;
+    GroupInfo group(event.id, event.key);
 
-    mtx_keys.lock();
-    keys.emplace(key_hash, ByteArray(key, key + sizeof(key)));
-    mtx_keys.unlock();
+    mtx_groups.lock();
+    groups.emplace(group.hash, group);
+    mtx_groups.unlock();
 }
 
 void EncryptionLayer::leave_group(const LeaveGroup& event)
 {
     const uint64_t key_hash = event.key_hash;
 
-    mtx_keys.lock();
-    if (keys.contains(key_hash)) keys.erase(key_hash);
-    mtx_keys.unlock();
+    mtx_groups.lock();
+    if (groups.contains(key_hash)) groups.erase(key_hash);
+    mtx_groups.unlock();
 }

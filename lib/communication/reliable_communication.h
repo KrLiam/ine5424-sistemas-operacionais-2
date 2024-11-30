@@ -46,8 +46,10 @@ public:
     ReceiveResult receive(char *m);
     ReceiveResult deliver(char *m);
 
-    uint64_t join_group(const char key[32]);
-    bool leave_group(uint64_t key_hash);
+    std::pair<std::vector<GroupInfo>, std::vector<GroupInfo>> get_groups();
+    bool register_group(std::string id, ByteArray key);
+    uint64_t join_group(std::string id);
+    bool leave_group(std::string id);
 
     std::shared_ptr<GroupRegistry> get_group_registry();
 

@@ -6,10 +6,20 @@
 #include "core/event.h"
 #include "utils/aes256.h"
 
+
+struct GroupInfo {
+    const std::string id;
+    const ByteArray key;
+    const uint64_t hash;
+
+    GroupInfo(const std::string &id, const ByteArray &key);
+};
+
+
 class EncryptionLayer : public PipelineStep
 {
-    std::unordered_map<uint64_t, ByteArray> keys;
-    std::mutex mtx_keys;
+    std::unordered_map<uint64_t, GroupInfo> groups;
+    std::mutex mtx_groups;
 
     void encrypt(Packet& packet);
     bool decrypt(Packet& packet);
@@ -24,6 +34,8 @@ public:
     EncryptionLayer(PipelineHandler handler);
 
     ~EncryptionLayer();
+
+    const std::unordered_map<uint64_t, GroupInfo> get_groups() const;
 
     void attach(EventBus& bus);
 

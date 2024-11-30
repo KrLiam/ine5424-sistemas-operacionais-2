@@ -63,6 +63,11 @@ RepeatCommand::RepeatCommand(std::shared_ptr<Command> subcommand, int count)
 std::string RepeatCommand::name() const { return "repeat"; }
 
 
+GroupListCommand::GroupListCommand() : Command(CommandType::group_list) {}
+
+std::string GroupListCommand::name() const { return "group list"; }
+
+
 std::string parse_string(Reader& reader) {
     reader.expect('"');
     Override ovr = reader.override_whitespace(false);
@@ -238,6 +243,14 @@ std::shared_ptr<Command> parse_command(Reader& reader) {
         int count = reader.read_int();
         std::shared_ptr<Command> subcommand = parse_command(reader);
         return std::make_shared<RepeatCommand>(subcommand, count);
+    }
+    if (keyword == "group") {
+        int pos = reader.get_pos();
+        std::string action = reader.read_word();
+
+        if (action == "list") return std::make_shared<GroupListCommand>();
+        
+        throw parse_error(format("Invalid group command at pos %i", pos));
     }
 
     if (keyword.length()) {

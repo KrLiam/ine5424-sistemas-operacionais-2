@@ -206,6 +206,45 @@ bool Process::send_message(
     return success;
 }
 
+
+std::string format_group(const GroupInfo& g) {
+    std::string hex_key = array_to_hex(g.key);
+    return format(
+        YELLOW "%s" COLOR_RESET " - key: " H_BLACK "%s" COLOR_RESET ", hash: " H_BLACK "%u" COLOR_RESET "\n",
+        g.id.c_str(),
+        hex_key.c_str(),
+        g.hash
+    );
+}
+void Process::execute_group_list() {
+    auto [joined, available] = comm->get_groups();
+
+    std::string out;
+
+    if (joined.size()) {
+        out += format("Showing %u joined group(s).\n", joined.size());
+        for (const GroupInfo& g : joined) {
+            out += format_group(g);
+        }
+    }
+    else {
+        out += "Did not join any group yet.\n";
+    }
+
+    if (available.size()) {
+        out += format("Showing %u available group(s).\n", available.size());
+        for (const GroupInfo& g : available) {
+            out += format_group(g);
+        }
+    }
+    else {
+        out += "No groups are available.";
+    }
+
+    log_print(out);
+}
+
+
 void Process::execute(const Command& command) {
     ExecutionContext ctx;
 
@@ -271,6 +310,11 @@ void Process::execute(const Command& command, ExecutionContext& ctx) {
 
         if (!initialized()) {
             log_print("Node is dead.");
+            return;
+        }
+
+        if (command.type == CommandType::group_list) {
+            execute_group_list();
             return;
         }
 

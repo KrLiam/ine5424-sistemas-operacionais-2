@@ -15,7 +15,8 @@ enum class CommandType : char {
     sequence = 7,
     async = 8,
     sleep = 9,
-    repeat = 10
+    repeat = 10,
+    group_list = 11
 };
 
 struct Command {
@@ -110,6 +111,12 @@ struct RepeatCommand : public Command {
     std::shared_ptr<Command> subcommand;
 
     RepeatCommand(std::shared_ptr<Command> subcommand, int count);
+
+    virtual std::string name() const;
+};
+
+struct GroupListCommand : public Command {
+    GroupListCommand();
 
     virtual std::string name() const;
 };
