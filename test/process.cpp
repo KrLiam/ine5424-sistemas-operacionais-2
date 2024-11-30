@@ -213,7 +213,7 @@ bool Process::send_message(
 std::string format_group(const GroupInfo& g) {
     std::string hex_key = array_to_hex(g.key);
     return format(
-        YELLOW "%s" COLOR_RESET " - key: " H_BLACK "%s" COLOR_RESET ", hash: " H_BLACK "%u" COLOR_RESET "\n",
+        YELLOW "%s" COLOR_RESET " - key: " H_BLACK "%s" COLOR_RESET ", hash: " H_BLACK "%lu" COLOR_RESET "\n",
         g.id.c_str(),
         hex_key.c_str(),
         g.hash
