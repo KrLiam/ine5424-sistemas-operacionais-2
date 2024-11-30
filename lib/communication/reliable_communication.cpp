@@ -100,17 +100,20 @@ bool ReliableCommunication::send(std::string group_id, std::string id, MessageDa
     }
 
     auto joined_groups = get_joined_groups();
-    uint64_t group_hash = 0;
+    uint64_t group_hash;
 
     if (joined_groups.contains(group_id)) {
         const GroupInfo& group = joined_groups.at(group_id);
         group_hash = group.hash;
     }
-    else if (group_id.length()) {
+    else if (group_id == GLOBAL_GROUP_ID) {
+        group_hash = 0;
+    }
+    else {
         log_error("Unable to send a message on group '", group_id, "' before joining it.");
         return false;
     }
-    
+
     Transmission transmission = create_transmission(group_hash, id, data, MessageType::SEND);
     bool enqueued = gr->enqueue(transmission);
 
@@ -148,7 +151,10 @@ bool ReliableCommunication::broadcast(std::string group_id, MessageData data) {
         const GroupInfo& group = joined_groups.at(group_id);
         group_hash = group.hash;
     }
-    else if (group_id.length()) {
+    else if (group_id == GLOBAL_GROUP_ID) {
+        group_hash = 0;
+    }
+    else {
         log_error("Unable to send a message on group '", group_id, "' before joining it.");
         return false;
     }

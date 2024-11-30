@@ -8,7 +8,7 @@
 
 const std::string BROADCAST_ID = "";
 const std::string LEADER_ID = "#leader";
-
+const std::string GLOBAL_GROUP_ID = "#all";
 
 struct TransmissionResult {
     bool success;

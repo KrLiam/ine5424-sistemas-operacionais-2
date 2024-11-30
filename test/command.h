@@ -4,6 +4,7 @@
 
 #include "utils/reader.h"
 #include "pipeline/fault_injection/fault_injection_layer.h"
+#include "communication/transmission.h"
 
 
 enum class CommandType : char {
@@ -26,7 +27,7 @@ enum class CommandType : char {
 
 struct Destination {
     std::string node;
-    std::string group;
+    std::string group = GLOBAL_GROUP_ID;
 };
 
 struct Command {
