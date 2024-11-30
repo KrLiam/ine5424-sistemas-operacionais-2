@@ -52,4 +52,4 @@ AtomicMapping::AtomicMapping(const MessageIdentity& request_id, const MessageIde
 
 JoinGroup::JoinGroup(const std::string &id, const ByteArray &key) : id(id), key(key) {}
 
-LeaveGroup::LeaveGroup(const uint64_t &key_hash) : key_hash(key_hash) {}
+LeaveGroup::LeaveGroup(const std::string& id, const uint64_t &key_hash) : id(id), key_hash(key_hash) {}

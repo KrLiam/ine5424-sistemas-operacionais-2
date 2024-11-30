@@ -259,7 +259,7 @@ bool ReliableCommunication::leave_group(std::string id)
     const ByteArray& key = config.groups.at(id);
     uint64_t key_hash = std::hash<ByteArray>()(key);
 
-    event_bus.notify(LeaveGroup(key_hash));
+    event_bus.notify(LeaveGroup(id, key_hash));
 
     return true;
 }

@@ -213,8 +213,9 @@ struct JoinGroup: public Event {
 struct LeaveGroup: public Event {
     static EventType type() { return EventType::LEAVE_GROUP; }
 
+    std::string id;
     const uint64_t &key_hash;
 
-    LeaveGroup(const uint64_t &key_hash);
+    LeaveGroup(const std::string& id, const uint64_t &key_hash);
 };
 

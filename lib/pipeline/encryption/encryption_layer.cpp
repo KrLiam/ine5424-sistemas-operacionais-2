@@ -86,6 +86,7 @@ void EncryptionLayer::join_group(const JoinGroup& event)
     mtx_groups.lock();
     groups.emplace(group.hash, group);
     mtx_groups.unlock();
+    log_info("Joined group ", group.id, ".");
 }
 
 void EncryptionLayer::leave_group(const LeaveGroup& event)
@@ -93,6 +94,11 @@ void EncryptionLayer::leave_group(const LeaveGroup& event)
     const uint64_t key_hash = event.key_hash;
 
     mtx_groups.lock();
-    if (groups.contains(key_hash)) groups.erase(key_hash);
+    if (groups.contains(key_hash)) {
+        groups.erase(key_hash);
+        log_info("Left group ", event.id, ".");
+    } else {
+        log_warn("Local node does not belong to group ", event.id, ".");
+    }
     mtx_groups.unlock();
 }
