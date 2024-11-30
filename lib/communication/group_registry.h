@@ -51,6 +51,8 @@ public:
         return connections.at(id);
     }
 
+    const std::unordered_map<uint64_t, GroupInfo>& get_joined_groups() const;
+
     bool enqueue(Transmission& transmission);
 
     void update(std::string id);

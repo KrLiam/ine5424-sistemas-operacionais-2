@@ -3,6 +3,7 @@
 #include <condition_variable>
 #include <mutex>
 #include <map>
+#include <set>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <cstring>
@@ -168,5 +169,5 @@ public:
 
     void dispatch_to_sender(Packet);
 
-    void heartbeat(std::unordered_set<SocketAddress> &suspicions);
+    void heartbeat(std::set<uint64_t> joined_groups, std::unordered_set<SocketAddress> &suspicions);
 };

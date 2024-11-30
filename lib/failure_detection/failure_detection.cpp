@@ -1,3 +1,5 @@
+#include <set>
+
 #include "failure_detection.h"
 #include "utils/date.h"
 
@@ -95,22 +97,49 @@ void FailureDetection::packet_sent(const PacketSent &event) {
     schedule_heartbeat(node);
 }
 
+template <typename T>
+std::string join_string(T value) {
+    std::string str;
+    for (uint64_t v : value) {
+        if (str.length()) str += ',';
+        str += std::to_string(v);
+    }
+    return str;
+}
+
 void FailureDetection::process_heartbeat(const Packet& packet)
 {
-    Node& remote = gr->get_nodes().get_node(packet.meta.origin);
+    NodeMap& nodes = gr->get_nodes();
+    Node& remote = nodes.get_node(packet.meta.origin);
+
+    const HeartbeatData* data = reinterpret_cast<const HeartbeatData*>(packet.data.message_data);
+    
+    std::set<uint64_t> joined_groups;
+    for (size_t i = 0; i < HeartbeatData::MAX_GROUPS; i++) {
+        if (data->groups[i] == 0) break;
+        joined_groups.emplace(data->groups[i]);
+    }
+    int group_data_size = HeartbeatData::MAX_GROUPS * sizeof(uint64_t);
+    nodes.update_groups(remote, joined_groups);
 
     if (verbose) {
-        log_info("Received heartbeat from ", remote.get_id(), " (", packet.meta.origin.to_string(), ")");
+        std::string groups_str;
+        for (uint64_t group : joined_groups) {
+            if (groups_str.length()) groups_str += ',';
+            groups_str += std::to_string(group);
+        }
+        log_info(
+            "Received heartbeat from ", remote.get_id(), " (", packet.meta.origin.to_string(),
+            ") (groups=", groups_str, ")."
+        );
     }
 
-    int num_of_suspicions = packet.meta.message_length / SocketAddress::SERIALIZED_SIZE;
+    int num_of_suspicions = (packet.meta.message_length - group_data_size) / SocketAddress::SERIALIZED_SIZE;
     if (num_of_suspicions == 0) return;
-
 
     std::unordered_set<SocketAddress> &remote_suspicions = get_suspicions(remote.get_id());
     remote_suspicions.clear();
 
-    const HeartbeatData* data = reinterpret_cast<const HeartbeatData*>(packet.data.message_data);
 
     for (int i = 0; i < num_of_suspicions; i++) {
         if ((i + 1) * SocketAddress::SERIALIZED_SIZE > PacketData::MAX_MESSAGE_SIZE) break;
@@ -223,7 +252,12 @@ void FailureDetection::heartbeat(const Node& node)
 
     std::unordered_set<SocketAddress> &suspicions = get_suspicions(gr->get_local_node().get_id());
     Connection &conn = gr->get_connection(node);
-    conn.heartbeat(suspicions);
+
+    auto group_map = gr->get_joined_groups();
+    std::set<uint64_t> groups;
+    for (const auto& [id, _] : group_map) groups.emplace(id);
+
+    conn.heartbeat(groups, suspicions);
 
     schedule_heartbeat(node); // TODO: fazer só mandar msgs por um tempo pra quem nao ta inicializado
 }

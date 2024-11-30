@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <cstring>
+#include <set>
 #include <map>
 #include <exception>
 
@@ -19,21 +20,24 @@ enum NodeState {
     FAULTY = 3,
 };
 
+
+class NodeMap;
+
 class Node
 {
 private:
     std::string id;
-    uint32_t pid;
-
     SocketAddress address;
     bool remote;
 
+    uint32_t pid;
+    std::set<uint64_t> groups;
     NodeState state;
-
     bool leader;
-
     // Indica se está atualmente recebendo pacotes AB. Somente para o nodo local.
     bool receiving_ab_broadcast;
+
+    friend class NodeMap;
 
 public:
     Node(std::string id, SocketAddress address, NodeState state, bool remote);
@@ -97,18 +101,22 @@ template<> struct std::hash<Node&> {
 
 class NodeMap {
     std::map<std::string, Node> nodes;
+    std::unordered_map<uint64_t, std::unordered_set<Node*>> groups;
 public:
     NodeMap();
     NodeMap(std::map<std::string, Node> nodes);
 
     Node &get_node(std::string id);
     Node &get_node(const SocketAddress& address);
-
     Node *get_leader();
+    const std::unordered_set<Node*>& get_group(uint64_t hash) const;
 
     bool contains(const SocketAddress& address) const;
+    bool contains_group(uint64_t hash) const;
 
-    void add(Node& node);
+    void add(const Node& node);
+
+    void update_groups(Node& node, const std::set<uint64_t>& node_groups);
 
     std::map<std::string, Node>::iterator begin();
     std::map<std::string, Node>::iterator end();

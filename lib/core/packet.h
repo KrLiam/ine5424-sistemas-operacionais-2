@@ -193,7 +193,10 @@ struct RequestVoteData {
 };
 
 struct HeartbeatData {
-    char suspicions[PacketData::MAX_MESSAGE_SIZE];
+    static constexpr uint32_t MAX_GROUPS = 16;
+
+    uint64_t groups[MAX_GROUPS];
+    char suspicions[PacketData::MAX_MESSAGE_SIZE - sizeof(uint64_t)*MAX_GROUPS];
 };
 
 struct DiscoverData {

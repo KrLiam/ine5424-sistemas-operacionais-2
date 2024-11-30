@@ -38,11 +38,12 @@ void ChannelLayer::receiver()
 void ChannelLayer::send(Packet packet)
 {
     const SocketAddress& destination = packet.meta.destination;
+    uint64_t group_hash = packet.data.header.key_hash;
 
     if (destination == BROADCAST_ADDRESS) {
-        for (const auto& [id, node] : nodes) {
+        for (const Node* node : nodes.get_group(group_hash)) {
 
-            packet.meta.destination = node.get_address();
+            packet.meta.destination = node->get_address();
             channel->send(packet);
         }
     }

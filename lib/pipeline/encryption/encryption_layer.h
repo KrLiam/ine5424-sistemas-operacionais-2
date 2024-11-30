@@ -35,7 +35,7 @@ public:
 
     ~EncryptionLayer();
 
-    const std::unordered_map<uint64_t, GroupInfo> get_groups() const;
+    const std::unordered_map<uint64_t, GroupInfo>& get_groups() const;
 
     void attach(EventBus& bus);
 

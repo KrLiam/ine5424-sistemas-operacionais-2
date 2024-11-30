@@ -73,6 +73,11 @@ void GroupRegistry::update_leader_queue() {
     }
 }
 
+const std::unordered_map<uint64_t, GroupInfo>& GroupRegistry::get_joined_groups() const {
+    const EncryptionLayer& encryption_layer = pipeline->get_encryption_layer();
+    return encryption_layer.get_groups();
+}
+
 bool GroupRegistry::enqueue(Transmission& transmission) {
     if (transmission.to_leader()) {
         leader_transmissions.push(&transmission);

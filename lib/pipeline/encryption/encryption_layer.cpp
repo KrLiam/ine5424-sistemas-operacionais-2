@@ -10,7 +10,7 @@ EncryptionLayer::EncryptionLayer(PipelineHandler handler) : PipelineStep(handler
 
 EncryptionLayer::~EncryptionLayer() {}
 
-const std::unordered_map<uint64_t, GroupInfo> EncryptionLayer::get_groups() const { return groups; }
+const std::unordered_map<uint64_t, GroupInfo>& EncryptionLayer::get_groups() const { return groups; }
 
 void EncryptionLayer::attach(EventBus &bus)
 {

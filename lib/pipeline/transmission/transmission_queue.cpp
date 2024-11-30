@@ -34,10 +34,12 @@ void TransmissionQueue::send(uint32_t num) {
 
     if (entry.tries == 0) {
         if (receiver_address == BROADCAST_ADDRESS) {
-            for (const auto& [_, node] : nodes) {
-                if (node.get_address() == BROADCAST_ADDRESS) continue;
-                if (!node.is_alive()) continue;
-                entry.pending_receivers.emplace(&node);
+            uint64_t group_hash = packet.data.header.key_hash;
+            log_print(group_hash, " ", nodes.get_group(group_hash).size(), " ", nodes.size());
+            for (const Node* node : nodes.get_group(group_hash)) {
+                if (node->get_address() == BROADCAST_ADDRESS) continue;
+                if (!node->is_alive()) continue;
+                entry.pending_receivers.emplace(node);
             }
         }
         else {

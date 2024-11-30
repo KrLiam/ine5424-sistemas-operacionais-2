@@ -1,3 +1,5 @@
+#include <set>
+
 #include "communication/connection.h"
 #include "pipeline/pipeline.h"
 #include "utils/uuid.h"
@@ -607,15 +609,28 @@ void Connection::dispatch_to_sender(Packet p)
     request_update();
 }
 
-void Connection::heartbeat(std::unordered_set<SocketAddress> &suspicions)
-{
+void Connection::heartbeat(
+    std::set<uint64_t> joined_groups,
+    std::unordered_set<SocketAddress> &suspicions
+) {
     log_trace("Heartbeating to ", remote_node.get_address().to_string(), ".");
 
     HeartbeatData hb_data = {
+        groups: {0},
         suspicions: {0}
     };
 
     int total_size = 0;
+
+    uint32_t group_i = 0;
+    for (uint64_t group : joined_groups) {
+        if (group_i+1 > HeartbeatData::MAX_GROUPS) break;
+
+        hb_data.groups[group_i] = group;
+        group_i++;
+    }
+    total_size += HeartbeatData::MAX_GROUPS * sizeof(uint64_t);
+
     for (SocketAddress suspicion : suspicions) {
         if (total_size + SocketAddress::SERIALIZED_SIZE > PacketData::MAX_MESSAGE_SIZE) break;
         memcpy(&hb_data.suspicions[total_size], suspicion.serialize().c_str(), SocketAddress::SERIALIZED_SIZE);
