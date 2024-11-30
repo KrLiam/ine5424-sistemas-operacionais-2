@@ -25,7 +25,22 @@
 
 #include <vector>
 
+#include "utils/reader.h"
+
 typedef std::vector<unsigned char> ByteArray;
+
+template<> struct std::hash<ByteArray> {
+    std::size_t operator()(const ByteArray& value) const {
+        std::string str(value.begin(), value.end());
+        return std::hash<std::string>()(str);
+    }
+};
+
+uint8_t hex_to_int(char ch);
+char int_to_hex(uint8_t ch);
+
+std::string array_to_hex(ByteArray value);
+
 
 #define BLOCK_SIZE 16
 
@@ -34,6 +49,8 @@ class Aes256 {
     public:
         Aes256(const ByteArray& key);
         ~Aes256();
+
+        static ByteArray parse_hex_key(Reader&);
 
         static ByteArray::size_type encrypt(const ByteArray& key, const ByteArray& plain, ByteArray& encrypted);
         static ByteArray::size_type encrypt(const ByteArray& key, const unsigned char* plain, const ByteArray::size_type plain_length, ByteArray& encrypted);

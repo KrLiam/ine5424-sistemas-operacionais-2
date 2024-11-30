@@ -243,6 +243,30 @@ FaultConfig ConfigReader::parse_faults() {
     return config;
 }
 
+std::unordered_map<std::string, ByteArray> ConfigReader::parse_groups() {
+    expect('{');
+
+    std::unordered_map<std::string, ByteArray> groups;
+
+    while (!eof()) {
+        char ch = peek();
+        if (!ch || ch == '}') break;
+
+        std::string id = read_word();
+        expect('=');
+        ByteArray key = Aes256::parse_hex_key(*this);
+
+        if (groups.contains(id)) throw parse_error(format("Duplicated group entry of id '%s' in config file.", id.c_str()));
+        groups.emplace(id, key);
+
+        if (!read(',')) break;
+    }
+
+    expect('}');
+
+    return groups;
+}
+
 Config ConfigReader::parse()
 {
     reset();
@@ -272,6 +296,9 @@ Config ConfigReader::parse()
         }
         else if (target == "faults") {
             config.faults = parse_faults();
+        }
+        else if (target == "groups") {
+            config.groups = parse_groups();
         }
         else throw parse_error(
             format("Invalid '%s' at pos %i of config file.", target.c_str(), pos)

@@ -22,9 +22,34 @@
  */
 
 #include "aes256.h"
+#include "utils/format.h"
 
 #include <iostream>
 #include <stdlib.h>
+
+
+uint8_t hex_to_int(char ch) {
+    ch = tolower(ch);
+    if ('0' <= ch && ch <= '9') return ch - '0';
+    if ('a' <= ch && ch <= 'f') return ch - 'a' + 10;
+    return 255; // invalid
+}
+char int_to_hex(uint8_t i) {
+    if (0 <= i && i <= 9) return '0' + i;
+    if (10 <= i && i <= 15) return 'a' + i - 10;
+    return 127; // invalid
+}
+
+std::string array_to_hex(ByteArray value) {
+    std::string result;
+
+    for (uint8_t byte : value) {
+        result += int_to_hex((byte >> 4) % 16);
+        result += int_to_hex(byte % 16);
+    }
+
+    return result;
+}
 
 #define FE(x)  (((x) << 1) ^ ((((x)>>7) & 1) * 0x1b))
 #define FD(x)  (((x) >> 1) ^ (((x) & 1) ? 0x8d : 0))
@@ -117,6 +142,34 @@ Aes256::Aes256(const ByteArray& key)
 
 Aes256::~Aes256()
 {}
+
+
+ByteArray Aes256::parse_hex_key(Reader& reader) {
+    std::string value = reader.read_word();
+
+    for (char ch : value) {
+        if (hex_to_int(ch) == 255) throw parse_error(format("Invalid '%c' in hexadecimal key string.", ch));
+    }
+
+    if (value.length() % 2 != 0) {
+        value += '0';
+    };
+
+    if (value.length() > 64) throw parse_error(
+        format("Hexadecimal key string must have at most 64 characters (has %u).", value.length())
+    );
+
+    ByteArray key(32, 0);
+    for (size_t i = 0; i < value.length(); i += 2) {
+        char a = value[i];
+        char b = value[i + 1];
+
+        char byte = hex_to_int(a) << 4 | hex_to_int(b);
+        key[i / 2] = byte;
+    }
+
+    return key;
+}
 
 ByteArray::size_type Aes256::encrypt(const ByteArray& key, const ByteArray& plain, ByteArray& encrypted)
 {

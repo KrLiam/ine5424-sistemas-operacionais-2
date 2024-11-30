@@ -4,12 +4,14 @@
 #include <stdint.h>
 #include <cstring>
 #include <iostream>
+#include <unordered_map>
 #include <fstream>
 #include <algorithm>
 #include <vector>
 #include <netinet/in.h>
 
 #include "utils/reader.h"
+#include "utils/aes256.h"
 
 class config_error : public std::runtime_error {
 public:
@@ -158,6 +160,7 @@ struct Config
     unsigned int alive = 1000;
     BroadcastType broadcast = BroadcastType::BEB;
     FaultConfig faults;
+    std::unordered_map<std::string, ByteArray> groups;
 
     const NodeConfig &get_node(std::string id) const;
 
@@ -178,5 +181,6 @@ public:
     uint32_t parse_alive();
     BroadcastType parse_broadcast();
     FaultConfig parse_faults();
+    std::unordered_map<std::string, ByteArray> parse_groups();
     Config parse();
 };
