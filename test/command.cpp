@@ -9,23 +9,18 @@
 
 Command::Command(CommandType type) : type(type) {}
 
-TextCommand::TextCommand(std::string text, std::string send_id)
-    : Command(CommandType::text), text(text), send_id(send_id) {}
+TextCommand::TextCommand(std::string text, Destination dest)
+    : Command(CommandType::text), text(text), dest(dest) {}
 
 std::string TextCommand::name() const { return "text"; }
 
-BroadcastCommand::BroadcastCommand(std::string text)
-    : Command(CommandType::broadcast), text(text) {}
-
-std::string BroadcastCommand::name() const { return "broadcast"; }
-
-DummyCommand::DummyCommand(size_t size, std::string send_id)
-    : Command(CommandType::dummy), size(size), send_id(send_id) {}
+DummyCommand::DummyCommand(size_t size, Destination dest)
+    : Command(CommandType::dummy), size(size), dest(dest) {}
 
 std::string DummyCommand::name() const { return "dummy"; }
 
-FileCommand::FileCommand(std::string path, std::string send_id)
-    : Command(CommandType::file), path(path), send_id(send_id)  {}
+FileCommand::FileCommand(std::string path, Destination dest)
+    : Command(CommandType::file), path(path), dest(dest)  {}
 
 std::string FileCommand::name() const { return "file"; }
 
@@ -118,18 +113,27 @@ std::string parse_path(Reader& reader) {
     return value;
 }
 
-std::string parse_destination(Reader& reader) {
+Destination parse_destination(Reader& reader) {
     reader.expect("->");
 
-    if (reader.read('*')) return BROADCAST_ID;
+    Destination dest;
 
-    std::string send_id = reader.read_word();
+    if (reader.read('*')) {
+        dest.node = BROADCAST_ID;
+    }
+    else {
+        std::string node_id = reader.read_word();
+        if (!node_id.length()) throw std::invalid_argument(
+            format("Expected send id after -> at pos ", reader.get_pos())
+        );
+        dest.node = node_id;
+    }
 
-    if (!send_id.length()) throw std::invalid_argument(
-        format("Expected send id after -> at pos ", reader.get_pos())
-    );
+    if (reader.read("on")) {
+        dest.group = reader.read_word();
+    }
 
-    return send_id;
+    return dest;
 }
 
 FaultRule parse_fault_rule(Reader& reader) {
@@ -214,22 +218,18 @@ std::shared_ptr<Command> parse_command(Reader& reader) {
 
     if (keyword == "file") {
         std::string path = parse_path(reader);
-        std::string send_id = parse_destination(reader);
-        return std::make_shared<FileCommand>(path, send_id);
+        Destination dest = parse_destination(reader);
+        return std::make_shared<FileCommand>(path, dest);
     }
     if (keyword == "text" || (!keyword.length() && reader.peek() == '"') ) {
         std::string text = parse_string(reader);
-        std::string send_id = parse_destination(reader);
-        return std::make_shared<TextCommand>(text, send_id);
+        Destination dest = parse_destination(reader);
+        return std::make_shared<TextCommand>(text, dest);
     }
     if (keyword == "dummy") {
         int size = reader.read_int();
-        std::string send_id = parse_destination(reader);
-        return std::make_shared<DummyCommand>(size, send_id);
-    }
-    if (keyword == "broadcast") {
-        std::string text = parse_string(reader);
-        return std::make_shared<BroadcastCommand>(text);
+        Destination dest = parse_destination(reader);
+        return std::make_shared<DummyCommand>(size, dest);
     }
     if (keyword == "kill") {
         return std::make_shared<KillCommand>();

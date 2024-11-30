@@ -41,8 +41,8 @@ public:
 
     void add_fault_rule(const FaultRule& rule);
 
-    bool send(std::string id, MessageData data);
-    bool broadcast(MessageData data);
+    bool send(std::string group_id, std::string node_id, MessageData data);
+    bool broadcast(std::string group_id, MessageData data);
     ReceiveResult receive(char *m);
     ReceiveResult deliver(char *m);
 
@@ -68,10 +68,10 @@ private:
 
     ReceiveResult message_to_buffer(Message &message, char *m);
 
-    Message create_message(std::string receiver_id, const MessageData& data, MessageType msg_type);
-    Message create_message(SocketAddress receiver_address, const MessageData& data, MessageType msg_type);
+    Message create_message(uint64_t group_hash, std::string receiver_id, const MessageData& data, MessageType msg_type);
+    Message create_message(uint64_t group_hash, SocketAddress receiver_address, const MessageData& data, MessageType msg_type);
 
-    Transmission create_transmission(std::string receiver_id, const MessageData& data, MessageType msg_type);
+    Transmission create_transmission(uint64_t group_hash, std::string receiver_id, const MessageData& data, MessageType msg_type);
 
     void send_routine();
 };

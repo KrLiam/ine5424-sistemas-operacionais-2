@@ -164,7 +164,7 @@ void Process::deliver(ThreadArgs* args) {
 }
 
 bool Process::send_message(
-    std::string node_id,
+    Destination dest,
     MessageData data,
     [[maybe_unused]] std::string cmd_name,
     [[maybe_unused]] std::string data_description
@@ -174,33 +174,36 @@ bool Process::send_message(
         return false;
     }
 
+    std::string node_id = dest.node;
+    std::string group_id = dest.group;
+
     bool success = false;
     if (node_id == BROADCAST_ID) {
         log_info(
-            "Executing command '", cmd_name, "', broadcasting ", data_description, "."
+            "Executing command '", cmd_name, "', broadcasting ", data_description, " on group '", group_id, "'."
         );
-        success = comm->broadcast(data);
+        success = comm->broadcast(group_id, data);
     }
     else {
         log_info(
-            "Executing command '", cmd_name, "', sending ", data_description, " to node ", node_id, "."
+            "Executing command '", cmd_name, "', sending ", data_description, " to node ", node_id, " on group '", group_id, "'."
         );
-        success = comm->send(node_id, data);
+        success = comm->send(group_id, node_id, data);
     }
 
     bool broadcast = node_id == BROADCAST_ID;
 
     if (success && !broadcast) {
-        log_print("Successfully sent message to node ", node_id, ".");
+        log_print("Successfully sent message to node ", node_id, " on group '", group_id, "'.");
     }
     else if (success && broadcast) {
-        log_print("Successfully broadcasted message.");
+        log_print("Successfully broadcasted message on group '", group_id, "'.");
     }
     else if (!success && broadcast) {
-        log_print("Could not broadcast message.");
+        log_print("Could not broadcast message on group '", group_id, "'.");
     }
     else {
-        log_error("Could not send message to node ", node_id, ".");
+        log_error("Could not send message to node ", node_id, " on group '", group_id, "'.");
     }
 
     return success;
@@ -358,7 +361,7 @@ void Process::execute(const Command& command, ExecutionContext& ctx) {
             const std::string& text = cmd->text;
 
             send_message(
-                cmd->send_id,
+                cmd->dest,
                 {text.c_str(), text.length()},
                 cmd->name(),
                 format("'%s'", text.c_str())
@@ -366,20 +369,6 @@ void Process::execute(const Command& command, ExecutionContext& ctx) {
             return;
         }
         
-        if (command.type == CommandType::broadcast) {
-            const BroadcastCommand* cmd = static_cast<const BroadcastCommand*>(&command);
-
-            const std::string& text = cmd->text;
-
-            send_message(
-                BROADCAST_ID,
-                {text.c_str(), text.length()},
-                cmd->name(),
-                format("'%s'", text.c_str())
-            );
-            return;
-        }
-
         if (command.type == CommandType::dummy) {
             const DummyCommand* cmd = static_cast<const DummyCommand*>(&command);
 
@@ -389,7 +378,7 @@ void Process::execute(const Command& command, ExecutionContext& ctx) {
             create_dummy_data(data, size);
 
             send_message(
-                cmd->send_id,
+                cmd->dest,
                 {data, size},
                 cmd->name(),
                 format("%u bytes of dummy data", size)
@@ -410,7 +399,7 @@ void Process::execute(const Command& command, ExecutionContext& ctx) {
             if (file.read(buffer, size))
             {
                 send_message(
-                    cmd->send_id,
+                    cmd->dest,
                     {buffer, size},
                     cmd->name(),
                     format("%u bytes from file '%s'", size, path.c_str())

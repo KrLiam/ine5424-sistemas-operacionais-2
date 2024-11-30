@@ -85,7 +85,7 @@ ReceiveResult ReliableCommunication::deliver(char *m)
     return message_to_buffer(message, m);
 }
 
-bool ReliableCommunication::send(std::string id, MessageData data)
+bool ReliableCommunication::send(std::string group_id, std::string id, MessageData data)
 {
     if (data.size == std::size_t(-1))
         data.size = user_buffer_size;
@@ -99,7 +99,19 @@ bool ReliableCommunication::send(std::string id, MessageData data)
         return false;
     }
 
-    Transmission transmission = create_transmission(id, data, MessageType::SEND);
+    auto joined_groups = get_joined_groups();
+    uint64_t group_hash = 0;
+
+    if (joined_groups.contains(group_id)) {
+        const GroupInfo& group = joined_groups.at(group_id);
+        group_hash = group.hash;
+    }
+    else if (group_id.length()) {
+        log_error("Unable to send a message on group '", group_id, "' before joining it.");
+        return false;
+    }
+    
+    Transmission transmission = create_transmission(group_hash, id, data, MessageType::SEND);
     bool enqueued = gr->enqueue(transmission);
 
     if (!enqueued) {
@@ -116,7 +128,7 @@ bool ReliableCommunication::send(std::string id, MessageData data)
     return result.success;
 }
 
-bool ReliableCommunication::broadcast(MessageData data) {
+bool ReliableCommunication::broadcast(std::string group_id, MessageData data) {
     if (data.size == std::size_t(-1))
         data.size = user_buffer_size;
 
@@ -129,9 +141,21 @@ bool ReliableCommunication::broadcast(MessageData data) {
         return false;
     }
 
+    auto joined_groups = get_joined_groups();
+    uint64_t group_hash = 0;
+
+    if (joined_groups.contains(group_id)) {
+        const GroupInfo& group = joined_groups.at(group_id);
+        group_hash = group.hash;
+    }
+    else if (group_id.length()) {
+        log_error("Unable to send a message on group '", group_id, "' before joining it.");
+        return false;
+    }
+
     MessageType message_type = message_type::from_broadcast_type(config.broadcast);
     std::string receiver_id = message_type == MessageType::AB_REQUEST ? LEADER_ID : BROADCAST_ID;
-    Transmission transmission = create_transmission(receiver_id, data, message_type);
+    Transmission transmission = create_transmission(group_hash, receiver_id, data, message_type);
     gr->enqueue(transmission);
     
     TransmissionResult result = transmission.wait_result();
@@ -140,15 +164,16 @@ bool ReliableCommunication::broadcast(MessageData data) {
     return result.success;
 }
 
-Message ReliableCommunication::create_message(std::string receiver_id, const MessageData &data, MessageType msg_type) {
+Message ReliableCommunication::create_message(uint64_t group_hash, std::string receiver_id, const MessageData &data, MessageType msg_type) {
     const Node& receiver = gr->get_nodes().get_node(receiver_id);
-    return create_message(receiver.get_address(), data, msg_type);
+    return create_message(group_hash, receiver.get_address(), data, msg_type);
 }
-Message ReliableCommunication::create_message(SocketAddress receiver_address, const MessageData &data, MessageType msg_type)
+Message ReliableCommunication::create_message(uint64_t group_hash, SocketAddress receiver_address, const MessageData &data, MessageType msg_type)
 {
     const Node& local = gr->get_local_node();
 
     Message m = {
+        group_hash : group_hash,
         id : {
             origin : local.get_address(),
             msg_num : 0,
@@ -166,16 +191,16 @@ Message ReliableCommunication::create_message(SocketAddress receiver_address, co
 }
 
 Transmission ReliableCommunication::create_transmission(
-    std::string receiver_id, const MessageData &data, MessageType msg_type
+    uint64_t group_hash, std::string receiver_id, const MessageData &data, MessageType msg_type
 )
 {
     Message message;
     
     if (receiver_id == BROADCAST_ID || receiver_id == LEADER_ID) {
-        message = create_message({BROADCAST_ADDRESS, 0}, data, msg_type);
+        message = create_message(group_hash, {BROADCAST_ADDRESS, 0}, data, msg_type);
     }
     else {
-        message = create_message(receiver_id, data, msg_type);
+        message = create_message(group_hash, receiver_id, data, msg_type);
     }
 
     return Transmission(message, receiver_id);

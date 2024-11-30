@@ -108,6 +108,7 @@ struct Message
 {
     inline const static int MAX_SIZE = 65536;
 
+    uint64_t group_hash;
     MessageIdentity id;
     UUID transmission_uuid;
     // Endereço do processo que envia a mensagem. Pode ser diferente

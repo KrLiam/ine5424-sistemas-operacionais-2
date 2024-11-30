@@ -45,7 +45,7 @@ struct Process {
     void kill();
 
     bool send_message(
-        std::string node_id,
+        Destination dest,
         MessageData data,
         [[maybe_unused]] std::string cmd_name,
         [[maybe_unused]] std::string data_description

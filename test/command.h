@@ -21,6 +21,12 @@ enum class CommandType : char {
     group_leave = 13
 };
 
+
+struct Destination {
+    std::string node;
+    std::string group;
+};
+
 struct Command {
     CommandType type;
 protected:
@@ -31,35 +37,27 @@ protected:
 
 struct TextCommand : public Command {
     std::string text;
-    std::string send_id;
+    Destination dest;
 
-    TextCommand(std::string text, std::string send_id);
-
-    virtual std::string name() const;
-};
-
-struct BroadcastCommand : public Command {
-    std::string text;
-
-    BroadcastCommand(std::string text);
+    TextCommand(std::string text, Destination dest);
 
     virtual std::string name() const;
 };
 
 struct DummyCommand : public Command {
     size_t size;
-    std::string send_id;
+    Destination dest;
 
-    DummyCommand(size_t size, std::string send_id);
+    DummyCommand(size_t size, Destination dest);
 
     virtual std::string name() const;
 };
 
 struct FileCommand : public Command {
     std::string path;
-    std::string send_id;
+    Destination dest;
 
-    FileCommand(std::string path, std::string send_id);
+    FileCommand(std::string path, Destination dest);
 
     virtual std::string name() const;
 };
@@ -144,7 +142,7 @@ std::string parse_string(Reader& reader);
 
 std::string parse_path(Reader& reader);
 
-std::string parse_destination(Reader& reader);
+Destination parse_destination(Reader& reader);
 
 std::shared_ptr<SequenceCommand> parse_command_list(Reader& reader);
 std::shared_ptr<Command> parse_command(Reader& reader);

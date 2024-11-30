@@ -26,9 +26,13 @@ void EncryptionLayer::send(Packet packet)
         log_trace("Packet ", packet.to_string(PacketFormat::SENT), " sent to encryption layer.");
     }
 
-    uint64_t key_hash = 0;
+    uint64_t key_hash = packet.data.header.key_hash;
 
     if (key_hash != 0) {
+        if (!groups.contains(key_hash)) {
+            log_warn("Group with hash ", key_hash, " does not exist. Dropping packet ", packet.to_string(PacketFormat::SENT), ".");
+            return;
+        }
         const GroupInfo& group = groups.at(key_hash);
         ByteArray key = group.key;
 
