@@ -477,10 +477,12 @@ bool BroadcastConnection::enqueue(Transmission& transmission) {
     return dispatcher.enqueue(transmission);
 }
 
-bool BroadcastConnection::establish_all_connections() {
+bool BroadcastConnection::establish_all_connections(const std::unordered_set<std::string>& node_ids) {
     bool established = true;
 
-    for (auto& [node_id, connection] : connections) {
+    for (auto& node_id : node_ids) {
+        Connection& connection = connections.at(node_id);
+
         const Node& node = nodes.get_node(node_id);
         if (node.get_state() == NOT_INITIALIZED) {
             log_warn("Node ", node.get_id(), " is not initialized; broadcast will hang.");
@@ -509,7 +511,17 @@ void BroadcastConnection::update() {
     if (ab_dispatcher.is_empty() && dispatcher.is_empty()) return;
     if (ab_dispatcher.is_active() && dispatcher.is_active()) return;
 
-    bool established = establish_all_connections();
+    std::unordered_set<std::string> node_ids;
+    if (Transmission* t = dispatcher.get_next()) {
+        uint64_t group_hash = t->message.group_hash;
+        for (Node* node : nodes.get_group(group_hash)) node_ids.emplace(node->get_id());
+    }
+    if (Transmission* t = ab_dispatcher.get_next()) {
+        uint64_t group_hash = t->message.group_hash;
+        for (Node* node : nodes.get_group(group_hash)) node_ids.emplace(node->get_id());
+    }
+    
+    bool established = establish_all_connections(node_ids);
     if (!established) return;
 
     ab_dispatcher.update();

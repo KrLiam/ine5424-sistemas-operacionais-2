@@ -57,7 +57,7 @@ class BroadcastConnection {
     void try_deliver(const MessageIdentity&);
     void try_deliver_next_atomic();
     bool is_delivered(const MessageIdentity& id, bool is_atomic);
-    bool establish_all_connections();
+    bool establish_all_connections(const std::unordered_set<std::string>& node_ids);
 
     Observer<ConnectionEstablished> obs_connection_established;
     Observer<ReceiveSynchronization> obs_receive_synchronization;
