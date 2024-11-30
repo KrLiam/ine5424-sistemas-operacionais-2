@@ -39,7 +39,6 @@ void ChecksumLayer::receive(Packet packet)
 
     unsigned short received_checksum = packet.data.header.checksum;
     PacketData &data = packet.data;
-    data.header.key_hash = 0;
     data.header.checksum = 0;
 
     char buffer[PacketData::MAX_PACKET_SIZE];
