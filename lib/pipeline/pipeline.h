@@ -5,6 +5,7 @@
 #include "pipeline/pipeline_handler.h"
 #include "pipeline/pipeline_step.h"
 #include "pipeline/transmission/transmission_layer.h"
+#include "pipeline/encryption/encryption_layer.h"
 #include "pipeline/fragmentation/fragmentation_layer.h"
 #include "pipeline/fault_injection/fault_injection_layer.h"
 #include "core/event_bus.h"
@@ -45,10 +46,11 @@ private:
 
 public:
     static const unsigned int CHANNEL_LAYER = 0;
-    static const unsigned int FAULT_INJECTION_LAYER = 1;
-    static const unsigned int TRANSMISSION_LAYER = 2;
-    static const unsigned int CHECKSUM_LAYER = 3;
-    static const unsigned int FRAGMENTATION_LAYER = 4;
+    static const unsigned int ENCRYPTION_LAYER = 1;
+    static const unsigned int FAULT_INJECTION_LAYER = 2;
+    static const unsigned int TRANSMISSION_LAYER = 3;
+    static const unsigned int CHECKSUM_LAYER = 4;
+    static const unsigned int FRAGMENTATION_LAYER = 5;
 
     Pipeline(std::shared_ptr<GroupRegistry> gr, EventBus& event_bus, const FaultConfig& fault_config);
 

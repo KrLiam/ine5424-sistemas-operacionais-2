@@ -54,7 +54,6 @@ void Channel::shutdown_socket() const
 
 void Channel::send(Packet packet)
 {
-    [[maybe_unused]] const PacketHeader& header = packet.data.header;
     const SocketAddress destination = packet.meta.destination;
 
     if (destination == BROADCAST_ADDRESS) return;
@@ -67,7 +66,7 @@ void Channel::send(Packet packet)
     int bytes_sent = sendto(
         socket_descriptor,
         (char *)&packet.data,
-        packet.meta.message_length + sizeof(header),
+        packet.meta.message_length + sizeof(PacketHeader),
         0,
         reinterpret_cast<struct sockaddr*>(&out_address),
         sizeof(out_address));
@@ -82,7 +81,7 @@ void Channel::send(Packet packet)
         return;
     }
     if (!packet.silent()) {
-        log_info("Sent packet ", packet.to_string(PacketFormat::SENT), " (", bytes_sent, " bytes).");
+        log_info("Sent ", bytes_sent, " bytes to ", destination.to_string(), ".");
     }
     event_bus.notify(PacketSent(packet));
 }
@@ -107,7 +106,7 @@ Packet Channel::receive()
     packet.meta.origin = SocketAddress::from(in_address);
     packet.meta.destination = address;
     packet.meta.message_length = bytes_received - sizeof(PacketHeader);
-    packet.meta.silent = packet.data.header.get_message_type() == MessageType::HEARTBEAT;
+    packet.meta.silent = 0;
 
     return packet;
 }

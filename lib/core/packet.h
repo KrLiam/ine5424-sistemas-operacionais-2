@@ -13,6 +13,7 @@ const uint8_t LDR = 0b00000010;
 
 struct PacketHeader
 {
+    uint64_t key_hash;
     MessageIdentity id;
     uint32_t fragment_num;
     uint16_t checksum;
@@ -76,11 +77,13 @@ struct PacketHeader
 
 struct PacketData
 {
+    static const int PADDING = 10;
+
     static const int MAX_PACKET_SIZE = 1280;
-    static const int MAX_MESSAGE_SIZE = MAX_PACKET_SIZE - sizeof(PacketHeader);
+    static const int MAX_MESSAGE_SIZE = MAX_PACKET_SIZE - sizeof(PacketHeader) - PADDING;
 
     PacketHeader header;
-    char message_data[MAX_MESSAGE_SIZE];
+    char message_data[MAX_MESSAGE_SIZE + PADDING];
 };
 
 struct PacketMetadata

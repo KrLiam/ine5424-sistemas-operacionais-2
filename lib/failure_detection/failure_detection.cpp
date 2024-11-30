@@ -269,6 +269,7 @@ void FailureDetection::send_discover(const Node& node)
     PacketData data;
     memset(&data, 0, sizeof(PacketData));
     data.header = {
+        key_hash : 0,
         id : {
             origin : local_node.get_address(),
             msg_num : 0,

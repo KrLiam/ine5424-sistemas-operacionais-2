@@ -26,6 +26,7 @@ Packet Fragmenter::create_packet() {
 
     PacketData data = {
         header : {
+            key_hash : 0,
             id : message.id,
             fragment_num : i,
             checksum : 0,

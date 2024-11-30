@@ -628,6 +628,7 @@ void Connection::heartbeat(std::unordered_set<SocketAddress> &suspicions)
     memset(&data, 0, sizeof(PacketData));
     memcpy(data.message_data, &hb_data, sizeof(hb_data));
     data.header = {
+        key_hash : 0,
         id : {
             origin : local_node.get_address(),
             msg_num : 0,

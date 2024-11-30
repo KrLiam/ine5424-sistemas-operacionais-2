@@ -16,6 +16,7 @@ Packet create_ack(const Packet& packet, SocketAddress destination)
     memset(&data, 0, sizeof(PacketData));
 
     data.header = {
+        key_hash : 0,
         id : packet.data.header.id,
         fragment_num : packet.data.header.fragment_num,
         checksum : 0,
