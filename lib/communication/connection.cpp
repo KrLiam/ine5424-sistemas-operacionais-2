@@ -620,8 +620,6 @@ void Connection::heartbeat(
         suspicions: {0}
     };
 
-    int total_size = 0;
-
     uint32_t group_i = 0;
     for (uint64_t group : joined_groups) {
         if (group_i+1 > HeartbeatData::MAX_GROUPS) break;
@@ -629,13 +627,15 @@ void Connection::heartbeat(
         hb_data.groups[group_i] = group;
         group_i++;
     }
-    total_size += HeartbeatData::MAX_GROUPS * sizeof(uint64_t);
+    int total_size = HeartbeatData::MAX_GROUPS * sizeof(uint64_t);
 
+    int suspicions_size = 0;
     for (SocketAddress suspicion : suspicions) {
-        if (total_size + SocketAddress::SERIALIZED_SIZE > PacketData::MAX_MESSAGE_SIZE) break;
-        memcpy(&hb_data.suspicions[total_size], suspicion.serialize().c_str(), SocketAddress::SERIALIZED_SIZE);
-        total_size += SocketAddress::SERIALIZED_SIZE;
+        if (total_size + suspicions_size + SocketAddress::SERIALIZED_SIZE > PacketData::MAX_MESSAGE_SIZE) break;
+        memcpy(&hb_data.suspicions[suspicions_size], suspicion.serialize().c_str(), SocketAddress::SERIALIZED_SIZE);
+        suspicions_size += SocketAddress::SERIALIZED_SIZE;
     }
+    total_size += suspicions_size;
 
     uint8_t flags = local_node.is_leader() ? LDR : 0;
 

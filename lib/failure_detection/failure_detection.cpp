@@ -140,7 +140,6 @@ void FailureDetection::process_heartbeat(const Packet& packet)
     std::unordered_set<SocketAddress> &remote_suspicions = get_suspicions(remote.get_id());
     remote_suspicions.clear();
 
-
     for (int i = 0; i < num_of_suspicions; i++) {
         if ((i + 1) * SocketAddress::SERIALIZED_SIZE > PacketData::MAX_MESSAGE_SIZE) break;
 
