@@ -14,6 +14,10 @@
 #include "raft/raft.h"
 #include "utils/observer.h"
 
+
+std::string generate_node_id(const SocketAddress& address);
+
+
 class Pipeline;
 
 class GroupRegistry

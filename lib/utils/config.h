@@ -104,7 +104,7 @@ struct SocketAddress
 
 template<> struct std::hash<SocketAddress> {
     std::size_t operator()(const SocketAddress& p) const {
-        return std::hash<IPv4>()(p.address) ^ std::hash<int>()(p.port);
+        return std::hash<IPv4>()(p.address) ^ std::hash<uint16_t>()(p.port);
     }
 };
 

@@ -12,6 +12,8 @@ ReliableCommunication::ReliableCommunication(
     user_buffer_size(user_buffer_size)
 {
     const NodeConfig* node_config = config.get_node(local_id);
+    if (!node_config) throw std::invalid_argument(format("Node '%s' does not exist in the config.", local_id.c_str()));
+
     log_info("Initializing node ", node_config->id, " (", node_config->address.to_string(), ").");
 
     gr = std::make_shared<GroupRegistry>(local_id, config, event_bus);

@@ -308,12 +308,8 @@ void Runner::run_node(
         id = node->id;
     }
     else if (args.port > 0) {
-        if (!id.length()) {
-            int i = 0;
-            while (config.get_node(std::to_string(i))) i++;
-            id = std::to_string(i);
-        }
-        config.nodes.push_back({id, address});
+        id = generate_node_id(address);
+        config.nodes.push_back(NodeConfig{id, address});
     }
     else {
         if (id.length()) throw std::invalid_argument(

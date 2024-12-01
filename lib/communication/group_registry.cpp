@@ -1,6 +1,11 @@
 #include "communication/group_registry.h"
 #include "pipeline/pipeline.h"
 
+
+std::string generate_node_id(const SocketAddress& address) {
+    return std::to_string(std::hash<SocketAddress>()(address));
+}
+
 GroupRegistry::GroupRegistry(std::string local_id, Config config, EventBus& event_bus) :
     event_bus(event_bus),
     local_id(local_id),
@@ -121,7 +126,7 @@ bool GroupRegistry::contains(const SocketAddress& address) const
 
 Node &GroupRegistry::add(const SocketAddress& address)
 {
-    std::string id = std::to_string(std::hash<SocketAddress>{}(address));
+    std::string id = generate_node_id(address);
     Node node(id, address, NOT_INITIALIZED, true);
     nodes.add(node);
 
