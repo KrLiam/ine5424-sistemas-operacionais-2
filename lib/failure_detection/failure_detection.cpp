@@ -284,11 +284,15 @@ void FailureDetection::attach()
     obs_packet_received.on(std::bind(&FailureDetection::packet_received, this, _1));
     obs_packet_sent.on(std::bind(&FailureDetection::packet_sent, this, _1));
     obs_node_up.on(std::bind(&FailureDetection::node_up, this, _1));
+    obs_join_group.on(std::bind(&FailureDetection::join_group, this, _1));
+    obs_leave_group.on(std::bind(&FailureDetection::leave_group, this, _1));
     event_bus.attach(obs_connection_established);
     event_bus.attach(obs_connection_closed);
     event_bus.attach(obs_packet_received);
     event_bus.attach(obs_packet_sent);
     event_bus.attach(obs_node_up);
+    event_bus.attach(obs_join_group);
+    event_bus.attach(obs_leave_group);
 }
 
 void FailureDetection::node_up(const NodeUp &event)
@@ -399,4 +403,18 @@ void FailureDetection::discover(const SocketAddress& address)
     Node& node = gr->add(address);
     log_info("New node discovered at ", address.to_string(), " (identified by ", node.get_id(), ")");
     schedule_heartbeat(node);
+}
+
+void FailureDetection::join_group(const JoinGroup &event)
+{
+    mtx.lock();
+    for (auto &[_, node] : gr->get_nodes()) heartbeat(node);
+    mtx.unlock();
+}
+
+void FailureDetection::leave_group(const LeaveGroup &event)
+{
+    mtx.lock();
+    for (auto &[_, node] : gr->get_nodes()) heartbeat(node);
+    mtx.unlock();
 }

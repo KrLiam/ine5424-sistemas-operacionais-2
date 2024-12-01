@@ -40,12 +40,16 @@ class FailureDetection
     Observer<PacketReceived> obs_packet_received;
     Observer<PacketSent> obs_packet_sent;
     Observer<NodeUp> obs_node_up;
+    Observer<JoinGroup> obs_join_group;
+    Observer<LeaveGroup> obs_leave_group;
 
     void connection_established(const ConnectionEstablished &event);
     void connection_closed(const ConnectionClosed &event);
     void packet_received(const PacketReceived &event);
     void packet_sent(const PacketSent &event);
     void node_up(const NodeUp &event);
+    void join_group(const JoinGroup &event);
+    void leave_group(const LeaveGroup &event);
 
     void failure_detection_routine();
 
