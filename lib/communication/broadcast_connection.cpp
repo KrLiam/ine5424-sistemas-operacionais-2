@@ -179,7 +179,7 @@ void BroadcastConnection::packet_received(const PacketReceived &event)
     }
     if (message_number > sequence->next_number)
     {
-        if (!is_atomic)
+        /*if (!is_atomic)
         {
             log_debug(
             "Received ",
@@ -191,18 +191,19 @@ void BroadcastConnection::packet_received(const PacketReceived &event)
             "; ignoring it."
             );
             return;
-        }
-        // TODO: testar isso, acho que o único jeito seria definindo manualmente no código os valores iniciais
+        }*/
         log_debug(
-            "Received atomic broadcast with sequence number higher than the current one [",
+            "Received ",
+            is_atomic ? "atomic broadcast" : "broadcast",
+            " with sequence number higher than the current one [",
             sequence->next_number,
             "]; ",
-            "jumping atomic sequence number to ",
+            "jumping sequence number to ",
             message_number,
             "."
         );
         sequence->next_number = message_number;
-        if (!has_pending_ab_delivery()) ab_next_deliver = message_number;  // Se tem uma entrega AB pendente, o ab_next_deliver vai pular no try_deliver_next_atomic()
+        if (is_atomic && !has_pending_ab_delivery()) ab_next_deliver = message_number;  // Se tem uma entrega AB pendente, o ab_next_deliver vai pular no try_deliver_next_atomic()
     }
 
     receive_fragment(packet);
