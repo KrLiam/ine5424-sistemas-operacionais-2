@@ -72,6 +72,10 @@ GroupLeaveCommand::GroupLeaveCommand(std::string id)
 
 std::string GroupLeaveCommand::name() const { return "group leave"; }
 
+NodeListCommand::NodeListCommand() : Command(CommandType::node_list) {}
+
+std::string NodeListCommand::name() const { return "node list"; }
+
 
 std::string parse_string(Reader& reader) {
     reader.expect('"');
@@ -275,6 +279,12 @@ std::shared_ptr<Command> parse_command(Reader& reader) {
         }
 
         throw parse_error(format("Invalid group command at pos %i", pos));
+    }
+    if (keyword == "node") {
+        int pos = reader.get_pos();
+        std::string action = reader.read_word();
+
+        if (action == "list") return std::make_shared<NodeListCommand>();
     }
 
     if (keyword.length()) {

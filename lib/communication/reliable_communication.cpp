@@ -286,3 +286,14 @@ std::unordered_map<std::string, GroupInfo> ReliableCommunication::get_available_
 
     return available;
 }
+
+std::unordered_map<uint64_t, GroupInfo> ReliableCommunication::get_registered_groups() {
+    std::unordered_map<uint64_t, GroupInfo> groups;
+
+    for (const auto& [id, key] : config.groups) {
+        GroupInfo group(id, key);
+        groups.emplace(group.hash, group);
+    }
+
+    return groups;
+}

@@ -247,6 +247,47 @@ void Process::execute_group_list() {
     log_print(out);
 }
 
+void Process::execute_node_list() {
+    GroupRegistry& gr = *comm->get_group_registry();
+    auto groups = comm->get_registered_groups();
+    auto joined_groups = comm->get_joined_groups();
+    NodeMap& nodes = gr.get_nodes();
+
+    std::string out;
+
+    out += format("Showing %u node(s).\n", nodes.size());
+    
+    for (const auto& [_, node] : nodes) {
+        Connection& connection = gr.get_connection(node.get_id());
+
+        const char* local_marker = node.is_remote() ? "" : " (local)";
+
+        std::string group_list;
+        for (uint64_t hash : node.get_groups()) {
+            if (group_list.length()) group_list += ", ";
+
+            if (groups.contains(hash)) {
+                std::string id = groups.at(hash).id;
+                const char* color = joined_groups.contains(id) ? H_BLUE : "";
+                group_list += format("%s%s" COLOR_RESET, color, id.c_str());
+            }
+            else group_list += format(H_BLACK "%s" COLOR_RESET, std::to_string(hash).c_str());
+        }
+        std::string groups_str = group_list.size() ? group_list : H_BLACK "none" COLOR_RESET;
+
+        out += format(
+            YELLOW "%s" COLOR_RESET "%s - address: " H_BLACK "%s" COLOR_RESET ", state: " H_BLACK "%s" COLOR_RESET ", connection: " H_BLACK "%s" COLOR_RESET ", groups: %s\n",
+            node.get_id().c_str(),
+            local_marker,
+            node.get_address().to_string().c_str(),
+            node.get_state_name().c_str(),
+            connection.get_current_state_name().c_str(),
+            groups_str.c_str()
+        );
+    }
+
+    log_print(out);
+}
 
 void Process::execute(const Command& command) {
     ExecutionContext ctx;
@@ -318,6 +359,11 @@ void Process::execute(const Command& command, ExecutionContext& ctx) {
 
         if (command.type == CommandType::group_list) {
             execute_group_list();
+            return;
+        }
+
+        if (command.type == CommandType::node_list) {
+            execute_node_list();
             return;
         }
 

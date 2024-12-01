@@ -19,6 +19,12 @@ enum NodeState {
     SUSPECT = 2,
     FAULTY = 3,
 };
+static std::unordered_map<NodeState, std::string> NODE_STATE_NAMES = {
+    {NOT_INITIALIZED, "not_initialized"},
+    {ACTIVE, "active"},
+    {SUSPECT, "suspect"},
+    {FAULTY, "faulty"}
+};
 
 
 class NodeMap;
@@ -61,6 +67,11 @@ public:
         this->state = state;
     }
 
+    std::string get_state_name() const
+    {
+        return NODE_STATE_NAMES.at(state);
+    }
+
     bool is_leader() const
     {
         return leader;
@@ -87,6 +98,8 @@ public:
     {
         this->pid = pid;
     }
+
+    const std::set<uint64_t>& get_groups() const;
 
     std::string to_string() const;
 

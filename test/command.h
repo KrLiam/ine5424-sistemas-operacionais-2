@@ -21,7 +21,8 @@ enum class CommandType : char {
     repeat = 10,
     group_list = 11,
     group_join = 12,
-    group_leave = 13
+    group_leave = 13,
+    node_list = 14
 };
 
 
@@ -140,6 +141,13 @@ struct GroupLeaveCommand : public Command {
 
     virtual std::string name() const;
 };
+
+struct NodeListCommand : public Command {
+    NodeListCommand();
+
+    virtual std::string name() const;
+};
+
 
 std::string parse_string(Reader& reader);
 

@@ -119,7 +119,6 @@ private:
 
     void cancel_transmissions();
 
-    std::string get_current_state_name();
     void change_state(ConnectionState new_state);
 
     void observe_pipeline();
@@ -150,6 +149,7 @@ public:
     );
 
     ConnectionState get_state() const;
+    std::string get_current_state_name();
 
     bool enqueue(Transmission& transmission);
 

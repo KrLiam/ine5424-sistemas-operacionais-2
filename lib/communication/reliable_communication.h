@@ -48,6 +48,7 @@ public:
 
     std::unordered_map<std::string, GroupInfo> get_joined_groups();
     std::unordered_map<std::string, GroupInfo> get_available_groups();
+    std::unordered_map<uint64_t, GroupInfo> get_registered_groups();
     bool register_group(std::string id, ByteArray key);
     bool join_group(std::string id);
     bool leave_group(std::string id);

@@ -52,6 +52,7 @@ struct Process {
     );
 
     void execute_group_list();
+    void execute_node_list();
 
     void execute(const Command& command);
     void execute(std::vector<std::shared_ptr<Command>> commands);

@@ -97,15 +97,6 @@ void FailureDetection::packet_sent(const PacketSent &event) {
     schedule_heartbeat(node);
 }
 
-template <typename T>
-std::string join_string(T value) {
-    std::string str;
-    for (uint64_t v : value) {
-        if (str.length()) str += ',';
-        str += std::to_string(v);
-    }
-    return str;
-}
 
 void FailureDetection::process_heartbeat(const Packet& packet)
 {

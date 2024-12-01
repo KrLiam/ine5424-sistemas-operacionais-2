@@ -23,6 +23,8 @@ bool Node::is_remote() const
     return remote;
 }
 
+const std::set<uint64_t>& Node::get_groups() const { return groups; }
+
 std::string Node::to_string() const
 {
     return format("%s:%s:%i", id.c_str(), address.to_string().c_str(), remote);
