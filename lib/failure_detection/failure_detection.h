@@ -60,7 +60,6 @@ class FailureDetection
 
     void send_discover(const Node& node);
     void process_discover(Packet& packet);
-    void discover(const SocketAddress& address);
     void send_discover_ack(const Packet& packet);
 
 public:
@@ -72,6 +71,8 @@ public:
     );
 
     ~FailureDetection();
+    
+    void discover(const SocketAddress& address);
 
     void terminate();
 

@@ -111,15 +111,22 @@ uint32_t IntRange::length() {
     return max - min + 1;
 }
 
-const NodeConfig &Config::get_node(std::string id) const
+const NodeConfig *Config::get_node(std::string id) const
 {
     for (const NodeConfig &node : nodes)
     {
         if (node.id == id)
-            return node;
+            return &node;
     }
-    throw std::invalid_argument(
-        format("Node id %s not found in config.", id.c_str()));
+    return nullptr;
+}
+const NodeConfig* Config::get_node(SocketAddress address) const
+{
+    for (const NodeConfig &node : nodes) {
+        if (node.address == address)
+            return &node;
+    }
+    return nullptr;
 }
 
 std::string Config::to_string() const

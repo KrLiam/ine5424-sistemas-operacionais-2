@@ -26,9 +26,9 @@ class Runner {
     const Arguments& args;
     
     void run_node(
-        const std::string& id,
+        std::string id,
         std::shared_ptr<Command> command,
-        const Config& config,
+        Config config,
         bool execute_client,
         bool auto_init,
         uint32_t min_lifespan

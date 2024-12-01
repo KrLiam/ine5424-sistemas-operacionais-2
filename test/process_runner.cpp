@@ -290,14 +290,50 @@ void Runner::run_test(const std::string& case_path_str) {
 }
 
 void Runner::run_node(
-    const std::string& id,
+    std::string id,
     std::shared_ptr<Command> command,
-    const Config& config,
+    Config config,
     bool execute_client,
     bool auto_init,
     uint32_t min_lifespan
 ) {
     uint64_t start_time = DateUtils::now();
+
+    SocketAddress address{{127, 0, 0, 1}, args.port};
+
+    if (const NodeConfig* node = config.get_node(id)) {
+        address = node->address;
+    }
+    else if (const NodeConfig* node = config.get_node(address)) {
+        id = node->id;
+    }
+    else if (args.port > 0) {
+        if (!id.length()) {
+            int i = 0;
+            while (config.get_node(std::to_string(i))) i++;
+            id = std::to_string(i);
+        }
+        config.nodes.push_back({id, address});
+    }
+    else {
+        if (id.length()) throw std::invalid_argument(
+            format("Node '%s' is not default, specify the port to be used.\nUsage: %s %s -p <port>",
+            id.c_str(),
+            args.program_name.c_str(),
+            id.c_str()
+        )
+        );
+        throw std::invalid_argument(format(
+            "Missing node arguments. Either provide a node id that is present in the config file or provide a valid port."
+            "\nUsage: %s <config-node-id>"
+            "\nUsage: %s <id> -p <port>"
+            "\nUsage: %s -p <port>",
+            args.program_name.c_str(),
+            args.program_name.c_str(),
+            args.program_name.c_str()
+        ));
+    }
+
     Process proc(id, Message::MAX_SIZE, !args.test, args.verbose, config);
 
     if (auto_init) {

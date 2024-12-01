@@ -53,6 +53,8 @@ public:
     bool join_group(std::string id);
     bool leave_group(std::string id);
 
+    void discover_node(const SocketAddress& address);
+
     std::shared_ptr<GroupRegistry> get_group_registry();
 
 private:

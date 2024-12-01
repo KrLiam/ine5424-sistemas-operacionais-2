@@ -11,8 +11,8 @@ ReliableCommunication::ReliableCommunication(
     config(cfg),
     user_buffer_size(user_buffer_size)
 {
-    const NodeConfig& node_config = config.get_node(local_id);
-    log_info("Initializing node ", node_config.id, " (", node_config.address.to_string(), ").");
+    const NodeConfig* node_config = config.get_node(local_id);
+    log_info("Initializing node ", node_config->id, " (", node_config->address.to_string(), ").");
 
     gr = std::make_shared<GroupRegistry>(local_id, config, event_bus);
     pipeline = std::make_shared<Pipeline>(gr, event_bus, config.faults);
@@ -262,6 +262,10 @@ bool ReliableCommunication::leave_group(std::string id)
     event_bus.notify(LeaveGroup(id, key_hash));
 
     return true;
+}
+
+void ReliableCommunication::discover_node(const SocketAddress& address) {
+    failure_detection->discover(address);
 }
 
 std::unordered_map<std::string, GroupInfo> ReliableCommunication::get_joined_groups() {

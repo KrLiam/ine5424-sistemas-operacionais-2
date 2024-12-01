@@ -10,7 +10,9 @@
 
 
 struct Arguments {
+    std::string program_name;
     std::string node_id;
+    uint16_t port = 0;
     std::vector<std::shared_ptr<Command>> send_commands;
 
     bool verbose = false;

@@ -162,7 +162,8 @@ struct Config
     FaultConfig faults;
     std::unordered_map<std::string, ByteArray> groups;
 
-    const NodeConfig &get_node(std::string id) const;
+    const NodeConfig* get_node(std::string id) const;
+    const NodeConfig* get_node(SocketAddress address) const;
 
     std::string to_string() const;
 };

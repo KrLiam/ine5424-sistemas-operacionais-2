@@ -2,6 +2,8 @@
 
 Arguments parse_arguments(int argc, char* argv[]) {
     Arguments args;
+    
+    args.program_name = argv[0];
 
     std::string value;
     for (int i=1; i < argc; i++) {
@@ -18,7 +20,7 @@ Arguments parse_arguments(int argc, char* argv[]) {
             format("Missing case file path. Usage:\n%s test <case>", argv[0])
         );
     }
-    else {
+    else if (reader.peek() != '-') {
         args.node_id = reader.read_word();
 
         if (!args.node_id.length()) throw std::invalid_argument(
@@ -52,8 +54,10 @@ Arguments parse_arguments(int argc, char* argv[]) {
         if ((!long_arg && flag == "s") || (long_arg && flag=="send")) {
             args.send_commands = parse_commands(reader);
         }
+        else if ((!long_arg && flag=="p") || (long_arg && flag=="port")) {
+            args.port = reader.read_int();
+        }
         else if ((!long_arg && flag=="v") || (long_arg && flag=="verbose")) {
-            log_print("peeking '", reader.peek(), "', is digit ", isdigit(reader.peek()));
             args.verbose = isdigit(reader.peek()) ? reader.read_int() : true;
         }
         else if ((!long_arg && flag=="t") || (long_arg && flag=="log-tail")) {
