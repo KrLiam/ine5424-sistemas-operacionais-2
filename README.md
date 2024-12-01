@@ -3,7 +3,7 @@
 > Projeto da disciplina de Sistemas Operacionais II (INE5424) do grupo A.
 
 ## Requisitos
-
+a
 - C++ 20
 
 ## Como compilar
@@ -82,9 +82,9 @@ Também é possível definir o comando a ser executado assim que o processo inic
 Isso seria equivalente a executar `"hi" -> 0` manualmente na linha de comando assim que o processo iniciasse.
 
 ### Comandos disponíveis
-- `text <message> -> <id>`: Envia a string `message` para o nó `id`. A palavra-chave `text` pode ser omitida. Exemplos: `text "Hello world" -> 1`, `"Bye" -> 0`.
-- `file <path> -> <id>`: Envia o arquivo em `path` para o nó `id`. Exemplo: `file "teste.png" -> 0` (envia o arquivo `teste.png` para 0).
-- `dummy <size> -> <id>`: Envia um texto de teste de tamanho `size` para o nó `id`. Exemplo: `dummy 1 -> 0` (envia 1 byte pra 0), `dummy 50000 -> 1` (envia 50000 bytes a 1).
+- `text <message> -> <id> [on <group>]`: Envia a string `message` para o nó `id` através do grupo `group`. A palavra-chave `text` pode ser omitida. Caso o grupo não seja informado, a mensagem é enviada através do grupo público. Exemplos: `text "Hello world" -> 1`, `"Bye" -> 0 on A`.
+- `file <path> -> <id> [on <group>]`: Envia o arquivo em `path` para o nó `id`. Exemplo: `file "teste.png" -> 0` (envia o arquivo `teste.png` para 0).
+- `dummy <size> -> <id> [on <group>]`: Envia um texto de teste de tamanho `size` para o nó `id`. Exemplo: `dummy 1 -> 0` (envia 1 byte pra 0), `dummy 50000 -> 1` (envia 50000 bytes a 1).
 - `kill`: Mata o nó local.
 - `init`: Inicia o nó local caso esteja morto.
 - `sleep <ms>`: Faz com que o nó durma por `ms` milésimos.
@@ -104,6 +104,10 @@ Por exemplo, `[async "c" -> 2; async "d" -> 3]; kill` fará com que o nó envie 
     - `fault drop 1u 1x`: Perca uma vez qualquer fragmento da mensagem de unicast de número 1.
     - `fault drop * 5%`: Perca qualquer pacote com 5% de chance (similar ao campo `faults` da configuração)
     - `fault drop * 5%, drop 1/0 1x`: Perca qualquer pacote com 5% de chance e perca o fragmento 0 da mensagem de número 1 uma vez (100% de chance).
+- `node list`: Lista os nós conhecidos.
+- `node discover <endpoint>`: Adiciona o nó em `endpoint` à lista de nós conhecidos e tenta fazer o _discover_ do mesmo. Exemplo: `node discover 127.0.0.1:3000`.
+- `group join <name> [<key>]`: Entra no grupo `name` identificado pela chave `key`. A chave `key` pode ser omitida caso o grupo esteja registrado no arquivo de configuração `nodes.conf`. Exemplos: `group join novo-grupo AF87BFD4F90DDF851A66923B694627AC651871D84033E22A35BE3F97465B4CB3`, `group join A`.
+- `group leave <name>`: Sai do grupo `name`.
 - `exit`: Encerra o processo.
 - `help`: Exibe lista de comandos e flags disponíveis.
 
