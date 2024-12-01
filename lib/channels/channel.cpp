@@ -1,7 +1,7 @@
 #include "channels/channel.h"
 
-Channel::Channel(const SocketAddress local_address, EventBus& event_bus)
-    : event_bus(event_bus), address(local_address)
+Channel::Channel(const SocketAddress local_endpoint, EventBus& event_bus)
+    : event_bus(event_bus), local_endpoint(local_endpoint)
 {
     open_socket();
 }
@@ -20,8 +20,8 @@ void Channel::open_socket() {
 
     memset(&in_address, 0, sizeof(sockaddr_in));
     in_address.sin_family = AF_INET;
-    in_address.sin_port = htons(address.port);
-    in_address.sin_addr.s_addr = INADDR_ANY;
+    in_address.sin_port = htons(local_endpoint.port);
+    in_address.sin_addr.s_addr = inet_addr(local_endpoint.address.to_string().c_str());
 
     memset(&out_address, 0, sizeof(sockaddr_in));
     out_address.sin_family = AF_INET;
@@ -33,11 +33,11 @@ void Channel::open_socket() {
         );
     if (bind_result < 0) {
         throw port_in_use_error(
-            format("Port %d is already in use. This is likely not an issue with the library.", address.port)
+            format("Port %d is already in use. This is likely not an issue with the library.", local_endpoint.port)
         );
     }
 
-    log_debug("Successfully binded socket to port ", address.port, ".");
+    log_debug("Successfully binded socket to port ", local_endpoint.port, ".");
 }
 
 
@@ -104,7 +104,7 @@ Packet Channel::receive()
         throw std::runtime_error("Socket closed.");
 
     packet.meta.origin = SocketAddress::from(in_address);
-    packet.meta.destination = address;
+    packet.meta.destination = local_endpoint;
     packet.meta.message_length = bytes_received - sizeof(PacketHeader);
     packet.meta.silent = 0;
 

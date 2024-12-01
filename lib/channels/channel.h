@@ -17,7 +17,7 @@
 class Channel
 {
 public:
-    explicit Channel(SocketAddress local_address, EventBus& event_bus);
+    explicit Channel(SocketAddress local_endpoint, EventBus& event_bus);
     ~Channel();
 
     void send(Packet packet);
@@ -27,7 +27,7 @@ public:
 private:
     EventBus& event_bus;
 
-    SocketAddress address;
+    SocketAddress local_endpoint;
     Packet buffer;
     std::mutex send_mutex;
 
