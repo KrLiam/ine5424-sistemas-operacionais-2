@@ -372,7 +372,7 @@ void FailureDetection::process_discover(Packet& packet)
         if ((i + 1) * SocketAddress::SERIALIZED_SIZE > PacketData::MAX_MESSAGE_SIZE) break;
 
         SocketAddress address = SocketAddress::deserialize(&data->nodes[i * SocketAddress::SERIALIZED_SIZE]);
-        if (!gr->contains(address)) discover(address);
+        if (!gr->contains(address)) discover(address, true);
     }
 }
 
