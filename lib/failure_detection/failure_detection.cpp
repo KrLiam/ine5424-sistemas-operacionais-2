@@ -264,16 +264,17 @@ void FailureDetection::heartbeat(const Node& node)
 
     conn.heartbeat(groups, suspicions);
 
-    schedule_heartbeat(node); // TODO: fazer só mandar msgs por um tempo pra quem nao ta inicializado
+    schedule_heartbeat(node);
 }
 
 void FailureDetection::schedule_heartbeat(const Node& node)
 {
     std::string id = node.get_id();
+    int timeout = node.is_alive() ? alive : alive * ALIVE_TOLERANCE;
 
     hb_timers_mtx.lock();
     if (hb_timers.contains(id)) TIMER.cancel(hb_timers[id]);
-    hb_timers[id] = TIMER.add(alive, [this, node]()
+    hb_timers[id] = TIMER.add(timeout, [this, node]()
     {
         mtx.lock();
         heartbeat(node);
