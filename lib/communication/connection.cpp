@@ -627,7 +627,8 @@ void Connection::heartbeat(
         hb_data.groups[group_i] = group;
         group_i++;
     }
-    int total_size = HeartbeatData::MAX_GROUPS * sizeof(uint64_t);
+
+    int total_size = suspicions.size() ? HeartbeatData::MAX_GROUPS * sizeof(uint64_t) : group_i * sizeof(uint64_t);
 
     int suspicions_size = 0;
     for (SocketAddress suspicion : suspicions) {

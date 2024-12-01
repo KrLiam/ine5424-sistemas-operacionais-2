@@ -114,12 +114,15 @@ void FailureDetection::process_heartbeat(const Packet& packet)
 
     const HeartbeatData* data = reinterpret_cast<const HeartbeatData*>(packet.data.message_data);
     
+    uint32_t possible_num_of_groups = packet.meta.message_length / sizeof(uint64_t);
+    int num_of_groups = std::min(possible_num_of_groups, HeartbeatData::MAX_GROUPS);
+
     std::set<uint64_t> joined_groups;
-    for (size_t i = 0; i < HeartbeatData::MAX_GROUPS; i++) {
+    for (size_t i = 0; i < num_of_groups; i++) {
         if (data->groups[i] == 0) break;
         joined_groups.emplace(data->groups[i]);
     }
-    int group_data_size = HeartbeatData::MAX_GROUPS * sizeof(uint64_t);
+    int group_data_size = num_of_groups * sizeof(uint64_t);
     nodes.update_groups(remote, joined_groups);
 
     if (verbose) {
@@ -134,7 +137,10 @@ void FailureDetection::process_heartbeat(const Packet& packet)
         );
     }
 
-    int num_of_suspicions = (packet.meta.message_length - group_data_size) / SocketAddress::SERIALIZED_SIZE;
+    int remaining_size = packet.meta.message_length - group_data_size;
+    if (remaining_size == 0) return;
+
+    int num_of_suspicions = remaining_size / SocketAddress::SERIALIZED_SIZE;
     if (num_of_suspicions == 0) return;
 
     std::unordered_set<SocketAddress> &remote_suspicions = get_suspicions(remote.get_id());
