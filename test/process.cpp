@@ -260,7 +260,8 @@ void Process::execute_node_list() {
     for (const auto& [_, node] : nodes) {
         Connection& connection = gr.get_connection(node.get_id());
 
-        const char* local_marker = node.is_remote() ? "" : " (local)";
+        const char* local_marker = node.is_remote() ? "" : ", local";
+        const char* leader_marker = !node.is_leader() ? "" : ", leader";
 
         std::string group_list;
         for (uint64_t hash : node.get_groups()) {
@@ -276,9 +277,10 @@ void Process::execute_node_list() {
         std::string groups_str = group_list.size() ? group_list : H_BLACK "none" COLOR_RESET;
 
         out += format(
-            YELLOW "%s" COLOR_RESET "%s - address: " H_BLACK "%s" COLOR_RESET ", state: " H_BLACK "%s" COLOR_RESET ", connection: " H_BLACK "%s" COLOR_RESET ", groups: %s\n",
+            YELLOW "%s" COLOR_RESET "%s%s - address: " H_BLACK "%s" COLOR_RESET ", state: " H_BLACK "%s" COLOR_RESET ", connection: " H_BLACK "%s" COLOR_RESET ", groups: %s\n",
             node.get_id().c_str(),
             local_marker,
+            leader_marker,
             node.get_address().to_string().c_str(),
             node.get_state_name().c_str(),
             connection.get_current_state_name().c_str(),
