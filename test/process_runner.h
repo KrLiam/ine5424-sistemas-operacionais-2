@@ -11,9 +11,13 @@
 #include "command.h"
 #include "process.h"
 
+struct NodeProcedure {
+    std::optional<SocketAddress> address;
+    std::shared_ptr<Command> command;
+};
 struct CaseFile {
     std::string config_path;
-    std::unordered_map<std::string, std::shared_ptr<Command>> procedures;
+    std::unordered_map<std::string, NodeProcedure> procedures;
     bool auto_init = true;
     uint32_t min_lifespan = 0;
     std::optional<LogLevel::Type> log_level;
@@ -27,6 +31,7 @@ class Runner {
     
     void run_node(
         std::string id,
+        const std::optional<SocketAddress>& address,
         std::shared_ptr<Command> command,
         Config config,
         bool execute_client,

@@ -85,6 +85,11 @@ CaseFile CaseFile::parse(const std::string& value) {
 
                 std::string key = reader.read_word();
 
+                std::optional<SocketAddress> address = std::nullopt;
+                if (reader.read('@')) {
+                    address = SocketAddress::parse(reader);
+                }
+
                 if (!key.length()) throw parse_error(
                     format("Unexpected '%c' at pos %i of procedures in case file.", p, reader.get_pos())
                 );
@@ -95,7 +100,8 @@ CaseFile CaseFile::parse(const std::string& value) {
                 reader.expect('=');
                 std::shared_ptr<Command> value = parse_command_list(reader);
 
-                f.procedures.emplace(key, value);
+                NodeProcedure procedure{address, value};
+                f.procedures.emplace(key, procedure);
 
                 if (!reader.read(',')) break;
             }
@@ -156,7 +162,7 @@ void Runner::run() {
 
     Config config = ConfigReader::parse_file(DEFAULT_CONFIG_PATH);
     auto commands = std::make_shared<SequenceCommand>(args.send_commands);
-    run_node(args.node_id, commands, config, true, true, 0);
+    run_node(args.node_id, args.address, commands, config, true, true, 0);
 }
 
 
@@ -242,7 +248,7 @@ void Runner::run_test(const std::string& case_path_str) {
 
     std::vector<std::pair<std::string, pid_t>> pids;
 
-    for (const auto& [id, command] : f.procedures) {
+    for (const auto& [id, proc] : f.procedures) {
         pid_t pid = fork();
 
         if (pid < 0) throw std::runtime_error("Could not fork process.");
@@ -253,7 +259,8 @@ void Runner::run_test(const std::string& case_path_str) {
             Logger::set_output_file(format("%s/%s.log", case_dir_path.c_str(), id.c_str()));
             if (f.log_level) Logger::set_level(*f.log_level);
 
-            run_node(id, command, config, false, f.auto_init, f.min_lifespan);
+
+            run_node(id, proc.address, proc.command, config, false, f.auto_init, f.min_lifespan);
             return;
         }
 
@@ -291,6 +298,7 @@ void Runner::run_test(const std::string& case_path_str) {
 
 void Runner::run_node(
     std::string id,
+    const std::optional<SocketAddress>& opt_address,
     std::shared_ptr<Command> command,
     Config config,
     bool execute_client,
@@ -299,35 +307,37 @@ void Runner::run_node(
 ) {
     uint64_t start_time = DateUtils::now();
 
-    SocketAddress address{{127, 0, 0, 1}, args.port};
+    if (!config.get_node(id)) {
+        if (opt_address.has_value()) {
+            const SocketAddress& address = *opt_address;
 
-    if (const NodeConfig* node = config.get_node(id)) {
-        address = node->address;
-    }
-    else if (const NodeConfig* node = config.get_node(address)) {
-        id = node->id;
-    }
-    else if (args.port > 0) {
-        id = generate_node_id(address);
-        config.nodes.push_back(NodeConfig{id, address});
-    }
-    else {
-        if (id.length()) throw std::invalid_argument(
-            format("Node '%s' is not default, specify the port to be used.\nUsage: %s %s -p <port>",
-            id.c_str(),
-            args.program_name.c_str(),
-            id.c_str()
-        )
-        );
-        throw std::invalid_argument(format(
-            "Missing node arguments. Either provide a node id that is present in the config file or provide a valid port."
-            "\nUsage: %s <config-node-id>"
-            "\nUsage: %s <id> -p <port>"
-            "\nUsage: %s -p <port>",
-            args.program_name.c_str(),
-            args.program_name.c_str(),
-            args.program_name.c_str()
-        ));
+            if (const NodeConfig* node = config.get_node(*args.address)) {
+                id = node->id;
+            }
+            else {
+                id = generate_node_id(address);
+                config.nodes.push_back(NodeConfig{id, address});
+            }
+        }
+        else {
+            if (id.length()) throw std::invalid_argument(
+                format(
+                    "Node '%s' is not default, specify the address to be used.\nUsage: %s %s -a <address>",
+                    id.c_str(),
+                    args.program_name.c_str(),
+                    id.c_str()
+                )
+            );
+            throw std::invalid_argument(format(
+                "Missing node arguments. Either provide a node id that is present in the config file or provide a valid port."
+                "\nUsage: %s <config-node-id>"
+                "\nUsage: %s <id> -a <address>"
+                "\nUsage: %s -a <address>",
+                args.program_name.c_str(),
+                args.program_name.c_str(),
+                args.program_name.c_str()
+            ));
+        }
     }
 
     Process proc(id, Message::MAX_SIZE, !args.test, args.verbose, config);

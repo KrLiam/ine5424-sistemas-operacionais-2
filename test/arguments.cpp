@@ -54,8 +54,8 @@ Arguments parse_arguments(int argc, char* argv[]) {
         if ((!long_arg && flag == "s") || (long_arg && flag=="send")) {
             args.send_commands = parse_commands(reader);
         }
-        else if ((!long_arg && flag=="p") || (long_arg && flag=="port")) {
-            args.port = reader.read_int();
+        else if ((!long_arg && flag=="a") || (long_arg && flag=="address")) {
+            args.address = SocketAddress::parse(reader);
         }
         else if ((!long_arg && flag=="v") || (long_arg && flag=="verbose")) {
             args.verbose = isdigit(reader.peek()) ? reader.read_int() : true;

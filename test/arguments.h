@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <optional>
 
 #include "utils/reader.h"
 #include "utils/log.h"
@@ -12,7 +13,7 @@
 struct Arguments {
     std::string program_name;
     std::string node_id;
-    uint16_t port = 0;
+    std::optional<SocketAddress> address;
     std::vector<std::shared_ptr<Command>> send_commands;
 
     bool verbose = false;
