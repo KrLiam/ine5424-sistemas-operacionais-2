@@ -1,31 +1,45 @@
 config = ./discover_100ms.conf
 min_lifespan=8000
 procedures = {
-
     0 @ :4000 = [
-        sleep 5000;
-        node list;
+        node discover :4001;
+	node discover :4002;
+	sleep 2000;
+	node list;
+	node discover :4003;
+	sleep 2000;
+	node list;
     ],
     1 @ :4001 = [
-        sleep 5000;
+        sleep 2000;
         node list;
+	sleep 2000;
+	node list;
     ],
     2 @ :4002 = [
-        sleep 5000;
+        sleep 2000;
         node list;
+	sleep 2000;
+	node list;
     ],
-
     3 @ :4003 = [
-        sleep 5000;
+	node discover :4004;
+	node discover :4005;
+        sleep 2000;
         node list;
+	sleep 2000;
+	node list;
     ],
     4 @ :4004 = [
-        sleep 5000;
+        sleep 2000;
         node list;
+	sleep 2000;
+	node list;
     ],
     5 @ :4005 = [
-        sleep 5000;
+        sleep 2000;
         node list;
+	sleep 2000;
+	node list;
     ],
-
 }
