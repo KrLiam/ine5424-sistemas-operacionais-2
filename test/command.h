@@ -22,7 +22,8 @@ enum class CommandType : char {
     group_list = 11,
     group_join = 12,
     group_leave = 13,
-    node_list = 14
+    node_list = 14,
+    node_discover = 15
 };
 
 
@@ -144,6 +145,14 @@ struct GroupLeaveCommand : public Command {
 
 struct NodeListCommand : public Command {
     NodeListCommand();
+
+    virtual std::string name() const;
+};
+
+struct NodeDiscoverCommand : public Command {
+    NodeDiscoverCommand(const SocketAddress& address);
+
+    SocketAddress address;
 
     virtual std::string name() const;
 };

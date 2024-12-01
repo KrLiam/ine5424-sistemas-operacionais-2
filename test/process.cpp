@@ -367,6 +367,12 @@ void Process::execute(const Command& command, ExecutionContext& ctx) {
             return;
         }
 
+        if (command.type == CommandType::node_discover) {
+            const NodeDiscoverCommand* cmd = static_cast<const NodeDiscoverCommand*>(&command);
+            comm->discover_node(cmd->address);
+            return;
+        }
+
         if (command.type == CommandType::group_join) {
             const GroupJoinCommand* cmd = static_cast<const GroupJoinCommand*>(&command);
 

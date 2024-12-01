@@ -258,10 +258,15 @@ void FailureDetection::heartbeat(const Node& node)
     schedule_heartbeat(node);
 }
 
-void FailureDetection::schedule_heartbeat(const Node& node)
+void FailureDetection::schedule_heartbeat(const Node& node) {
+    schedule_heartbeat(node, false);
+}
+void FailureDetection::schedule_heartbeat(const Node& node, bool instant)
 {
     std::string id = node.get_id();
-    int timeout = node.is_alive() ? alive : alive * ALIVE_TOLERANCE;
+    int timeout = instant ? 1 :
+        node.is_alive() ? alive :
+        alive * ALIVE_TOLERANCE;
 
     hb_timers_mtx.lock();
     if (hb_timers.contains(id)) TIMER.cancel(hb_timers[id]);
@@ -397,9 +402,15 @@ void FailureDetection::send_discover_ack(const Packet& packet)
 
 void FailureDetection::discover(const SocketAddress& address)
 {
+    discover(address, false);
+}
+void FailureDetection::discover(const SocketAddress& address, bool instant)
+{
+    if (gr->contains(address)) return;
+
     Node& node = gr->add(address);
     log_info("New node discovered at ", address.to_string(), " (identified by ", node.get_id(), ")");
-    schedule_heartbeat(node);
+    schedule_heartbeat(node, instant);
 }
 
 void FailureDetection::join_group(const JoinGroup &event)

@@ -75,6 +75,7 @@ struct SocketAddress
     std::string to_string() const;
 
     static SocketAddress from(sockaddr_in& address);
+    static SocketAddress parse(Reader&);
 
     std::string serialize() const;
     static SocketAddress deserialize(const char *serialized)
@@ -176,8 +177,6 @@ public:
     static ConfigReader from_file(const std::string &path);
     static Config parse_file(const std::string &path);
 
-    IPv4 parse_ipv4();
-    SocketAddress parse_socket_address();
     std::vector<NodeConfig> parse_nodes();
     uint32_t parse_alive();
     BroadcastType parse_broadcast();

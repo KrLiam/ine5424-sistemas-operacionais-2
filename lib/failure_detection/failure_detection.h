@@ -57,6 +57,7 @@ class FailureDetection
     void heartbeat(const Node& node);
     void process_heartbeat(const Packet& packet);
     void schedule_heartbeat(const Node& node);
+    void schedule_heartbeat(const Node& node, bool instant);
 
     void send_discover(const Node& node);
     void process_discover(Packet& packet);
@@ -73,6 +74,7 @@ public:
     ~FailureDetection();
     
     void discover(const SocketAddress& address);
+    void discover(const SocketAddress& address, bool instant);
 
     void terminate();
 

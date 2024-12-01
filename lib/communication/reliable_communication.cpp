@@ -265,7 +265,7 @@ bool ReliableCommunication::leave_group(std::string id)
 }
 
 void ReliableCommunication::discover_node(const SocketAddress& address) {
-    failure_detection->discover(address);
+    failure_detection->discover(address, true);
 }
 
 std::unordered_map<std::string, GroupInfo> ReliableCommunication::get_joined_groups() {

@@ -52,6 +52,20 @@ std::string SocketAddress::to_string() const
     return format("%s:%i", address.to_string().c_str(), port);
 }
 
+SocketAddress SocketAddress::parse(Reader& reader)
+{
+    if (reader.read(':')) {
+        int port = reader.read_int();
+        return SocketAddress{{127, 0, 0, 1}, (uint16_t) port};
+    }
+
+    IPv4 ip = IPv4::parse(reader);
+    reader.expect(':');
+    int port = reader.read_int();
+
+    return SocketAddress{ip, (uint16_t)port};
+}
+
 SocketAddress SocketAddress::from(sockaddr_in& address)
 {
     char remote_address[INET_ADDRSTRLEN];
@@ -156,15 +170,6 @@ Config ConfigReader::parse_file(const std::string &path)
     return reader.parse();
 }
 
-SocketAddress ConfigReader::parse_socket_address()
-{
-    IPv4 ip = IPv4::parse(*this);
-    expect(':');
-    int port = read_int();
-
-    return SocketAddress{ip, (uint16_t)port};
-}
-
 std::vector<NodeConfig> ConfigReader::parse_nodes()
 {
     std::vector<NodeConfig> nodes;
@@ -182,7 +187,7 @@ std::vector<NodeConfig> ConfigReader::parse_nodes()
 
         std::string id = read_word();
         expect(',');
-        SocketAddress address = parse_socket_address();
+        SocketAddress address = SocketAddress::parse(*this);
 
         NodeConfig node{id, address};
         nodes.push_back(node);

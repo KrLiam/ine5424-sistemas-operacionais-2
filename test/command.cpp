@@ -77,6 +77,12 @@ NodeListCommand::NodeListCommand() : Command(CommandType::node_list) {}
 std::string NodeListCommand::name() const { return "node list"; }
 
 
+NodeDiscoverCommand::NodeDiscoverCommand(const SocketAddress& address)
+    : Command(CommandType::node_discover), address(address) {}
+
+std::string NodeDiscoverCommand::name() const { return "node discover"; }
+
+
 std::string parse_string(Reader& reader) {
     reader.expect('"');
     Override ovr = reader.override_whitespace(false);
@@ -285,6 +291,10 @@ std::shared_ptr<Command> parse_command(Reader& reader) {
         std::string action = reader.read_word();
 
         if (action == "list") return std::make_shared<NodeListCommand>();
+        if (action == "discover") {
+            SocketAddress address = SocketAddress::parse(reader);
+            return std::make_shared<NodeDiscoverCommand>(address);
+        }
     }
 
     if (keyword.length()) {
