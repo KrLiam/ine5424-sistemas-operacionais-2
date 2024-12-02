@@ -315,7 +315,7 @@ void Runner::run_node(
                 id = node->id;
             }
             else {
-                id = generate_node_id(address);
+                if (!id.length()) id = generate_node_id(address);
                 config.nodes.push_back(NodeConfig{id, address});
             }
         }
