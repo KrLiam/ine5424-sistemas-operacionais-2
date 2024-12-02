@@ -1,0 +1,47 @@
+config = ./groups_100ms.conf
+min_lifespan=10000
+procedures = {
+    4062 @ 127.0.0.1:4000 = [
+        node list;
+
+        node discover 127.0.0.1:4001;
+        node discover 127.0.0.1:4002;
+        node discover 127.0.0.1:4003;
+        sleep 5000;
+        node list;
+
+        group join A;
+        sleep 1000;
+        node list;
+    ],
+    4063 @ 127.0.0.1:4001 = [
+        node list;
+        sleep 5000;
+        node list;
+
+        group join A;
+        group join B;
+        sleep 1000;
+        node list;
+
+        "Olá B" -> * on B;
+        "Olá A" -> * on A;
+    ],
+    4060 @ 127.0.0.1:4002 = [
+        node list;
+        sleep 5000;
+        node list;
+
+        group join B;
+        sleep 1000;
+        node list;
+    ],
+    4061 @ 127.0.0.1:4003 = [
+        node list;
+        sleep 5000;
+        node list;
+
+        sleep 1000;
+        node list;
+    ]
+}
