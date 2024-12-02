@@ -287,7 +287,6 @@ std::shared_ptr<Command> parse_command(Reader& reader) {
         throw parse_error(format("Invalid group command at pos %i", pos));
     }
     if (keyword == "node") {
-        int pos = reader.get_pos();
         std::string action = reader.read_word();
 
         if (action == "list") return std::make_shared<NodeListCommand>();

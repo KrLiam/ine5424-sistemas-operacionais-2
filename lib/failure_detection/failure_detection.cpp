@@ -109,7 +109,7 @@ void FailureDetection::process_heartbeat(const Packet& packet)
     int num_of_groups = std::min(possible_num_of_groups, HeartbeatData::MAX_GROUPS);
 
     std::set<uint64_t> joined_groups;
-    for (size_t i = 0; i < num_of_groups; i++) {
+    for (int i = 0; i < num_of_groups; i++) {
         if (data->groups[i] == 0) break;
         joined_groups.emplace(data->groups[i]);
     }
@@ -413,14 +413,14 @@ void FailureDetection::discover(const SocketAddress& address, bool instant)
     schedule_heartbeat(node, instant);
 }
 
-void FailureDetection::join_group(const JoinGroup &event)
+void FailureDetection::join_group(const JoinGroup&)
 {
     mtx.lock();
     for (auto &[_, node] : gr->get_nodes()) heartbeat(node);
     mtx.unlock();
 }
 
-void FailureDetection::leave_group(const LeaveGroup &event)
+void FailureDetection::leave_group(const LeaveGroup&)
 {
     mtx.lock();
     for (auto &[_, node] : gr->get_nodes()) heartbeat(node);

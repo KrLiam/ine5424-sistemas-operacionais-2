@@ -4,6 +4,9 @@
 #include <iostream>
 #include <stdlib.h>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wregister"
+
 
 uint8_t hex_to_int(char ch) {
     ch = tolower(ch);
@@ -12,7 +15,7 @@ uint8_t hex_to_int(char ch) {
     return 255; // invalid
 }
 char int_to_hex(uint8_t i) {
-    if (0 <= i && i <= 9) return '0' + i;
+    if (i <= 9) return '0' + i;
     if (10 <= i && i <= 15) return 'a' + i - 10;
     return 127; // invalid
 }
@@ -570,6 +573,7 @@ void Aes256::mix_columns(unsigned char* buffer)
     }
 }
 
+
 void Aes256::mix_columns_inv(unsigned char* buffer)
 {
     register unsigned char i, a, b, c, d, e, x, y, z;
@@ -596,3 +600,5 @@ inline unsigned char rj_xtime(unsigned char x)
 {
     return (x & 0x80) ? ((x << 1) ^ 0x1b) : (x << 1);
 }
+
+#pragma GCC diagnostic pop
