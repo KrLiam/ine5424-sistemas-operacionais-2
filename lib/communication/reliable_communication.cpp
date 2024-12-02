@@ -16,13 +16,13 @@ ReliableCommunication::ReliableCommunication(
 
     log_info("Initializing node ", node_config->id, " (", node_config->address.to_string(), ").");
 
-    gr = std::make_shared<GroupRegistry>(local_id, config, event_bus);
-    pipeline = std::make_shared<Pipeline>(gr, event_bus, config.faults);
+    gr = std::make_unique<GroupRegistry>(local_id, config, event_bus);
+    pipeline = std::make_unique<Pipeline>(gr.get(), event_bus, config.faults);
 
     sender_thread = std::thread([this]()
                                 { send_routine(); });
 
-    gr->set_pipeline(pipeline);
+    gr->set_pipeline(pipeline.get());
     gr->establish_connections();
 
     failure_detection = std::make_unique<FailureDetection>(

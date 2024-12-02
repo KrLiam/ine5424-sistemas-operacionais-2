@@ -17,7 +17,7 @@ class GroupRegistry;
 class Pipeline
 {
 private:
-    std::shared_ptr<GroupRegistry> gr;
+    GroupRegistry* gr;
 
     std::vector<PipelineStep *> layers;
     FaultInjectionLayer* fault_layer;
@@ -54,7 +54,7 @@ public:
     static const unsigned int CHECKSUM_LAYER = 4;
     static const unsigned int FRAGMENTATION_LAYER = 5;
 
-    Pipeline(std::shared_ptr<GroupRegistry> gr, EventBus& event_bus, const FaultConfig& fault_config);
+    Pipeline(GroupRegistry* gr, EventBus& event_bus, const FaultConfig& fault_config);
 
     ~Pipeline();
 

@@ -71,7 +71,7 @@ public:
     Buffer<Message>& get_application_buffer();
     Buffer<Message>& get_deliver_buffer();
 
-    void set_pipeline(std::shared_ptr<Pipeline> pipeline);
+    void set_pipeline(Pipeline* pipeline);
 
     void start_raft();
 
@@ -83,7 +83,7 @@ private:
     std::unique_ptr<BroadcastConnection> broadcast_connection;
     std::unique_ptr<RaftManager> raft;
 
-    std::shared_ptr<Pipeline> pipeline;
+    Pipeline* pipeline;
 
     std::queue<Transmission*> leader_transmissions;
 

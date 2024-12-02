@@ -169,7 +169,7 @@ Buffer<Message> &GroupRegistry::get_deliver_buffer()
     return deliver_buffer;
 }
 
-void GroupRegistry::set_pipeline(std::shared_ptr<Pipeline> pipeline)
+void GroupRegistry::set_pipeline(Pipeline* pipeline)
 {
     this->pipeline = pipeline;
 }
