@@ -26,6 +26,7 @@ struct ReceiveResult {
     size_t truncated_bytes;
     SocketAddress sender_address;
     std::string sender_id;
+    std::string group_id;
 };
 
 class ReliableCommunication

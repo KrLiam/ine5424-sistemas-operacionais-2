@@ -66,12 +66,20 @@ ReceiveResult ReliableCommunication::message_to_buffer(Message &message, char *m
         log_warn("User's buffer is smaller than the message; truncating it.");
     }
 
+    uint64_t hash = message.group_hash;
+    auto groups = get_registered_groups();
+    std::string group_id =
+        groups.contains(hash) ? groups.at(hash).id :
+        hash == 0 ? GLOBAL_GROUP_ID :
+        "unknown";
+
     Node node = gr->get_nodes().get_node(message.id.origin);
     return ReceiveResult{
         length : len,
         truncated_bytes : message.length - len,
         sender_address : message.id.origin,
-        sender_id : node.get_id()
+        sender_id : node.get_id(),
+        group_id : group_id
     };
 }
 

@@ -43,6 +43,7 @@ void FragmentAssembler::add_packet(Packet &packet)
     bytes_received += len;
 
     message.id = header.id;
+    message.group_hash = header.key_hash;
     message.origin = meta.origin;
     message.destination = meta.destination;
 

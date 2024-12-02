@@ -111,7 +111,8 @@ void Process::receive(ThreadArgs* args) {
             message_data.c_str(),
             "' (", result.length, " bytes) from ",
             result.sender_id,
-            "."
+            " on group ",
+            result.group_id
         );
 
         if (!save_message_files) continue;
@@ -148,7 +149,14 @@ void Process::deliver(ThreadArgs* args) {
             message_data = message_data.substr(0, 100) + "...";
         }
 
-        log_print("[Broadcast] Received '", message_data.c_str(), "' (", result.length, " bytes) from ", result.sender_id);
+        log_print(
+            "[Broadcast] Received '",
+            message_data.c_str(),
+            "' (", result.length, " bytes) from ",
+            result.sender_id,
+            " on group ",
+            result.group_id
+        );
 
         if (!save_message_files) continue;
 
