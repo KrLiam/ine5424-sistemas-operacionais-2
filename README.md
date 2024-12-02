@@ -3,7 +3,7 @@
 > Projeto da disciplina de Sistemas Operacionais II (INE5424) do grupo A.
 
 ## Requisitos
-a
+
 - C++ 20
 
 ## Como compilar
