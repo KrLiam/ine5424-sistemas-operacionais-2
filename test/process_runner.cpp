@@ -89,6 +89,7 @@ CaseFile CaseFile::parse(const std::string& value) {
                 if (reader.read('@')) {
                     address = SocketAddress::parse(reader);
                 }
+                if (!key.length() && address.has_value()) key = generate_node_id(*address);
 
                 if (!key.length()) throw parse_error(
                     format("Unexpected '%c' at pos %i of procedures in case file.", p, reader.get_pos())

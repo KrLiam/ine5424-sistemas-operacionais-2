@@ -212,12 +212,12 @@ bool Process::send_message(
 
 std::string format_group(const GroupInfo& g) {
     std::string hex_key = array_to_hex(g.key);
-    return format(
-        YELLOW "%s" COLOR_RESET " - key: " H_BLACK "%s" COLOR_RESET ", hash: " H_BLACK "%lu" COLOR_RESET "\n",
-        g.id.c_str(),
-        hex_key.c_str(),
-        g.hash
-    );
+
+    const char* pattern = log_colored ?
+        YELLOW "%s" COLOR_RESET " - key: " H_BLACK "%s" COLOR_RESET ", hash: " H_BLACK "%lu" COLOR_RESET "\n" :
+        "%s - key: %s, hash: %lu\n";
+    
+    return format(pattern, g.id.c_str(), hex_key.c_str(), g.hash);
 }
 void Process::execute_group_list() {
     std::string out;
@@ -255,6 +255,10 @@ void Process::execute_node_list() {
 
     std::string out;
 
+    const char* pattern = log_colored ?
+        YELLOW "%s" COLOR_RESET "%s%s - address: " H_BLACK "%s" COLOR_RESET ", state: " H_BLACK "%s" COLOR_RESET ", connection: " H_BLACK "%s" COLOR_RESET ", groups: %s\n" :
+        "%s%s%s - address: %s, state: %s, connection: %s, groups: %s\n";
+
     out += format("Showing %u node(s).\n", nodes.size());
     
     for (const auto& [_, node] : nodes) {
@@ -269,15 +273,21 @@ void Process::execute_node_list() {
 
             if (groups.contains(hash)) {
                 std::string id = groups.at(hash).id;
-                const char* color = joined_groups.contains(id) ? H_BLUE : "";
-                group_list += format("%s%s" COLOR_RESET, color, id.c_str());
+
+                const char* pattern = log_colored && joined_groups.contains(id) ?
+                    H_BLUE "%s" COLOR_RESET : "%s";
+                group_list += format(pattern, id.c_str());
             }
-            else group_list += format(H_BLACK "%s" COLOR_RESET, std::to_string(hash).c_str());
+            else group_list += format(
+                log_colored ? H_BLACK "%s" COLOR_RESET : "%s",
+                std::to_string(hash).c_str()
+            );
         }
-        std::string groups_str = group_list.size() ? group_list : H_BLACK "none" COLOR_RESET;
+        const char* none = log_colored ? H_BLACK "none" COLOR_RESET : "none";
+        std::string groups_str = group_list.size() ? group_list : none;
 
         out += format(
-            YELLOW "%s" COLOR_RESET "%s%s - address: " H_BLACK "%s" COLOR_RESET ", state: " H_BLACK "%s" COLOR_RESET ", connection: " H_BLACK "%s" COLOR_RESET ", groups: %s\n",
+            pattern,
             node.get_id().c_str(),
             local_marker,
             leader_marker,
