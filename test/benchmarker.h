@@ -10,15 +10,17 @@ struct BenchmarkResult {
     // vetor com throughput a cada segundo em cada no, 
 };
 
-enum HashMapOperation : bool {
+enum HashMapOperation : uint16_t {
     READ = 0,
     WRITE = 1
 };
 
 struct HashMapMessage {
     HashMapOperation operation;
-    unsigned char key[4];
-    unsigned char value[Message::MAX_SIZE - sizeof(key) - sizeof(operation)];
+    uint16_t key;
+
+    static constexpr uint32_t VALUE_SIZE = Message::MAX_SIZE - sizeof(key) - sizeof(operation);
+    unsigned char value[VALUE_SIZE];
 };
 
 namespace hash_map_message {
@@ -32,7 +34,8 @@ struct Worker {
     const std::string node_id;
     const std::string group_id;
     const uint32_t bytes_to_send;
-    const uint32_t messages_to_send;
+    const uint32_t interval_between_messages;
+    const uint32_t max_message_size;
 
     std::thread sender_thread;
     std::thread receiver_thread;
@@ -41,18 +44,23 @@ struct Worker {
 
     std::binary_semaphore read_sem{0};
 
+    uint32_t remaining_bytes;
+
     Worker(
         const Config& config,
         const std::string& node_id,
         const std::string& group_id,
-        const uint32_t& bytes_to_send,
-        const uint32_t& messages_to_send
+        uint32_t bytes_to_send,
+        uint32_t interval_between_messages,
+        uint32_t max_message_size
     ) :
         config(config),
         node_id(node_id),
         group_id(group_id),
         bytes_to_send(bytes_to_send),
-        messages_to_send(messages_to_send)
+        interval_between_messages(interval_between_messages),
+        max_message_size(std::clamp(max_message_size, (uint32_t) 1, (uint32_t) Message::MAX_SIZE)),
+        remaining_bytes(bytes_to_send)
     {}
 
     ~Worker() {
@@ -83,8 +91,37 @@ struct Worker {
 
     }
 
-    std::size_t create_hashmap_message(const char *buffer) {
-        // criar msg de write ou read aleatoriamente
+    std::size_t create_hashmap_message(char* buffer) {
+        HashMapMessage msg;
+
+        uint32_t bytes = std::min(remaining_bytes, max_message_size);
+        remaining_bytes -= bytes;
+
+        uint32_t metadata_bytes = sizeof(msg.operation) + sizeof(msg.key);
+        if (bytes < metadata_bytes) return 0;
+
+        uint32_t value_size = bytes - metadata_bytes;
+
+        // apenas escrita por enquanto
+        msg.operation = HashMapOperation::WRITE;
+
+        // o numero maximo de chaves na hash table está relacionado com
+        // o numero total de nós e a quantidade de ram disponível pro benchmark. 
+        uint32_t max_key = 100;
+        std::uniform_int_distribution<> key_dis(0, max_key);
+        msg.key = key_dis(rc_random::gen);
+
+        // talvez seja mais interessante ler o valor atual da chave e calcular
+        // um novo valor que dependa do anterior e da ordem que estas escritas são feitas
+        // para verificar a integridade do ab
+        for (int i = 0; i < value_size; i++) {
+            uint8_t byte = rc_random::dis8(rc_random::gen);
+            msg.value[i] = byte;
+        }
+
+        memcpy(buffer, &msg, sizeof(msg));
+        
+        return bytes;
     }
 
     void receive_routine() {
@@ -125,7 +162,8 @@ class Benchmarker {
     uint32_t total_groups;
     uint32_t total_nodes_in_group;
     uint32_t bytes_sent_per_node;
-    uint32_t messages_sent_per_node;
+    uint32_t interval_between_messages;
+    uint32_t max_message_size;
 
     std::vector<std::unique_ptr<Worker>> workers;
 
@@ -134,12 +172,14 @@ public:
         uint32_t total_groups,
         uint32_t total_nodes_in_group,
         uint32_t bytes_sent_per_node,
-        uint32_t messages_sent_per_node
+        uint32_t interval_between_messages,
+        uint32_t max_message_size
     ) :
         total_groups(total_groups),
         total_nodes_in_group(total_nodes_in_group),
         bytes_sent_per_node(bytes_sent_per_node),
-        messages_sent_per_node(messages_sent_per_node)
+        interval_between_messages(interval_between_messages),
+        max_message_size(std::clamp(max_message_size, (uint32_t) 1, (uint32_t) Message::MAX_SIZE))
     {
         workers.reserve(total_nodes());
     }
@@ -213,7 +253,8 @@ public:
                         node.id,
                         group_id,
                         bytes_sent_per_node,
-                        messages_sent_per_node
+                        interval_between_messages,
+                        max_message_size
                     )
                 );
             }

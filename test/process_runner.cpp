@@ -374,13 +374,15 @@ void Runner::run_benchmark() {
     uint32_t total_groups = 3;
     uint32_t total_nodes_in_group = 10;
     uint32_t bytes_sent_per_node = 100*1024*1024; // 100mb
-    uint32_t messages_sent_per_node = 0;
+    uint32_t interval_between_messages = 100;
+    uint32_t max_message_size = Message::MAX_SIZE;
 
     Benchmarker benchmarker(
         total_groups,
         total_nodes_in_group,
         bytes_sent_per_node,
-        messages_sent_per_node
+        interval_between_messages,
+        max_message_size
     );
 
     benchmarker.run();
