@@ -1,6 +1,7 @@
 #include <cstdint>
 #include <vector>
 #include <thread>
+#include <semaphore>
 
 #include "communication/reliable_communication.h"
 
@@ -8,6 +9,23 @@
 struct BenchmarkResult {
     // vetor com throughput a cada segundo em cada no, 
 };
+
+enum HashMapOperation : bool {
+    READ = 0,
+    WRITE = 1
+};
+
+struct HashMapMessage {
+    HashMapOperation operation;
+    unsigned char key[4];
+    unsigned char value[Message::MAX_SIZE - sizeof(key) - sizeof(operation)]
+};
+
+namespace hash_map_message {
+    bool is_read(const char* msg) {
+        return msg[0];
+    }
+}
 
 struct Worker {
     const Config& config;
@@ -17,8 +35,11 @@ struct Worker {
     const uint32_t messages_sent;
 
     std::thread sender_thread;
+    std::thread receiver_thread;
     std::thread deliver_thread;
     std::unique_ptr<ReliableCommunication> comm;
+
+    std::binary_semaphore read_sem{0};
 
     Worker(
         const Config& config,
@@ -37,11 +58,37 @@ struct Worker {
     ~Worker() {
         comm.reset();
         if (sender_thread.joinable()) sender_thread.join();
+        if (receiver_thread.joinable()) receiver_thread.join();
         if (deliver_thread.joinable()) deliver_thread.join();
     }
 
     void send_routine() {
-        // fazer um laço para mandar as mensagens com AB
+        char buffer[Message::MAX_SIZE];
+
+        while (true) {
+            std::size_t size = create_hashmap_message(buffer);
+            if (hash_map_message::is_read(buffer)) {
+                std::string node_id = choose_random_node();
+                bool success = comm->send(group_id, node_id, {buffer, size});
+                if (!success) continue;
+                read_sem.acquire(); // TODO: dar release no receive quando o resultado da leitura chegar
+            }
+            else {
+                comm->broadcast(group_id, {buffer, size});
+            }
+        }
+    }
+
+    std::string choose_random_node() {
+
+    }
+
+    std::size_t create_hashmap_message(const char *buffer) {
+        // criar msg de write ou read aleatoriamente
+    }
+
+    void receive_routine() {
+        // TODO: aguardar receber o resultado de um read e dar release no read_sem
     }
 
     void deliver_routine() {
@@ -65,6 +112,7 @@ struct Worker {
     void start() {
         comm = std::make_unique<ReliableCommunication>(node_id, Message::MAX_SIZE, false, config);
         sender_thread = std::thread([this]() { send_routine(); });
+        receiver_thread = std::thread([this]() { receive_routine(); });
         deliver_thread = std::thread([this]() { deliver_routine(); });
     }
 
