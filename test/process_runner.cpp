@@ -7,6 +7,7 @@
 #include <filesystem>
 
 #include "process_runner.h"
+#include "benchmarker.h"
 #include "utils/log.h"
 #include "core/node.h"
 #include "core/constants.h"
@@ -158,6 +159,11 @@ void Runner::run() {
 
     if (args.test) {
         run_test(args.case_path);
+        return;
+    }
+
+    if (args.benchmark) {
+        run_benchmark();
         return;
     }
 
@@ -361,4 +367,21 @@ void Runner::run_node(
         log_info("Node lifespan was ", lifespan, ", waiting for ", min_lifespan - lifespan);
         std::this_thread::sleep_for(std::chrono::milliseconds(min_lifespan - lifespan));
     }
+}
+
+void Runner::run_benchmark() {
+    // possivelmente pegar estes parametros por argumento
+    uint32_t total_groups = 3;
+    uint32_t total_nodes_in_group = 10;
+    uint32_t bytes_sent_per_node = 100*1024*1024; // 100mb
+    uint32_t messages_sent_per_node = 0;
+
+    Benchmarker benchmarker(
+        total_groups,
+        total_nodes_in_group,
+        bytes_sent_per_node,
+        messages_sent_per_node
+    );
+
+    benchmarker.run();
 }

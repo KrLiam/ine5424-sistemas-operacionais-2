@@ -18,7 +18,7 @@ enum HashMapOperation : bool {
 struct HashMapMessage {
     HashMapOperation operation;
     unsigned char key[4];
-    unsigned char value[Message::MAX_SIZE - sizeof(key) - sizeof(operation)]
+    unsigned char value[Message::MAX_SIZE - sizeof(key) - sizeof(operation)];
 };
 
 namespace hash_map_message {
@@ -28,11 +28,11 @@ namespace hash_map_message {
 }
 
 struct Worker {
-    const Config& config;
+    const Config config;
     const std::string node_id;
     const std::string group_id;
-    const uint32_t bytes_sent;
-    const uint32_t messages_sent;
+    const uint32_t bytes_to_send;
+    const uint32_t messages_to_send;
 
     std::thread sender_thread;
     std::thread receiver_thread;
@@ -43,16 +43,16 @@ struct Worker {
 
     Worker(
         const Config& config,
-        std::string node_id,
-        std::string group_id,
-        uint32_t bytes_sent,
-        uint32_t messages_sent
+        const std::string& node_id,
+        const std::string& group_id,
+        const uint32_t& bytes_to_send,
+        const uint32_t& messages_to_send
     ) :
         config(config),
         node_id(node_id),
         group_id(group_id),
-        bytes_sent(bytes_sent),
-        messages_sent(messages_sent)
+        bytes_to_send(bytes_to_send),
+        messages_to_send(messages_to_send)
     {}
 
     ~Worker() {
@@ -141,7 +141,10 @@ public:
         bytes_sent_per_node(bytes_sent_per_node),
         messages_sent_per_node(messages_sent_per_node)
     {
+        workers.reserve(total_nodes());
     }
+
+    uint32_t total_nodes() { return total_groups * total_nodes_in_group; }
 
     std::unordered_map<std::string, ByteArray> create_groups() {
         std::unordered_map<std::string, ByteArray> map;
@@ -150,7 +153,7 @@ public:
             std::string id = format("group_%u", i);
             ByteArray key;
             for (int k = 0; k < 256; k++) {
-                key[k] = i; // fazer ser um numero aleatorio
+                key.push_back(i); // fazer ser um numero aleatorio
             }
 
             map.emplace(id, key);
@@ -162,9 +165,7 @@ public:
     std::vector<NodeConfig> create_nodes() {
         std::vector<NodeConfig> nodes;
 
-        uint32_t n = total_nodes_in_group * total_groups;
-
-        for (uint32_t i = 0; i < n; i++) {
+        for (uint32_t i = 0; i < total_nodes(); i++) {
             std::string id = std::to_string(i);
 
             uint16_t port = 3000 + i; // fazer um esquema de verificar se esta porta está disponível
@@ -218,13 +219,13 @@ public:
             }
         }
 
-        for (auto& worker : workers) {
-            worker->start();
-        }
+        // for (auto& worker : workers) {
+        //     worker->start();
+        // }
 
-        for (auto& worker : workers) {
-            worker->wait();
-        }
+        // for (auto& worker : workers) {
+        //     worker->wait();
+        // }
 
         return BenchmarkResult();
     }

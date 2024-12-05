@@ -20,6 +20,9 @@ Arguments parse_arguments(int argc, char* argv[]) {
             format("Missing case file path. Usage:\n%s test <case>", argv[0])
         );
     }
+    else if (reader.read("benchmark")) {
+        args.benchmark = true;
+    }
     else if (reader.peek() != '-') {
         args.node_id = reader.read_word();
 

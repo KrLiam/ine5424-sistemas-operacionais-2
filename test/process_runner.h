@@ -47,5 +47,7 @@ public:
     void run();
 
     void run_test(const std::string& case_path);
+
+    void run_benchmark();
 };
 

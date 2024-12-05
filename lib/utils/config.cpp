@@ -76,7 +76,7 @@ SocketAddress SocketAddress::from(sockaddr_in& address)
 
 std::string NodeConfig::to_string() const
 {
-    return format("{%s, %s}", id, address.to_string().c_str());
+    return format("{%s, %s}", id.c_str(), address.to_string().c_str());
 }
 
 IntRange IntRange::parse(std::string string) {

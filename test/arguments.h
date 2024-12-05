@@ -18,6 +18,7 @@ struct Arguments {
 
     bool verbose = false;
     bool test = false;
+    bool benchmark = false;
     std::string case_path;
 
     LogLevel::Type log_level  = LogLevel::INFO;
