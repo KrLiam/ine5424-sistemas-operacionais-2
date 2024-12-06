@@ -331,6 +331,8 @@ public:
             }
         }
 
+        print_start();
+
         start_time = DateUtils::now();
 
         for (auto& worker : workers) {
@@ -365,6 +367,25 @@ public:
             if (!worker->done) return false;
         }
         return true;
+    }
+
+    void print_start() {
+        std::string out = format(
+            "Starting benchmark.\n"
+            "Groups=%u \n"
+            "Nodes=%u per group (%u total)\n"
+            "Bytes=%s sent per node (%s total)\n"
+            "Interval between messages=%u\n"
+            "Max message size=%u\n\n",
+            total_groups,
+            total_nodes_in_group,
+            total_nodes(),
+            format_bytes(bytes_sent_per_node).c_str(),
+            format_bytes(bytes_sent_per_node*total_nodes()).c_str(),
+            interval_between_messages,
+            max_message_size
+        );
+        std::cout << out;
     }
 
     void print_progress() {

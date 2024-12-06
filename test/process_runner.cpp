@@ -372,19 +372,12 @@ void Runner::run_node(
 void Runner::run_benchmark() {
     Logger::set_level(LogLevel::ERROR);
 
-    // possivelmente pegar estes parametros por argumento
-    uint32_t total_groups = 1;
-    uint32_t total_nodes_in_group = 1;
-    uint32_t bytes_sent_per_node = 5*1024*1024;
-    uint32_t interval_between_messages = 0;
-    uint32_t max_message_size = 12000;
-
     Benchmarker benchmarker(
-        total_groups,
-        total_nodes_in_group,
-        bytes_sent_per_node,
-        interval_between_messages,
-        max_message_size
+        args.num_groups,
+        args.num_nodes,
+        args.bytes_per_node,
+        args.node_interval,
+        args.max_message_size
     );
 
     benchmarker.run();

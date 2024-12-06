@@ -70,6 +70,21 @@ Arguments parse_arguments(int argc, char* argv[]) {
         else if ((!long_arg && flag=="l") || (long_arg && flag == "log-level")) {
             args.log_level = LogLevel::parse(reader);
         }
+        else if (long_arg && flag == "num-groups") {
+            args.num_groups = reader.read_int();
+        }
+        else if (long_arg && flag == "num-nodes") {
+            args.num_nodes = reader.read_int();
+        }
+        else if (long_arg && flag == "bytes-per-node") {
+            args.bytes_per_node = reader.read_int();
+        }
+        else if (long_arg && flag == "node-interval") {
+            args.node_interval = reader.read_int();
+        }
+        else if (long_arg && flag == "max-message-size") {
+            args.max_message_size = reader.read_int();
+        }
         else {
             throw std::invalid_argument(
                 format("Unknown flag '%s' at pos %i", flag.c_str(), reader.get_pos() - flag.length())
