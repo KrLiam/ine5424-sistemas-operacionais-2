@@ -23,6 +23,12 @@ struct HashMapMessage {
     unsigned char value[VALUE_SIZE];
 };
 
+struct LogEntry {
+    uint64_t time;
+    size_t bytes_received;
+    uint32_t key;
+};
+
 struct Worker {
     const Config config;
     const std::string node_id;
@@ -36,12 +42,16 @@ struct Worker {
     std::thread deliver_thread;
     std::unique_ptr<ReliableCommunication> comm;
 
-    std::binary_semaphore node_over{0};
+    std::binary_semaphore done_sem{0};
+    bool done = false;
+    bool terminate = false;
+
     std::binary_semaphore benchmark_over{0};
 
     std::binary_semaphore read_sem{0};
 
     uint32_t remaining_bytes;
+    std::vector<LogEntry> logs;
 
     Worker(
         const Config& config,
@@ -82,16 +92,19 @@ struct Worker {
                 read_sem.acquire(); // TODO: dar release no receive quando o resultado da leitura chegar
             }
             else if (msg.operation == HashMapOperation::WRITE) {
-                log_print("Node ", node_id, " is sending ", size, " bytes (key=", msg.key, ").");
+                // log_print("Node ", node_id, " is sending ", size, " bytes (key=", msg.key, ").");
                 comm->broadcast(group_id, {(const char*) &msg, size});
                 std::this_thread::sleep_for(std::chrono::milliseconds(interval_between_messages));
             }
         }
 
         log_print("Node ", node_id, " is done, waiting for benchmark being over.");
-        node_over.release();
+        done = true;
+        done_sem.release();
         benchmark_over.acquire();
+        
         log_print("Node ", node_id, " is terminating.");
+        terminate = true;
     }
 
     std::string choose_random_node() {
@@ -141,7 +154,7 @@ struct Worker {
         HashMapMessage msg;
         ReceiveResult result;
 
-        while (true) {
+        while (!terminate) {
             try {
                 result = comm->deliver((char*) &msg);
             }
@@ -149,11 +162,16 @@ struct Worker {
                 return;
             }
 
-            log_print("Node ", node_id, " received ", result.length, " bytes on group ", result.group_id, " (key=", msg.key, ").");
+            if (terminate) return;
 
-            // provavelmente pegar o tempo atual e dar push no vetor
-            // para calcular o throughput posteriormente, além de
-            // fazer a logica de escrever na hash table.
+            // log_print("Node ", node_id, " received ", result.length, " bytes on group ", result.group_id, " (key=", msg.key, ").");
+
+            LogEntry entry = {
+                time : DateUtils::now(),
+                bytes_received : result.length,
+                key : msg.key
+            };
+            logs.push_back(entry);
         }
     }
 
@@ -278,7 +296,7 @@ public:
         }
 
         for (auto& worker : workers) {
-            worker->node_over.acquire();
+            worker->done_sem.acquire();
         }
         
         log_print("Benchmark is over.");
@@ -288,6 +306,23 @@ public:
             worker->wait();
         }
 
+        analyse_result();
+
         return BenchmarkResult();
+    }
+
+    void analyse_result() {
+        for (std::unique_ptr<Worker>& worker : workers) {
+            std::string msg;
+            
+            msg += worker->node_id + " - ";
+            msg += format("(%u) ", worker->logs.size());
+
+            for (auto& entry : worker->logs) {
+                msg += format("%u ", entry.key);
+            }
+
+            log_print(msg);
+        }
     }
 };

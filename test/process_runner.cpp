@@ -374,7 +374,7 @@ void Runner::run_benchmark() {
 
     // possivelmente pegar estes parametros por argumento
     uint32_t total_groups = 2;
-    uint32_t total_nodes_in_group = 2;
+    uint32_t total_nodes_in_group = 5;
     uint32_t bytes_sent_per_node = 50000;
     uint32_t interval_between_messages = 0;
     uint32_t max_message_size = 1000;
