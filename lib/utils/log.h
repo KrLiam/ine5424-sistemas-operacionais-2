@@ -83,7 +83,8 @@ int get_thread_id();
 
 static std::mutex log_mutex;
 
-extern std::ofstream log_out;
+extern std::ofstream log_open_file;
+extern std::ostream* log_out;
 extern std::string prefix;
 extern bool log_colored;
 extern bool log_show_files;
@@ -109,8 +110,9 @@ public:
     }
 
     static void set_output_file(const std::string& path) {
-        log_out = std::ofstream(path);
-        std::cout.rdbuf(log_out.rdbuf());
+        log_open_file = std::ofstream(path);
+        log_out = &log_open_file;
+        // std::cout.rdbuf(log_out.rdbuf());
     }   
 
     template <typename... Args>
@@ -157,7 +159,7 @@ public:
             << std::endl;
         }
 
-        std::cout << oss.str() << std::flush;
+        *log_out << oss.str() << std::flush;
 
         log_mutex.unlock();
     }
@@ -170,7 +172,7 @@ public:
         std::ostringstream oss;
 
         (oss << prefix << ... << args) << std::endl;
-        std::cout << oss.str() << std::flush;
+        *log_out << oss.str() << std::flush;
 
         log_mutex.unlock();
     }

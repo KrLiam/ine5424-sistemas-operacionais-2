@@ -1,9 +1,12 @@
 #include <thread>
+#include <iostream>
 #include <unordered_map>
 
 #include "log.h"
 
-std::ofstream log_out;
+std::ofstream log_open_file;
+std::ostream* log_out = &std::cout;
+
 std::string prefix;
 bool log_colored = true;
 bool log_show_files = true;
