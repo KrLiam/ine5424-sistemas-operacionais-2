@@ -12,6 +12,15 @@
             "args": ["0"],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "build-test"
+        },
+        {
+            "name": "Benchmark",
+            "type":"cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/program",
+            "args": ["benchmark"],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build-test"
         }
     ]
 }
