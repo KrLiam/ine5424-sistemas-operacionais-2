@@ -6,6 +6,20 @@
 #include "communication/reliable_communication.h"
 
 
+std::string format_bytes(uint64_t bytes) {
+    if (bytes < 1024) return format("%uB", bytes);
+
+    double kiB = (double) bytes / 1024.0;
+    if (kiB < 1024.0) return format("%0.2fKiB", kiB);
+
+    double miB = (double) kiB / 1024.0;
+    if (miB < 1024.0) return format("%0.2fMiB", miB);
+
+    double giB = (double) miB / 1024.0;
+    return format("%0.2fGiB", giB);
+}
+
+
 struct BenchmarkResult {
     // vetor com throughput a cada segundo em cada no, 
 };
@@ -98,12 +112,12 @@ struct Worker {
             }
         }
 
-        log_print("Node ", node_id, " is done, waiting for benchmark being over.");
+        //log_print("Node ", node_id, " is done, waiting for benchmark being over.");
         done = true;
         done_sem.release();
         benchmark_over.acquire();
         
-        log_print("Node ", node_id, " is terminating.");
+        //log_print("Node ", node_id, " is terminating.");
         terminate = true;
     }
 
@@ -291,8 +305,34 @@ public:
             }
         }
 
+
+        uint64_t start_time = DateUtils::now();
+
         for (auto& worker : workers) {
             worker->start();
+        }
+
+        double total_bytes = total_nodes() * bytes_sent_per_node;
+        while (!all_done()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            uint64_t now = DateUtils::now();
+            double elapsed = (double)(now - start_time) / 1000.0;
+
+            double remaining = 0;
+            for (auto& worker : workers) {
+                remaining += worker->remaining_bytes;
+            }
+            uint32_t transferred = total_bytes - remaining;
+            double remaining_ratio = remaining/total_bytes;
+            double progress_ratio = 1 - remaining_ratio;
+
+            double time_estimate = remaining_ratio/progress_ratio * elapsed;
+
+            log_print(
+                elapsed, "s elapsed | ",
+                progress_ratio*100, "% complete | ",
+                format_bytes(transferred), "/", format_bytes(total_bytes), " ( ", time_estimate, "s left)"
+            );
         }
 
         for (auto& worker : workers) {
@@ -311,18 +351,25 @@ public:
         return BenchmarkResult();
     }
 
-    void analyse_result() {
-        for (std::unique_ptr<Worker>& worker : workers) {
-            std::string msg;
-            
-            msg += worker->node_id + " - ";
-            msg += format("(%u) ", worker->logs.size());
-
-            for (auto& entry : worker->logs) {
-                msg += format("%u ", entry.key);
-            }
-
-            log_print(msg);
+    bool all_done() {
+        for (auto& worker : workers) {
+            if (!worker->done) return false;
         }
+        return true;
+    }
+
+    void analyse_result() {
+        // for (std::unique_ptr<Worker>& worker : workers) {
+        //     std::string msg;
+            
+        //     msg += worker->node_id + " - ";
+        //     msg += format("(%u) ", worker->logs.size());
+
+        //     for (auto& entry : worker->logs) {
+        //         msg += format("%u ", entry.key);
+        //     }
+
+        //     log_print(msg);
+        // }
     }
 };
