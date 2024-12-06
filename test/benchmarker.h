@@ -23,12 +23,6 @@ struct HashMapMessage {
     unsigned char value[VALUE_SIZE];
 };
 
-namespace hash_map_message {
-    bool is_read(const char* msg) {
-        return msg[0];
-    }
-}
-
 struct Worker {
     const Config config;
     const std::string node_id;
@@ -41,6 +35,9 @@ struct Worker {
     std::thread receiver_thread;
     std::thread deliver_thread;
     std::unique_ptr<ReliableCommunication> comm;
+
+    std::binary_semaphore node_over{0};
+    std::binary_semaphore benchmark_over{0};
 
     std::binary_semaphore read_sem{0};
 
@@ -71,27 +68,39 @@ struct Worker {
     }
 
     void send_routine() {
-        char buffer[Message::MAX_SIZE];
+        HashMapMessage msg;
 
         while (true) {
-            std::size_t size = create_hashmap_message(buffer);
-            if (hash_map_message::is_read(buffer)) {
+            std::size_t size = create_hashmap_message(&msg);
+
+            if (!size) break;
+
+            if (msg.operation == HashMapOperation::READ) {
                 std::string node_id = choose_random_node();
-                bool success = comm->send(group_id, node_id, {buffer, size});
+                bool success = comm->send(group_id, node_id, {(const char*) &msg, size});
                 if (!success) continue;
                 read_sem.acquire(); // TODO: dar release no receive quando o resultado da leitura chegar
             }
-            else {
-                comm->broadcast(group_id, {buffer, size});
+            else if (msg.operation == HashMapOperation::WRITE) {
+                log_print("Node ", node_id, " is sending ", size, " bytes (key=", msg.key, ").");
+                comm->broadcast(group_id, {(const char*) &msg, size});
+                std::this_thread::sleep_for(std::chrono::milliseconds(interval_between_messages));
             }
         }
+
+        log_print("Node ", node_id, " is done, waiting for benchmark being over.");
+        node_over.release();
+        benchmark_over.acquire();
+        log_print("Node ", node_id, " is terminating.");
     }
 
     std::string choose_random_node() {
-
+        uint32_t i = rc_random::dis32(rc_random::gen) % config.nodes.size();
+        const NodeConfig& node = config.nodes.at(i);
+        return node.id;
     }
 
-    std::size_t create_hashmap_message(char* buffer) {
+    std::size_t create_hashmap_message(HashMapMessage* buffer) {
         HashMapMessage msg;
 
         uint32_t bytes = std::min(remaining_bytes, max_message_size);
@@ -114,7 +123,7 @@ struct Worker {
         // talvez seja mais interessante ler o valor atual da chave e calcular
         // um novo valor que dependa do anterior e da ordem que estas escritas são feitas
         // para verificar a integridade do ab
-        for (int i = 0; i < value_size; i++) {
+        for (uint32_t i = 0; i < value_size; i++) {
             uint8_t byte = rc_random::dis8(rc_random::gen);
             msg.value[i] = byte;
         }
@@ -129,16 +138,18 @@ struct Worker {
     }
 
     void deliver_routine() {
-        char buffer[Message::MAX_SIZE];
+        HashMapMessage msg;
         ReceiveResult result;
 
         while (true) {
             try {
-                result = comm->deliver(buffer);
+                result = comm->deliver((char*) &msg);
             }
             catch (const buffer_termination& err) {
                 return;
             }
+
+            log_print("Node ", node_id, " received ", result.length, " bytes on group ", result.group_id, " (key=", msg.key, ").");
 
             // provavelmente pegar o tempo atual e dar push no vetor
             // para calcular o throughput posteriormente, além de
@@ -148,6 +159,8 @@ struct Worker {
 
     void start() {
         comm = std::make_unique<ReliableCommunication>(node_id, Message::MAX_SIZE, false, config);
+        comm->join_group(group_id);
+
         sender_thread = std::thread([this]() { send_routine(); });
         receiver_thread = std::thread([this]() { receive_routine(); });
         deliver_thread = std::thread([this]() { deliver_routine(); });
@@ -223,7 +236,7 @@ public:
 
         config.groups = create_groups();
         config.nodes = create_nodes();
-        config.alive = 500;
+        config.alive = 100;
         config.broadcast = BroadcastType::AB;
         config.faults = {delay: {0, 0}, lose_chance: 0, corrupt_chance: 0};
 
@@ -260,13 +273,20 @@ public:
             }
         }
 
-        // for (auto& worker : workers) {
-        //     worker->start();
-        // }
+        for (auto& worker : workers) {
+            worker->start();
+        }
 
-        // for (auto& worker : workers) {
-        //     worker->wait();
-        // }
+        for (auto& worker : workers) {
+            worker->node_over.acquire();
+        }
+        
+        log_print("Benchmark is over.");
+
+        for (auto& worker : workers) {
+            worker->benchmark_over.release();
+            worker->wait();
+        }
 
         return BenchmarkResult();
     }
