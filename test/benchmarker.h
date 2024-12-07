@@ -6,17 +6,19 @@
 #include "communication/reliable_communication.h"
 
 
-std::string format_bytes(uint64_t bytes) {
+std::string format_bytes(uint64_t bytes, uint8_t decimals = 255) {
     if (bytes < 1024) return format("%uB", bytes);
 
+    std::string p = decimals == 255 ? "%f" : std::string("%0.") + std::to_string(decimals) + "f";
+
     double kiB = (double) bytes / 1024.0;
-    if (kiB < 1024.0) return format("%0.3fKiB", kiB);
+    if (kiB < 1024.0) return format(p+"KiB", kiB);
 
     double miB = (double) kiB / 1024.0;
-    if (miB < 1024.0) return format("%0.3fMiB", miB);
+    if (miB < 1024.0) return format(p+"MiB", miB);
 
     double giB = (double) miB / 1024.0;
-    return format("%0.2fGiB", giB);
+    return format(p+"GiB", giB);
 }
 
 
@@ -39,7 +41,7 @@ struct HashMapMessage {
 
 struct LogEntry {
     uint64_t time;
-    size_t bytes_received;
+    size_t bytes;
     uint32_t key;
 };
 
@@ -65,7 +67,8 @@ struct Worker {
     std::binary_semaphore read_sem{0};
 
     uint32_t remaining_bytes;
-    std::vector<LogEntry> logs;
+    std::vector<LogEntry> in_logs;
+    std::vector<LogEntry> out_logs;
 
     Worker(
         const Config& config,
@@ -95,24 +98,50 @@ struct Worker {
         return bytes_received(interval_ms, DateUtils::now());
     }
     uint64_t bytes_received(uint64_t interval_ms, uint64_t time) {
-        if (logs.empty()) return 0;
+        if (in_logs.empty()) return 0;
 
         uint64_t min_time = time - interval_ms;
-        int32_t max_i = (int32_t) logs.size() - 1;
+        int32_t max_i = (int32_t) in_logs.size() - 1;
 
-        if (logs[max_i].time < min_time) return 0;
+        if (in_logs[max_i].time < min_time) return 0;
 
-        while (max_i > 0 && logs[max_i].time > time) max_i--;
+        while (max_i > 0 && in_logs[max_i].time > time) max_i--;
 
         int32_t min_i = max_i;
-        while (min_i > 0 && logs[min_i - 1].time > min_time) min_i--;
+        while (min_i > 0 && in_logs[min_i - 1].time > min_time) min_i--;
         
-        auto begin = logs.begin() + min_i;
-        auto end = logs.begin() + max_i;
+        auto begin = in_logs.begin() + min_i;
+        auto end = in_logs.begin() + max_i;
 
         uint64_t bytes = 0;
         for (auto entry = begin; entry <= end; entry++) {
-            bytes += entry->bytes_received;
+            bytes += entry->bytes;
+        }
+        return bytes;
+    }
+
+    double bytes_sent(uint64_t interval_ms) {
+        return bytes_sent(interval_ms, DateUtils::now());
+    }
+    uint64_t bytes_sent(uint64_t interval_ms, uint64_t time) {
+        if (out_logs.empty()) return 0;
+
+        uint64_t min_time = time - interval_ms;
+        int32_t max_i = (int32_t) out_logs.size() - 1;
+
+        if (out_logs[max_i].time < min_time) return 0;
+
+        while (max_i > 0 && out_logs[max_i].time > time) max_i--;
+
+        int32_t min_i = max_i;
+        while (min_i > 0 && out_logs[min_i - 1].time > min_time) min_i--;
+        
+        auto begin = out_logs.begin() + min_i;
+        auto end = out_logs.begin() + max_i;
+
+        uint64_t bytes = 0;
+        for (auto entry = begin; entry <= end; entry++) {
+            bytes += entry->bytes;
         }
         return bytes;
     }
@@ -137,6 +166,11 @@ struct Worker {
                 std::this_thread::sleep_for(std::chrono::milliseconds(interval));
 
                 comm->broadcast(group_id, {(const char*) &msg, size});
+                out_logs.push_back({
+                    time : DateUtils::now(),
+                    bytes : size,
+                    key : msg.key
+                });
                 remaining_bytes -= size;
                 
             }
@@ -212,10 +246,10 @@ struct Worker {
 
             LogEntry entry = {
                 time : DateUtils::now(),
-                bytes_received : result.length,
+                bytes : result.length,
                 key : msg.key
             };
-            logs.push_back(entry);
+            in_logs.push_back(entry);
         }
     }
 
@@ -415,14 +449,16 @@ public:
 
         double total_bytes = total_nodes() * bytes_sent_per_node;
         double remaining_bytes = 0;
-        double throughput = 0;
+        double avg_in_throughput = 0;
+        double out_throughput = 0;
 
         for (auto& worker : workers) {
             remaining_bytes += worker->remaining_bytes;
-            throughput += worker->bytes_received(1000); // bytes recebidos no ultimo segundo
+            avg_in_throughput += worker->bytes_received(1000); // bytes recebidos no ultimo segundo
+            out_throughput += worker->bytes_sent(1000);
         }
 
-        throughput /= total_nodes();
+        avg_in_throughput /= total_nodes();
 
         uint32_t transferred_bytes = total_bytes - remaining_bytes;
         double remaining_ratio = remaining_bytes/total_bytes;
@@ -432,13 +468,18 @@ public:
 
 
         std::string out = format(
-            "%.2fs elapsed | %s/%s (%.5f%%), time_left=%.2fs, throughput=%s/s",
+            "%.1fs | "
+            "%s/%s (%.5f%%), "
+            "time_left=%.1fs, "
+            "avg_in=%s/s, "
+            "total_out=%s/s",
             elapsed,
-            format_bytes(transferred_bytes).c_str(),
-            format_bytes(total_bytes).c_str(),
+            format_bytes(transferred_bytes, 3).c_str(),
+            format_bytes(total_bytes, 3).c_str(),
             progress_ratio*100,
             time_estimate,
-            format_bytes(throughput).c_str()
+            format_bytes(avg_in_throughput, 3).c_str(),
+            format_bytes(out_throughput, 3).c_str()
         );
         std::cout << out << std::endl;
     }
