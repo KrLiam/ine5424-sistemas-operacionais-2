@@ -11,11 +11,6 @@ void ChecksumLayer::send(Packet packet)
         log_trace("Packet ", packet.to_string(PacketFormat::SENT), " sent to checksum layer.");
     }
 
-    if (config.disable_checksum) {
-        handler.forward_send(packet);
-        return;
-    }
-
     PacketData &data = packet.data;
 
     // pre-processamento do pacote antes de enviar, a principio isso n tem nada a ver com a checksum layer
@@ -23,6 +18,11 @@ void ChecksumLayer::send(Packet packet)
     packet.data.header.pid = local_node.get_pid();
     if (local_node.is_leader()) packet.data.header.flags |= LDR;
     else packet.data.header.flags &= ~LDR;
+
+    if (config.disable_checksum) {
+        handler.forward_send(packet);
+        return;
+    }
 
     char buffer[PacketData::MAX_PACKET_SIZE];
     prepare_packet_buffer(data, packet.meta.message_length, buffer);
