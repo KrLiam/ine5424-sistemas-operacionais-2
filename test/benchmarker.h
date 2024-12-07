@@ -254,22 +254,28 @@ struct Worker {
 
             if (terminate) return;
 
-            if (msg.operation == HashMapOperation::READ) {
-                // log_print("Node ", node_id, " received read request on group ", result.group_id, " (key=", msg.key, ").");
-                HashMapMessage answer = create_read_answer(msg);
-                comm->send(result.group_id, result.sender_id, {(char*)&answer, sizeof(answer)});
-            }
-            else if (msg.operation == HashMapOperation::READ_RESULT) {
-                // log_print(msg.key, " on node ", result.sender_id, " is ", msg.value, ".");
-                read_sem.release();
-            }
-
             LogEntry entry = {
                 time : DateUtils::now(),
                 bytes : result.length,
                 key : msg.key
             };
             in_logs.push_back(entry);
+
+            if (msg.operation == HashMapOperation::READ) {
+                // log_print("Node ", node_id, " received read request on group ", result.group_id, " (key=", msg.key, ").");
+                HashMapMessage answer = create_read_answer(msg);
+                bool success = comm->send(result.group_id, result.sender_id, {(char*)&answer, sizeof(answer)});
+                if (!success) continue;
+                out_logs.push_back({
+                    time : DateUtils::now(),
+                    bytes : sizeof(answer),
+                    key : msg.key
+                });
+            }
+            else if (msg.operation == HashMapOperation::READ_RESULT) {
+                // log_print(msg.key, " on node ", result.sender_id, " is ", msg.value, ".");
+                read_sem.release();
+            }
         }
     }
 
