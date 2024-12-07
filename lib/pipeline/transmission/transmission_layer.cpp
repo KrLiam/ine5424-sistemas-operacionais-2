@@ -41,7 +41,6 @@ void TransmissionLayer::clear_queue(const TransmissionKey& key) {
     queue_map.erase(key);
     queue_mutex.unlock();
     // log_info("Cleared queue to ", id.origin.to_string(), " ", id.msg_num, " ", id.sequence_type);
-
 }
 
 void TransmissionLayer::attach(EventBus& bus) {

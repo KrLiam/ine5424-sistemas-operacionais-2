@@ -69,6 +69,10 @@ void TransmissionQueue::send(uint32_t num) {
 
     entry.tries++;
     pending.emplace(num);
+    if (entry.timeout_id != -1) {
+        TIMER.cancel(entry.timeout_id);
+        entry.timeout_id = -1;
+    }
     entry.timeout_id = TIMER.add(Config::ACK_TIMEOUT, [this, num]() { timeout(num); });
 
     // não transmite o fragmento na primeira tentativa
