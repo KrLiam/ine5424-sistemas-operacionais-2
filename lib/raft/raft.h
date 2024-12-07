@@ -20,17 +20,9 @@ enum RaftState
     LEADER = 2
 };
 
-struct RaftPersistentData
-{
-    Node *voted_for;
-};
-
 class RaftManager
 {
-    std::string data_filename;
-
-    RaftPersistentData data;
-
+    Node *voted_for;
     RaftState state;
 
     BroadcastConnection& broadcast_connection;

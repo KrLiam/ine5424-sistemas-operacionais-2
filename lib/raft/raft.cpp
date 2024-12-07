@@ -10,7 +10,7 @@ RaftManager::RaftManager(
     EventBus &event_bus,
     unsigned int alive
 ) :
-    data_filename(format(DATA_DIR "/raft/%s.raft", local_node.get_id().c_str())),
+    voted_for(nullptr),
     state(FOLLOWER),
     broadcast_connection(broadcast_connection),
     connections(connections),
@@ -48,11 +48,11 @@ void RaftManager::send_vote(Packet packet) {
                 "ignoring.");
             return;
         }
-        if (data.voted_for != nullptr && data.voted_for->get_address() != packet.meta.origin) {
+        if (voted_for != nullptr && voted_for->get_address() != packet.meta.origin) {
             log_debug("Received vote request, but we already voted for someone.");
             return;
         }
-        data.voted_for = &nodes.get_node(packet.meta.origin);
+        voted_for = &nodes.get_node(packet.meta.origin);
         set_election_timer();
     }
 
@@ -199,7 +199,7 @@ void RaftManager::packet_received(const PacketReceived &event) {
 
 
 void RaftManager::on_follower() {
-    data.voted_for = nullptr;
+    voted_for = nullptr;
 
     set_election_timer();
 }
@@ -231,7 +231,7 @@ void RaftManager::on_candidate() { candidate_timeout(); }
 
 void RaftManager::candidate_timeout() {
     log_info("Candidate timed out; starting new election.");
-    data.voted_for = nullptr;
+    voted_for = nullptr;
     leader = nullptr;
 
     received_votes.clear();
