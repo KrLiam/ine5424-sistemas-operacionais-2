@@ -165,7 +165,8 @@ struct Worker {
                 uint32_t interval = interval_range.random();
                 std::this_thread::sleep_for(std::chrono::milliseconds(interval));
 
-                comm->broadcast(group_id, {(const char*) &msg, size});
+                bool success = comm->broadcast(group_id, {(const char*) &msg, size});
+                if (!success) continue;
                 out_logs.push_back({
                     time : DateUtils::now(),
                     bytes : size,
