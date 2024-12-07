@@ -10,11 +10,11 @@
 class ChannelLayer : public PipelineStep {
     std::unique_ptr<Channel> channel;
     std::thread receiver_thread;
-    const NodeMap& nodes;
+    NodeMap& nodes;
 
     void receiver();
 public:
-    ChannelLayer(PipelineHandler handler, SocketAddress local_address, const NodeMap& nodes, EventBus& event_bus);
+    ChannelLayer(PipelineHandler handler, SocketAddress local_address, NodeMap& nodes, EventBus& event_bus);
 
     ~ChannelLayer();
 

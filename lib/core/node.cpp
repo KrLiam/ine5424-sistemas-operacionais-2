@@ -98,7 +98,9 @@ void NodeMap::add(const Node& node) {
 bool NodeMap::contains_group(uint64_t hash) const {
     return groups.contains(hash);
 }
-const std::unordered_set<Node*>& NodeMap::get_group(uint64_t hash) const {
+const std::unordered_set<Node*>& NodeMap::get_group(uint64_t hash) {
+    if (!groups.contains(hash)) groups.emplace(hash, std::unordered_set<Node*>());
+
     return groups.at(hash);
 }
 
