@@ -42,6 +42,9 @@ struct Arguments {
     IntRange node_interval = {0, 0};
     uint32_t max_message_size = Message::MAX_SIZE;
     BenchmarkMode mode = BenchmarkMode::AB;
+
+    bool no_encryption = false;
+    bool no_checksum = false;
 };
 
 Arguments parse_arguments(int argc, char* argv[]);

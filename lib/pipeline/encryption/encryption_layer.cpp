@@ -6,7 +6,7 @@ using namespace std::placeholders;
 GroupInfo::GroupInfo(const std::string &id, const ByteArray &key)
     : id(id), key(key), hash(std::hash<ByteArray>()(key)) {}
 
-EncryptionLayer::EncryptionLayer(PipelineHandler handler) : PipelineStep(handler) {}
+EncryptionLayer::EncryptionLayer(PipelineHandler handler, const Config& config) : PipelineStep(handler), config(config) {}
 
 EncryptionLayer::~EncryptionLayer() {}
 
@@ -24,6 +24,11 @@ void EncryptionLayer::send(Packet packet)
 {
     if (!packet.silent()) {
         log_trace("Packet ", packet.to_string(PacketFormat::SENT), " sent to encryption layer.");
+    }
+
+    if (config.disable_encryption) {
+        handler.forward_send(packet);
+        return;
     }
 
     uint64_t key_hash = packet.data.header.key_hash;
@@ -55,6 +60,11 @@ void EncryptionLayer::receive(Packet packet)
 {
     if (!packet.silent()) {
         log_trace("Packet from ", packet.meta.origin.to_string(), " received on encryption layer.");
+    }
+
+    if (config.disable_encryption) {
+        handler.forward_receive(packet);
+        return;
     }
 
     uint64_t key_hash = packet.data.header.key_hash;

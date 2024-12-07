@@ -5,22 +5,22 @@
 #include "communication/group_registry.h"
 #include "communication/connection.h"
 
-Pipeline::Pipeline(GroupRegistry* gr, EventBus& event_bus, const FaultConfig& fault_config) : gr(gr), event_bus(event_bus)
+Pipeline::Pipeline(GroupRegistry* gr, EventBus& event_bus, const Config& config) : gr(gr), event_bus(event_bus)
 {
     PipelineHandler handler = PipelineHandler(*this, event_bus, -1);
 
     fault_layer = new FaultInjectionLayer(
         handler.at_index(FAULT_INJECTION_LAYER),
         gr->get_nodes(),
-        fault_config
+        config.faults
     );
-    encryption_layer = new EncryptionLayer(handler.at_index(ENCRYPTION_LAYER));
+    encryption_layer = new EncryptionLayer(handler.at_index(ENCRYPTION_LAYER), config);
 
     layers.push_back(new ChannelLayer(handler.at_index(CHANNEL_LAYER), gr->get_local_node().get_address(), gr->get_nodes(), event_bus));
     layers.push_back(encryption_layer);
     layers.push_back(fault_layer);
     layers.push_back(new TransmissionLayer(handler.at_index(TRANSMISSION_LAYER), gr->get_nodes()));
-    layers.push_back(new ChecksumLayer(handler.at_index(CHECKSUM_LAYER), gr->get_local_node()));
+    layers.push_back(new ChecksumLayer(handler.at_index(CHECKSUM_LAYER), gr->get_local_node(), config));
     layers.push_back(new FragmentationLayer(handler.at_index(FRAGMENTATION_LAYER), event_bus));
 
     attach_layers();

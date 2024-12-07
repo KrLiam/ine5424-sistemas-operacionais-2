@@ -21,6 +21,8 @@ class EncryptionLayer : public PipelineStep
     std::unordered_map<uint64_t, GroupInfo> groups;
     std::mutex mtx_groups;
 
+    const Config& config;
+
     void encrypt(Packet& packet);
     bool decrypt(Packet& packet);
 
@@ -31,7 +33,7 @@ class EncryptionLayer : public PipelineStep
     void leave_group(const LeaveGroup& event);
 
 public:
-    EncryptionLayer(PipelineHandler handler);
+    EncryptionLayer(PipelineHandler handler, const Config& config);
 
     ~EncryptionLayer();
 

@@ -328,6 +328,9 @@ Config ConfigReader::parse()
         expect(';');
     }
 
+    config.disable_checksum = false;
+    config.disable_encryption = false;
+
     return config;
 }
 

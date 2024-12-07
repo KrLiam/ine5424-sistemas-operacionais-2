@@ -17,7 +17,7 @@ ReliableCommunication::ReliableCommunication(
     log_info("Initializing node ", node_config->id, " (", node_config->address.to_string(), ").");
 
     gr = std::make_unique<GroupRegistry>(local_id, config, event_bus);
-    pipeline = std::make_unique<Pipeline>(gr.get(), event_bus, config.faults);
+    pipeline = std::make_unique<Pipeline>(gr.get(), event_bus, config);
 
     sender_thread = std::thread([this]()
                                 { send_routine(); });

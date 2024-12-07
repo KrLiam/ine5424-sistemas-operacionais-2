@@ -107,6 +107,12 @@ Arguments parse_arguments(int argc, char* argv[]) {
         else if (long_arg && flag == "mode") {
             args.mode = parse_benchmark_mode(reader);
         }
+        else if (long_arg && flag == "no-encryption") {
+            args.no_encryption = true;
+        }
+        else if (long_arg && flag == "no-checksum") {
+            args.no_checksum = true;
+        }
         else {
             throw std::invalid_argument(
                 format("Unknown flag '%s' at pos %i", flag.c_str(), reader.get_pos() - flag.length())

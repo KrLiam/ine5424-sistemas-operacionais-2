@@ -8,9 +8,10 @@
 class ChecksumLayer : public PipelineStep
 {
     Node& local_node;
+    const Config& config;
 
 public:
-    ChecksumLayer(PipelineHandler handler, Node& local_node);
+    ChecksumLayer(PipelineHandler handler, Node& local_node, const Config& config);
 
     ~ChecksumLayer();
 

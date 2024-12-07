@@ -1,7 +1,7 @@
 #include "pipeline/checksum/checksum_layer.h"
 #include "utils/log.h"
 
-ChecksumLayer::ChecksumLayer(PipelineHandler handler, Node& local_node) : PipelineStep(handler), local_node(local_node) {}
+ChecksumLayer::ChecksumLayer(PipelineHandler handler, Node& local_node, const Config& config) : PipelineStep(handler), local_node(local_node), config(config) {}
 
 ChecksumLayer::~ChecksumLayer() {}
 
@@ -9,6 +9,11 @@ void ChecksumLayer::send(Packet packet)
 {
     if (!packet.silent()) {
         log_trace("Packet ", packet.to_string(PacketFormat::SENT), " sent to checksum layer.");
+    }
+
+    if (config.disable_checksum) {
+        handler.forward_send(packet);
+        return;
     }
 
     PacketData &data = packet.data;
@@ -35,6 +40,11 @@ void ChecksumLayer::receive(Packet packet)
 {
     if (!packet.silent()) {
         log_trace("Packet ", packet.to_string(PacketFormat::RECEIVED), " received on checksum layer.");
+    }
+
+    if (config.disable_checksum) {
+        handler.forward_receive(packet);
+        return;
     }
 
     unsigned short received_checksum = packet.data.header.checksum;

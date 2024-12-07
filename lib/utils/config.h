@@ -160,10 +160,12 @@ struct Config
     static int ACK_TIMEOUT;
 
     std::vector<NodeConfig> nodes;
-    unsigned int alive = 1000;
+    unsigned int alive = 100;
     BroadcastType broadcast = BroadcastType::BEB;
     FaultConfig faults;
     std::unordered_map<std::string, ByteArray> groups;
+    bool disable_checksum;
+    bool disable_encryption;
 
     const NodeConfig* get_node(std::string id) const;
     const NodeConfig* get_node(SocketAddress address) const;

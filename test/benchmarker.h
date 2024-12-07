@@ -279,6 +279,9 @@ class Benchmarker {
     uint64_t start_time;
     std::vector<std::unique_ptr<Worker>> workers;
 
+    bool disable_encryption;
+    bool disable_checksum;
+
 public:
     Benchmarker(
         uint32_t total_groups,
@@ -286,13 +289,17 @@ public:
         uint32_t bytes_sent_per_node,
         IntRange interval_range,
         uint32_t max_message_size,
-        BenchmarkMode mode
+        BenchmarkMode mode,
+        bool no_encryption,
+        bool no_checksum
     ) :
         total_nodes_in_group(total_nodes_in_group),
         bytes_sent_per_node(bytes_sent_per_node),
         interval_range(interval_range),
         max_message_size(std::clamp(max_message_size, (uint32_t) 1, (uint32_t) Message::MAX_SIZE)),
-        mode(mode)
+        mode(mode),
+        disable_encryption(no_encryption),
+        disable_checksum(no_checksum)
     {
         global_group = total_groups == 0;
         this->total_groups = total_groups ? total_groups : 1;
@@ -350,6 +357,8 @@ public:
             BroadcastType::BEB;
 
         config.faults = {delay: {0, 0}, lose_chance: 0, corrupt_chance: 0};
+        config.disable_encryption = disable_encryption;
+        config.disable_checksum = disable_checksum;
 
         return config;
     }

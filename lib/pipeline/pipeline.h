@@ -54,7 +54,7 @@ public:
     static const unsigned int CHECKSUM_LAYER = 4;
     static const unsigned int FRAGMENTATION_LAYER = 5;
 
-    Pipeline(GroupRegistry* gr, EventBus& event_bus, const FaultConfig& fault_config);
+    Pipeline(GroupRegistry* gr, EventBus& event_bus, const Config& config);
 
     ~Pipeline();
 
