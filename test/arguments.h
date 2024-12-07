@@ -40,7 +40,7 @@ struct Arguments {
     uint32_t num_nodes = 10;
     uint32_t bytes_per_node = 100*1024*1024;
     IntRange node_interval = {0, 0};
-    uint32_t max_message_size = Message::MAX_SIZE;
+    uint32_t max_message_size = PacketData::MAX_MESSAGE_SIZE;
     BenchmarkMode mode = BenchmarkMode::AB;
 
     bool no_encryption = false;

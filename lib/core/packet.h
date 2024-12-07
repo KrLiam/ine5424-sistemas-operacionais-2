@@ -79,7 +79,7 @@ struct PacketData
 {
     static const int PADDING = 10;
 
-    static const int MAX_PACKET_SIZE = 1280;
+    static const int MAX_PACKET_SIZE = 65468;
     static const int MAX_MESSAGE_SIZE = MAX_PACKET_SIZE - sizeof(PacketHeader) - PADDING;
 
     PacketHeader header;
