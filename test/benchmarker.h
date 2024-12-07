@@ -354,9 +354,9 @@ public:
         uint32_t bytes_sent_per_node,
         IntRange interval_range,
         uint32_t max_message_size,
+        BenchmarkMode mode,
         bool no_encryption,
         bool no_checksum
-        BenchmarkMode mode,
     ) :
         total_nodes_in_group(total_nodes_in_group),
         bytes_sent_per_node(bytes_sent_per_node),
