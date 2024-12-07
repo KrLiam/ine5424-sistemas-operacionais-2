@@ -28,7 +28,8 @@ struct BenchmarkResult {
 
 enum HashMapOperation : uint16_t {
     READ = 0,
-    WRITE = 1
+    WRITE = 1,
+    READ_RESULT = 2
 };
 
 struct HashMapMessage {
@@ -70,6 +71,12 @@ struct Worker {
     std::vector<LogEntry> in_logs;
     std::vector<LogEntry> out_logs;
 
+    // o numero maximo de chaves na hash table está relacionado com
+    // o numero total de nós e a quantidade de ram disponível pro benchmark. 
+    static const uint32_t MAX_KEY = 100;
+    std::uniform_int_distribution<> key_dis;
+    std::unordered_map<uint16_t, std::array<char, HashMapMessage::VALUE_SIZE>> hash_map;
+
     Worker(
         const Config& config,
         const std::string& node_id,
@@ -84,7 +91,8 @@ struct Worker {
         bytes_to_send(bytes_to_send),
         interval_range(interval_range),
         max_message_size(std::clamp(max_message_size, (uint32_t) 1, (uint32_t) Message::MAX_SIZE)),
-        remaining_bytes(bytes_to_send)
+        remaining_bytes(bytes_to_send),
+        key_dis(0, MAX_KEY)
     {}
 
     ~Worker() {
@@ -156,16 +164,9 @@ struct Worker {
 
             if (msg.operation == HashMapOperation::READ) {
                 std::string node_id = choose_random_node();
-                bool success = comm->send(group_id, node_id, {(const char*) &msg, size});
-                if (!success) continue;
-                read_sem.acquire(); // TODO: dar release no receive quando o resultado da leitura chegar
-            }
-            else if (msg.operation == HashMapOperation::WRITE) {
-                // log_print("Node ", node_id, " is sending ", size, " bytes (key=", msg.key, ").");
-                uint32_t interval = interval_range.random();
-                std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+                // log_print("Node ", node_id, " is reading ", msg.key, " at ", node_id, ".");
 
-                bool success = comm->broadcast(group_id, {(const char*) &msg, size});
+                bool success = comm->send(group_id, node_id, {(const char*) &msg, size});
                 if (!success) continue;
                 out_logs.push_back({
                     time : DateUtils::now(),
@@ -173,7 +174,22 @@ struct Worker {
                     key : msg.key
                 });
                 remaining_bytes -= size;
-                
+
+                read_sem.acquire();
+            }
+            else if (msg.operation == HashMapOperation::WRITE) {
+                // log_print("Node ", node_id, " is sending ", size, " bytes (key=", msg.key, ").");
+                uint32_t interval = interval_range.random();
+
+                bool success = comm->broadcast(group_id, {(const char*) &msg, size});
+                std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+                if (!success) continue;
+                out_logs.push_back({
+                    time : DateUtils::now(),
+                    bytes : size,
+                    key : msg.key
+                });
+                remaining_bytes -= size;
             }
         }
 
@@ -201,23 +217,22 @@ struct Worker {
         uint32_t metadata_bytes = sizeof(msg.operation) + sizeof(msg.key);
         if (bytes < metadata_bytes) return 0;
 
+        // TODO: talvez tirar isso e deixar mandar um pacote cheio pra não bugar o valor no ultimo broadcast
         uint32_t value_size = bytes - metadata_bytes;
 
         // apenas escrita por enquanto
-        msg.operation = HashMapOperation::WRITE;
+        msg.operation = (HashMapOperation)rc_random::dis1(rc_random::gen);;
 
-        // o numero maximo de chaves na hash table está relacionado com
-        // o numero total de nós e a quantidade de ram disponível pro benchmark. 
-        uint32_t max_key = 100;
-        std::uniform_int_distribution<> key_dis(0, max_key);
         msg.key = key_dis(rc_random::gen);
 
-        // talvez seja mais interessante ler o valor atual da chave e calcular
-        // um novo valor que dependa do anterior e da ordem que estas escritas são feitas
-        // para verificar a integridade do ab
-        for (uint32_t i = 0; i < value_size; i++) {
-            uint8_t byte = rc_random::dis8(rc_random::gen);
-            msg.value[i] = byte;
+        if (msg.operation == HashMapOperation::WRITE) {
+            // talvez seja mais interessante ler o valor atual da chave e calcular
+            // um novo valor que dependa do anterior e da ordem que estas escritas são feitas
+            // para verificar a integridade do ab
+            for (uint32_t i = 0; i < value_size; i++) {
+                uint8_t byte = rc_random::dis8(rc_random::gen);
+                msg.value[i] = byte;
+            }
         }
 
         memcpy(buffer, &msg, sizeof(msg));
@@ -226,7 +241,53 @@ struct Worker {
     }
 
     void receive_routine() {
-        // TODO: aguardar receber o resultado de um read e dar release no read_sem
+        HashMapMessage msg;
+        ReceiveResult result;
+
+        while (!terminate) {
+            try {
+                result = comm->receive((char*) &msg);
+            }
+            catch (const buffer_termination& err) {
+                return;
+            }
+
+            if (terminate) return;
+
+            if (msg.operation == HashMapOperation::READ) {
+                // log_print("Node ", node_id, " received read request on group ", result.group_id, " (key=", msg.key, ").");
+                HashMapMessage answer = create_read_answer(msg);
+                comm->send(result.group_id, result.sender_id, {(char*)&answer, sizeof(answer)});
+            }
+            else if (msg.operation == HashMapOperation::READ_RESULT) {
+                // log_print(msg.key, " on node ", result.sender_id, " is ", msg.value, ".");
+                read_sem.release();
+            }
+
+            LogEntry entry = {
+                time : DateUtils::now(),
+                bytes : result.length,
+                key : msg.key
+            };
+            in_logs.push_back(entry);
+        }
+    }
+
+    HashMapMessage create_read_answer(HashMapMessage& read_msg) {
+        HashMapMessage answer;
+
+        answer.operation = HashMapOperation::READ_RESULT;
+        answer.key = read_msg.key;
+
+        if (hash_map.contains(read_msg.key)) {
+            memcpy(answer.value, hash_map[read_msg.key].data(), HashMapMessage::VALUE_SIZE);
+        }
+        else {
+            std::string undefined = "undefined";
+            memcpy(answer.value, undefined.c_str(), undefined.size());
+        }
+
+        return answer;
     }
 
     void deliver_routine() {
@@ -251,6 +312,9 @@ struct Worker {
                 key : msg.key
             };
             in_logs.push_back(entry);
+
+            if (!hash_map.contains(msg.key)) hash_map[msg.key] = {};
+            memcpy(hash_map[msg.key].data(), msg.value, result.length - sizeof(msg.operation) - sizeof(msg.key));
         }
     }
 
@@ -290,9 +354,9 @@ public:
         uint32_t bytes_sent_per_node,
         IntRange interval_range,
         uint32_t max_message_size,
-        BenchmarkMode mode,
         bool no_encryption,
         bool no_checksum
+        BenchmarkMode mode,
     ) :
         total_nodes_in_group(total_nodes_in_group),
         bytes_sent_per_node(bytes_sent_per_node),
