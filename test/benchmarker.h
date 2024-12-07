@@ -221,7 +221,7 @@ struct Worker {
 
     void start() {
         comm = std::make_unique<ReliableCommunication>(node_id, Message::MAX_SIZE, false, config);
-        comm->join_group(group_id);
+        if (group_id != GLOBAL_GROUP_ID) comm->join_group(group_id);
 
         sender_thread = std::thread([this]() { send_routine(); });
         receiver_thread = std::thread([this]() { receive_routine(); });
@@ -241,6 +241,7 @@ class Benchmarker {
     uint32_t max_message_size;
     BenchmarkMode mode;
 
+    bool global_group = false;
     uint64_t start_time;
     std::vector<std::unique_ptr<Worker>> workers;
 
@@ -253,13 +254,14 @@ public:
         uint32_t max_message_size,
         BenchmarkMode mode
     ) :
-        total_groups(total_groups),
         total_nodes_in_group(total_nodes_in_group),
         bytes_sent_per_node(bytes_sent_per_node),
         interval_range(interval_range),
         max_message_size(std::clamp(max_message_size, (uint32_t) 1, (uint32_t) Message::MAX_SIZE)),
         mode(mode)
     {
+        global_group = total_groups == 0;
+        this->total_groups = total_groups ? total_groups : 1;
         workers.reserve(total_nodes());
     }
 
@@ -267,6 +269,11 @@ public:
 
     std::unordered_map<std::string, ByteArray> create_groups() {
         std::unordered_map<std::string, ByteArray> map;
+
+        if (global_group) {
+            map.emplace(GLOBAL_GROUP_ID, ByteArray{0});
+            return map;
+        }
 
         for (uint32_t i = 0; i < total_groups; i++) {
             std::string id = format("group_%u", i);
@@ -387,7 +394,7 @@ public:
             "Groups=%u \n"
             "Nodes=%u per group (%u total)\n"
             "Bytes=%s sent per node (%s total)\n"
-            "Interval between messages=%u\n"
+            "Interval between messages=%s\n"
             "Max message size=%u\n"
             "Message mode=%s\n\n",
             total_groups,
