@@ -377,7 +377,8 @@ void Runner::run_benchmark() {
         args.num_nodes,
         args.bytes_per_node,
         args.node_interval,
-        args.max_message_size
+        args.max_message_size,
+        args.mode
     );
 
     benchmarker.run();

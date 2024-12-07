@@ -138,7 +138,9 @@ struct IntRange {
     IntRange(uint32_t value);
     IntRange(uint32_t min, uint32_t max);
 
-    uint32_t length();
+    uint32_t random() const;
+
+    uint32_t length() const;
 };
 
 struct FaultConfig {

@@ -11,6 +11,16 @@
 #include "command.h"
 
 
+
+enum class BenchmarkMode {
+    SEND = 0,
+    BEB = 1,
+    URB = 2,
+    AB =3
+};
+BenchmarkMode parse_benchmark_mode(Reader& reader);
+const char* benchmark_mode_to_string(BenchmarkMode);
+
 struct Arguments {
     std::string program_name;
     std::string node_id;
@@ -29,8 +39,9 @@ struct Arguments {
     uint32_t num_groups = 3;
     uint32_t num_nodes = 10;
     uint32_t bytes_per_node = 100*1024*1024;
-    uint32_t node_interval = 0;
+    IntRange node_interval = {0, 0};
     uint32_t max_message_size = Message::MAX_SIZE;
+    BenchmarkMode mode = BenchmarkMode::AB;
 };
 
 Arguments parse_arguments(int argc, char* argv[]);

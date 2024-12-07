@@ -7,6 +7,7 @@
 #include "utils/config.h"
 #include "utils/log.h"
 #include "utils/format.h"
+#include "utils/random.h"
 
 
 config_error::config_error(const std::string &msg)
@@ -121,7 +122,11 @@ bool IntRange::contains(uint32_t value) const {
     return min <= value && value <= max;
 }
 
-uint32_t IntRange::length() {
+uint32_t IntRange::random() const {
+    return length() ? min + rc_random::dis32(rc_random::gen) % length() : min;
+}
+
+uint32_t IntRange::length() const {
     return max - min + 1;
 }
 

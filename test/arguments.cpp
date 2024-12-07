@@ -1,5 +1,24 @@
 #include "arguments.h"
 
+BenchmarkMode parse_benchmark_mode(Reader& reader) {
+    std::string value = reader.read_word();
+    std::transform(value.begin(), value.end(), value.begin(), ::tolower);
+
+    if (value == "send") return BenchmarkMode::SEND;
+    if (value == "beb") return BenchmarkMode::BEB;
+    if (value == "urb") return BenchmarkMode::URB;
+    if (value == "ab") return BenchmarkMode::AB;
+
+    throw parse_error(format("Invalid benchmark mode '%s'.", value.c_str()));
+}
+
+const char* benchmark_mode_to_string(BenchmarkMode mode) {
+    if (mode == BenchmarkMode::SEND) return "SEND";
+    if (mode == BenchmarkMode::URB) return "BEB";
+    if (mode == BenchmarkMode::AB) return "AB";
+    return "BEB";
+}
+
 Arguments parse_arguments(int argc, char* argv[]) {
     Arguments args;
     
@@ -80,10 +99,13 @@ Arguments parse_arguments(int argc, char* argv[]) {
             args.bytes_per_node = reader.read_int();
         }
         else if (long_arg && flag == "node-interval") {
-            args.node_interval = reader.read_int();
+            args.node_interval = IntRange::parse(reader);
         }
         else if (long_arg && flag == "max-message-size") {
             args.max_message_size = reader.read_int();
+        }
+        else if (long_arg && flag == "mode") {
+            args.mode = parse_benchmark_mode(reader);
         }
         else {
             throw std::invalid_argument(

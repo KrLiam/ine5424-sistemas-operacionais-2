@@ -48,7 +48,7 @@ struct Worker {
     const std::string node_id;
     const std::string group_id;
     const uint32_t bytes_to_send;
-    const uint32_t interval_between_messages;
+    const IntRange interval_range;
     const uint32_t max_message_size;
 
     std::thread sender_thread;
@@ -72,14 +72,14 @@ struct Worker {
         const std::string& node_id,
         const std::string& group_id,
         uint32_t bytes_to_send,
-        uint32_t interval_between_messages,
+        IntRange interval_range,
         uint32_t max_message_size
     ) :
         config(config),
         node_id(node_id),
         group_id(group_id),
         bytes_to_send(bytes_to_send),
-        interval_between_messages(interval_between_messages),
+        interval_range(interval_range),
         max_message_size(std::clamp(max_message_size, (uint32_t) 1, (uint32_t) Message::MAX_SIZE)),
         remaining_bytes(bytes_to_send)
     {}
@@ -97,10 +97,13 @@ struct Worker {
     uint64_t bytes_received(uint64_t interval_ms, uint64_t time) {
         if (logs.empty()) return 0;
 
+        uint64_t min_time = time - interval_ms;
         int32_t max_i = (int32_t) logs.size() - 1;
+
+        if (logs[max_i].time < min_time) return 0;
+
         while (max_i > 0 && logs[max_i].time > time) max_i--;
 
-        uint64_t min_time = time - interval_ms;
         int32_t min_i = max_i;
         while (min_i > 0 && logs[min_i - 1].time > min_time) min_i--;
         
@@ -130,10 +133,12 @@ struct Worker {
             }
             else if (msg.operation == HashMapOperation::WRITE) {
                 // log_print("Node ", node_id, " is sending ", size, " bytes (key=", msg.key, ").");
+                uint32_t interval = interval_range.random();
+                std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+
                 comm->broadcast(group_id, {(const char*) &msg, size});
                 remaining_bytes -= size;
                 
-                std::this_thread::sleep_for(std::chrono::milliseconds(interval_between_messages));
             }
         }
 
@@ -232,8 +237,9 @@ class Benchmarker {
     uint32_t total_groups;
     uint32_t total_nodes_in_group;
     uint32_t bytes_sent_per_node;
-    uint32_t interval_between_messages;
+    IntRange interval_range;
     uint32_t max_message_size;
+    BenchmarkMode mode;
 
     uint64_t start_time;
     std::vector<std::unique_ptr<Worker>> workers;
@@ -243,14 +249,16 @@ public:
         uint32_t total_groups,
         uint32_t total_nodes_in_group,
         uint32_t bytes_sent_per_node,
-        uint32_t interval_between_messages,
-        uint32_t max_message_size
+        IntRange interval_range,
+        uint32_t max_message_size,
+        BenchmarkMode mode
     ) :
         total_groups(total_groups),
         total_nodes_in_group(total_nodes_in_group),
         bytes_sent_per_node(bytes_sent_per_node),
-        interval_between_messages(interval_between_messages),
-        max_message_size(std::clamp(max_message_size, (uint32_t) 1, (uint32_t) Message::MAX_SIZE))
+        interval_range(interval_range),
+        max_message_size(std::clamp(max_message_size, (uint32_t) 1, (uint32_t) Message::MAX_SIZE)),
+        mode(mode)
     {
         workers.reserve(total_nodes());
     }
@@ -295,7 +303,11 @@ public:
         config.groups = create_groups();
         config.nodes = create_nodes();
         config.alive = 100;
-        config.broadcast = BroadcastType::AB;
+        config.broadcast =
+            mode == BenchmarkMode::URB ? BroadcastType::URB :
+            mode == BenchmarkMode::AB ? BroadcastType::AB :
+            BroadcastType::BEB;
+
         config.faults = {delay: {0, 0}, lose_chance: 0, corrupt_chance: 0};
 
         return config;
@@ -324,7 +336,7 @@ public:
                         node.id,
                         group_id,
                         bytes_sent_per_node,
-                        interval_between_messages,
+                        interval_range,
                         max_message_size
                     )
                 );
@@ -376,14 +388,16 @@ public:
             "Nodes=%u per group (%u total)\n"
             "Bytes=%s sent per node (%s total)\n"
             "Interval between messages=%u\n"
-            "Max message size=%u\n\n",
+            "Max message size=%u\n"
+            "Message mode=%s\n\n",
             total_groups,
             total_nodes_in_group,
             total_nodes(),
             format_bytes(bytes_sent_per_node).c_str(),
             format_bytes(bytes_sent_per_node*total_nodes()).c_str(),
-            interval_between_messages,
-            max_message_size
+            interval_range.to_string().c_str(),
+            max_message_size,
+            benchmark_mode_to_string(mode)
         );
         std::cout << out;
     }
