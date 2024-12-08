@@ -250,10 +250,10 @@ struct Worker {
                 result = comm->receive((char*) &msg);
             }
             catch (const buffer_termination& err) {
-                return;
+                break;
             }
 
-            if (terminate) return;
+            if (terminate) break;
 
             LogEntry entry = {
                 time : DateUtils::now(),
@@ -306,10 +306,10 @@ struct Worker {
                 result = comm->deliver((char*) &msg);
             }
             catch (const buffer_termination& err) {
-                return;
+                break;
             }
 
-            if (terminate) return;
+            if (terminate) break;
 
             // log_print("Node ", node_id, " received ", result.length, " bytes on group ", result.group_id, " (key=", msg.key, ").");
 
@@ -484,7 +484,7 @@ struct BenchmarkResult {
         return std::string("{") + indent(contents, "    ") + "\n}";
     }
 
-    std::string produce_filename() {
+    std::string produce_filename(fs::path directory) {
         std::string value;
 
         value += format("%ug", params.total_groups);
@@ -498,26 +498,31 @@ struct BenchmarkResult {
         if (params.disable_encryption) value += "-noencryption";
 
         uint32_t i = 1;
-        while (fs::exists(format("%s/%s-%u.json", directory_path, value.c_str(), i))) i++;
+        while (fs::exists(format("%s/%s-%u.json", directory.c_str(), value.c_str(), i))) i++;
         value += format("-%u.json", i);
         
         return value;
     }
 
     void save(std::string file_path) {
-        fs::path path; 
+        fs::path directory = directory_path;
+        fs::path path = file_path;
+
         if (!file_path.length()) {
-            std::string filename = produce_filename();
+            std::string filename = produce_filename(directory);
             path = format(".data/benchmark/%s", filename.c_str());
         }
-        else {
-            path = file_path;
-            if (!path.has_extension()) path += ".json";
+        else if (fs::is_directory(path)) {
+            std::string filename = produce_filename(path);
+            path = format("%s/%s", file_path.c_str(), filename.c_str());
         }
+
+        if (!path.has_extension()) path += ".json";
 
         std::string value = serialize();
 
-        fs::create_directories(path.parent_path());
+        fs::path parent_path = path.parent_path();
+        if (!parent_path.empty()) fs::create_directories(parent_path);
 
         std::ofstream file(path);
         if (!file.is_open()) return;
@@ -660,9 +665,18 @@ public:
             worker->start();
         }
 
+        uint64_t last_activity_time = start_time;
         while (true) {
             BenchmarkSnapshot snapshot = create_snapshot();
             result.snapshots.push_back(snapshot);
+
+            if (snapshot.out_throughput) {
+                last_activity_time = snapshot.elapsed_time;
+            }
+            if ( (snapshot.elapsed_time - last_activity_time) > 5) {
+                log_error("Aborting benchmark due to inactivity. Terminating it ungracefully.");
+                exit(0);
+            }
 
             std::cout << snapshot.to_string() << std::endl;
 
@@ -680,8 +694,6 @@ public:
             worker->benchmark_over.release();
             worker->wait();
         }
-
-        
 
         return result;
     }
@@ -735,7 +747,6 @@ public:
         double progress_ratio = 1 - remaining_ratio;
 
         double time_estimate = remaining_ratio/progress_ratio * elapsed;
-
 
         return BenchmarkSnapshot{
             elapsed_time : elapsed,

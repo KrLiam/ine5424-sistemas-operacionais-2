@@ -36,7 +36,7 @@ struct Arguments {
     bool log_tail = true;
 
     bool benchmark = false;
-    std::string out_file;
+    std::optional<std::string> out_file;
     uint32_t num_groups = 3;
     uint32_t num_nodes = 10;
     uint32_t bytes_per_node = 100*1024*1024;
