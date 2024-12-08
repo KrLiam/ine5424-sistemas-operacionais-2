@@ -122,6 +122,7 @@ public:
     Node &get_node(std::string id);
     Node &get_node(const SocketAddress& address);
     Node *get_leader();
+    Node *get_local();
     const std::unordered_set<Node*>& get_group(uint64_t hash);
 
     bool contains(const SocketAddress& address) const;

@@ -74,6 +74,15 @@ Node *NodeMap::get_leader() {
     return nullptr;
 }
 
+Node *NodeMap::get_local() {
+    for (auto &[id, node] : nodes)
+    {
+        if (!node.is_remote()) return &node;
+    }
+    
+    return nullptr;
+}
+
 bool NodeMap::contains(const SocketAddress& address) const
 {
     for (auto &[id, node] : nodes)
