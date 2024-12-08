@@ -18,9 +18,17 @@
             "type":"cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/program",
-            "args": ["benchmark"],
+            "args": ["benchmark", "${input:args}"],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "build-test"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "args",
+            "type": "promptString",
+            "description": "Type the arguments for the benchmark program.",
+            "default": ""
         }
     ]
 }
