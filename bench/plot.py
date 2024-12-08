@@ -1,0 +1,117 @@
+from argparse import ArgumentParser
+import json
+import glob
+import os
+from pathlib import Path
+from typing import Any, Iterable, TypedDict
+import matplotlib.pyplot as plt    
+
+def parse_arguments():
+    parser = ArgumentParser()
+
+    parser.add_argument("--files", type=str, nargs="+")
+    parser.add_argument("--x-column", type=str, default="elapsed_time")
+    parser.add_argument("--x-label", type=str, required=False)
+    parser.add_argument("--y-column", type=str, default="total_out")
+    parser.add_argument("--y-scale", type=float, default=1)
+    parser.add_argument("--y-label", type=str, required=False)
+    parser.add_argument("--title", type=str, default="Benchmark result")
+    parser.add_argument("--output", type=str, default="")
+
+    args = parser.parse_args()
+
+    if args.x_label is None:
+        args.x_label = args.x_column
+    if args.y_label is None:
+        args.y_label = args.y_column
+    
+    return args
+
+
+def read_files(values: str | list[str]) -> list[Any]:
+    if isinstance(values, str):
+        values = [values]
+
+    results = []
+
+    for value in values:
+        files = glob.glob(value)
+
+        for path in files:
+            with open(path, "rt") as f:
+                txt = f.read()
+            results.append(json.loads(txt))
+    
+    return results
+
+def get_axis(result: Any, column: str) -> list[Any]:
+    snapshots = result["snapshots"]
+    return [snapshot[column] for snapshot in snapshots]
+
+def get_avg(axis: list[Any]) -> float:
+    if not len(axis):
+        return 0
+    return sum(axis) / len(axis)
+
+
+def plot(
+    curves: list[tuple[list[float], list[float]]],
+    curve_labels: list[str],
+    x_label: str,
+    y_label: str,
+    output_path: str,
+    title: str,
+):
+    fig, ax1 = plt.subplots(1, 1)
+    fig.set_size_inches(20, 5)
+
+    ax1.set_title(title)
+
+    colors = ["r", "b", "g", "magenta", "cyan", "yellow"]
+
+    for i, (x, y) in enumerate(curves):
+        ax1.plot(x, y, colors[i % len(colors)], label=curve_labels[i])
+
+    max_x = max(max(x) for x, _ in curves)
+    min_x = min(min(x) for x, _ in curves)
+    ax1.set_xbound(min_x, max_x)
+
+    ax1.set_xlabel(x_label)
+    ax1.set_ylabel(y_label)
+    ax1.legend()
+
+    if not len(output_path):
+        plt.show()
+    else:
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(output_path, bbox_inches="tight")
+
+
+def main():
+    args = parse_arguments()
+
+    results = read_files(args.files)
+
+    curve_labels = [
+        Path(p).stem for p in args.files
+    ]
+
+    curves = []
+    for result in results:
+        x = get_axis(result, args.x_column)
+        y = [
+            yi / args.y_scale for yi in get_axis(result, args.y_column)
+        ]
+        curves.append((x, y))
+    
+    plot(
+        curves,
+        curve_labels,
+        args.x_label,
+        args.y_label,
+        args.output,
+        args.title
+    )
+
+if __name__ == "__main__":
+    main()
