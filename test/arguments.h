@@ -27,7 +27,7 @@ struct Arguments {
     std::optional<SocketAddress> address;
     std::vector<std::shared_ptr<Command>> send_commands;
 
-    LogLevel::Type log_level  = LogLevel::INFO;
+    std::optional<LogLevel::Type> log_level;
     bool verbose = false;
 
     bool test = false;

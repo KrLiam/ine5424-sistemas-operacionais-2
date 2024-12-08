@@ -155,7 +155,7 @@ void Runner::client(Process& proc) {
 }
 
 void Runner::run() {
-    Logger::set_level(args.log_level);
+    if (args.log_level.has_value()) Logger::set_level(*args.log_level);
 
     if (args.test) {
         run_test(args.case_path);
@@ -370,7 +370,7 @@ void Runner::run_node(
 }
 
 void Runner::run_benchmark() {
-    Logger::set_level(LogLevel::ERROR);
+    if (!args.log_level.has_value()) Logger::set_level(LogLevel::ERROR);
 
     Benchmarker benchmarker(
         args.num_groups,
