@@ -118,7 +118,7 @@ Arguments parse_arguments(int argc, char* argv[]) {
             args.num_nodes = reader.read_int();
         }
         else if (long_arg && flag == "bytes-per-node") {
-            args.bytes_per_node = reader.read_int() * parse_byte_unit(reader);
+            args.bytes_per_node = reader.read_double() * parse_byte_unit(reader);
         }
         else if (long_arg && flag == "node-interval") {
             args.node_interval = IntRange::parse(reader);

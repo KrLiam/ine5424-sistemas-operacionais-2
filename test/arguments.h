@@ -39,7 +39,7 @@ struct Arguments {
     std::optional<std::string> out_file;
     uint32_t num_groups = 3;
     uint32_t num_nodes = 10;
-    uint32_t bytes_per_node = 100*1024*1024;
+    double bytes_per_node = 100*1024*1024;
     IntRange node_interval = {0, 0};
     uint32_t max_message_size = PacketData::MAX_MESSAGE_SIZE;
     BenchmarkMode mode = BenchmarkMode::AB;

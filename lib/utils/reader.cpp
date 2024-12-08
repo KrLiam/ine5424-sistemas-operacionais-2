@@ -160,6 +160,26 @@ int Reader::read_int()
     return std::stoi(string);
 }
 
+double Reader::read_double()
+{
+    char ch = peek();
+    int start = pos;
+
+    Override ovr = override_whitespace(false);
+
+    while (ch && isdigit(ch)) // Ignora ponto, mas não vai ser usado
+    {
+        advance();
+        ch = peek();
+    }
+
+    std::string string = str.substr(start, pos - start);
+
+    if (!string.size())
+        return 0;
+    return std::stod(string);
+}
+
 const static std::unordered_set<char> WORD_CHARS = {
     '0','1','2','3','4','5','6','7','8','9', '_', '-',
     'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',

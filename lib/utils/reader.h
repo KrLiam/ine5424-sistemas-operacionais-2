@@ -67,6 +67,7 @@ public:
     char read(char ch);
     bool read(const std::string &chars);
     int read_int();
+    double read_double();
     bool read_bool();
     std::string read_word();
 

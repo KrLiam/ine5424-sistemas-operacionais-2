@@ -52,7 +52,7 @@ struct Worker {
     const Config config;
     const std::string node_id;
     const std::string group_id;
-    const uint32_t bytes_to_send;
+    const double bytes_to_send;
     const IntRange interval_range;
     const uint32_t max_message_size;
     bool write_only;
@@ -70,7 +70,7 @@ struct Worker {
 
     std::binary_semaphore read_sem{0};
 
-    uint32_t remaining_bytes;
+    double remaining_bytes;
     std::vector<LogEntry> in_logs;
     std::vector<LogEntry> out_logs;
 
@@ -88,7 +88,7 @@ struct Worker {
         const Config& config,
         const std::string& node_id,
         const std::string& group_id,
-        uint32_t bytes_to_send,
+        double bytes_to_send,
         IntRange interval_range,
         uint32_t max_message_size,
         bool write_only
@@ -224,7 +224,7 @@ struct Worker {
     std::size_t create_hashmap_message(HashMapMessage* buffer) {
         HashMapMessage msg;
 
-        uint32_t bytes = std::min(remaining_bytes, max_message_size);
+        uint32_t bytes = std::min(remaining_bytes, (double) max_message_size);
         // remaining_bytes -= bytes;
 
         uint32_t metadata_bytes = sizeof(msg.operation) + sizeof(msg.key);
@@ -379,7 +379,7 @@ std::string serialize_double(double value) {
 struct BenchmarkParameters {
     uint32_t total_groups;
     uint32_t total_nodes_in_group;
-    uint32_t bytes_sent_per_node;
+    double bytes_sent_per_node;
     IntRange interval_range;
     uint32_t max_message_size;
     BenchmarkMode mode;
@@ -392,7 +392,7 @@ struct BenchmarkParameters {
 
         contents += format("\n\"num_groups\": %u,", total_groups);
         contents += format("\n\"num_nodes\": %u,", total_nodes_in_group);
-        contents += format("\n\"bytes_per_node\": %u,", bytes_sent_per_node);
+        contents += format("\n\"bytes_per_node\": %f,", bytes_sent_per_node);
         contents += format("\n\"interval\": [%u, %u],", interval_range.min, interval_range.max);
         contents += format("\n\"max_message_size\": %u,", max_message_size);
         contents += format("\n\"mode\": \"%s\",", benchmark_mode_to_string(mode));
@@ -431,8 +431,8 @@ struct BenchmarkParameters {
 
 struct BenchmarkSnapshot {
     double elapsed_time;
-    uint32_t transferred_bytes;
-    uint32_t total_bytes;
+    double transferred_bytes;
+    double total_bytes;
     double progress_ratio;
     double time_estimate;
     double avg_in_throughput;
@@ -444,8 +444,8 @@ struct BenchmarkSnapshot {
         return format(
             "{"
             "\"elapsed_time\": %f, "
-            "\"transferred_bytes\": %u, "
-            "\"total_bytes\": %u, "
+            "\"transferred_bytes\": %f, "
+            "\"total_bytes\": %f, "
             "\"progress_ratio\": %f, "
             "\"time_estimate\": %s, "
             "\"avg_in\": %f, "
@@ -569,7 +569,7 @@ public:
     Benchmarker(
         uint32_t total_groups,
         uint32_t total_nodes_in_group,
-        uint32_t bytes_sent_per_node,
+        double bytes_sent_per_node,
         IntRange interval_range,
         uint32_t max_message_size,
         BenchmarkMode mode,
@@ -759,23 +759,23 @@ public:
         uint64_t now = DateUtils::now();
         double elapsed = (double)(now - start_time) / 1000.0;
 
-        uint32_t total_bytes = total_nodes() * params.bytes_sent_per_node;
-        uint32_t remaining_bytes = 0;
+        double total_bytes = total_nodes() * params.bytes_sent_per_node;
+        double remaining_bytes = 0;
         double avg_in_throughput = 0;
         double out_throughput = 0;
         uint32_t read_operations = 0;
         uint32_t write_operations = 0;
 
         for (auto& worker : workers) {
-            remaining_bytes += worker->remaining_bytes;
             avg_in_throughput += worker->bytes_received(1000); // bytes recebidos no ultimo segundo
+            remaining_bytes += worker->remaining_bytes;
             out_throughput += worker->bytes_sent(1000);
             read_operations += worker->read_operations;
             write_operations += worker->write_operations;
         }
         avg_in_throughput /= params.total_nodes_in_group;
 
-        uint32_t transferred_bytes = total_bytes - remaining_bytes;
+        double transferred_bytes = total_bytes - remaining_bytes;
         double remaining_ratio = (double) remaining_bytes/ (double) total_bytes;
         double progress_ratio = 1 - remaining_ratio;
 
