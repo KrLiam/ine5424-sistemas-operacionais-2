@@ -537,8 +537,7 @@ public:
             avg_in_throughput += worker->bytes_received(1000); // bytes recebidos no ultimo segundo
             out_throughput += worker->bytes_sent(1000);
         }
-
-        avg_in_throughput /= total_nodes();
+        avg_in_throughput /= total_nodes_in_group;
 
         uint32_t transferred_bytes = total_bytes - remaining_bytes;
         double remaining_ratio = remaining_bytes/total_bytes;
