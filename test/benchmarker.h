@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <cmath>
+#include <mutex>
 
 #include "communication/reliable_communication.h"
 
@@ -77,6 +78,7 @@ struct Worker {
     static const uint32_t MAX_KEY = 100;
     std::uniform_int_distribution<> key_dis;
     std::unordered_map<uint16_t, std::array<char, HashMapMessage::VALUE_SIZE>> hash_map;
+    std::mutex hm_mutex;
 
     Worker(
         const Config& config,
@@ -286,6 +288,7 @@ struct Worker {
         answer.operation = HashMapOperation::READ_RESULT;
         answer.key = read_msg.key;
 
+        hm_mutex.lock();
         if (hash_map.contains(read_msg.key)) {
             memcpy(answer.value, hash_map[read_msg.key].data(), HashMapMessage::VALUE_SIZE);
         }
@@ -293,6 +296,7 @@ struct Worker {
             std::string undefined = "undefined";
             memcpy(answer.value, undefined.c_str(), undefined.size());
         }
+        hm_mutex.unlock();
 
         return answer;
     }
@@ -320,8 +324,10 @@ struct Worker {
             };
             in_logs.push_back(entry);
 
+            hm_mutex.lock();
             if (!hash_map.contains(msg.key)) hash_map[msg.key] = {};
             memcpy(hash_map[msg.key].data(), msg.value, result.length - sizeof(msg.operation) - sizeof(msg.key));
+            hm_mutex.unlock();
         }
     }
 
