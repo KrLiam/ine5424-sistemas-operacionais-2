@@ -242,8 +242,8 @@ struct Worker {
         // TODO: talvez tirar isso e deixar mandar um pacote cheio pra não bugar o valor no ultimo broadcast
         uint32_t value_size = bytes - metadata_bytes;
 
-        bool can_read = read_operations <= max_read_operations;
-        bool can_write = write_operations <= max_write_operations;
+        bool can_read = read_operations < max_read_operations;
+        bool can_write = write_operations < max_write_operations;
         if (can_read && can_write) msg.operation = (HashMapOperation)rc_random::dis1(rc_random::gen);
         else if (can_read) msg.operation = HashMapOperation::READ;
         else if (can_write) msg.operation = HashMapOperation::WRITE;
