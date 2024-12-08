@@ -12,8 +12,8 @@ def parse_arguments():
     parser.add_argument("--files", type=str, nargs="+")
     parser.add_argument("--x-column", type=str, default="elapsed_time")
     parser.add_argument("--x-label", type=str, required=False)
-    parser.add_argument("--y-column", type=str, default="total_out")
-    parser.add_argument("--y-scale", type=float, default=1)
+    parser.add_argument("--y-column", type=str, nargs="+", default=["total_out"])
+    parser.add_argument("--y-scale", type=float, nargs="+", required=False)
     parser.add_argument("--y-label", type=str, required=False)
     parser.add_argument("--title", type=str, default="Benchmark result")
     parser.add_argument("--output", type=str, default="")
@@ -23,7 +23,9 @@ def parse_arguments():
     if args.x_label is None:
         args.x_label = args.x_column
     if args.y_label is None:
-        args.y_label = args.y_column
+        args.y_label = args.y_column[0] if len(args.y_column) == 1 else "Value"
+    if args.y_scale is None:
+        args.y_scale = [1] * len(args.y_column)
     
     return args
 
@@ -92,17 +94,25 @@ def main():
 
     results = read_files(args.files)
 
-    curve_labels = [
-        Path(p).stem for p in args.files
-    ]
+    if len(args.y_column) > 1:
+        curve_labels = [
+            f"{Path(p).stem} ({column})"
+            for p in args.files
+            for column in args.y_column
+        ]
+    else:
+        curve_labels = [
+            Path(p).stem for p in args.files
+        ]
 
     curves = []
     for result in results:
         x = get_axis(result, args.x_column)
-        y = [
-            yi / args.y_scale for yi in get_axis(result, args.y_column)
-        ]
-        curves.append((x, y))
+        for i, y_column in enumerate(args.y_column):
+            y = [
+                yi / args.y_scale[i] for yi in get_axis(result, y_column)
+            ]
+            curves.append((x, y))
     
     plot(
         curves,
