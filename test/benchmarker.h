@@ -55,7 +55,6 @@ struct Worker {
     const double bytes_to_send;
     const IntRange interval_range;
     const uint32_t max_message_size;
-    bool write_only;
 
     std::thread sender_thread;
     std::thread receiver_thread;
@@ -74,7 +73,9 @@ struct Worker {
     std::vector<LogEntry> in_logs;
     std::vector<LogEntry> out_logs;
 
+    uint32_t max_read_operations;
     uint32_t read_operations;
+    uint32_t max_write_operations;
     uint32_t write_operations;
 
     // o numero maximo de chaves na hash table está relacionado com
@@ -91,7 +92,8 @@ struct Worker {
         double bytes_to_send,
         IntRange interval_range,
         uint32_t max_message_size,
-        bool write_only
+        uint32_t max_read_operations,
+        uint32_t max_write_operations
     ) :
         config(config),
         node_id(node_id),
@@ -102,8 +104,9 @@ struct Worker {
         remaining_bytes(bytes_to_send),
         key_dis(0, MAX_KEY),
         read_operations(0),
+        max_read_operations(max_read_operations),
         write_operations(0),
-        write_only(write_only)
+        max_write_operations(max_write_operations)
     {}
 
     ~Worker() {
@@ -206,7 +209,7 @@ struct Worker {
             }
         }
 
-        //log_print("Node ", node_id, " is done, waiting for benchmark being over.");
+        // log_print("Node ", node_id, " is done, waiting for benchmark being over.");
         done = true;
         done_sem.release();
         benchmark_over.acquire();
@@ -233,8 +236,12 @@ struct Worker {
         // TODO: talvez tirar isso e deixar mandar um pacote cheio pra não bugar o valor no ultimo broadcast
         uint32_t value_size = bytes - metadata_bytes;
 
-        if (write_only) msg.operation = HashMapOperation::WRITE;
-        else msg.operation = (HashMapOperation)rc_random::dis1(rc_random::gen);
+        bool can_read = read_operations <= max_read_operations;
+        bool can_write = write_operations <= max_write_operations;
+        if (can_read && can_write) msg.operation = (HashMapOperation)rc_random::dis1(rc_random::gen);
+        else if (can_read) msg.operation = HashMapOperation::READ;
+        else if (can_write) msg.operation = HashMapOperation::WRITE;
+        else return 0;
 
         msg.key = key_dis(rc_random::gen);
 
@@ -385,7 +392,8 @@ struct BenchmarkParameters {
     BenchmarkMode mode;
     bool disable_encryption;
     bool disable_checksum;
-    bool write_only;
+    uint32_t max_read_operations;
+    uint32_t max_write_operations;
 
     std::string serialize() {
         std::string contents;
@@ -395,10 +403,11 @@ struct BenchmarkParameters {
         contents += format("\n\"bytes_per_node\": %f,", bytes_sent_per_node);
         contents += format("\n\"interval\": [%u, %u],", interval_range.min, interval_range.max);
         contents += format("\n\"max_message_size\": %u,", max_message_size);
+        contents += format("\n\"max_read_operations\": %u,", max_read_operations);
+        contents += format("\n\"max_write_operations\": %u,", max_write_operations);
         contents += format("\n\"mode\": \"%s\",", benchmark_mode_to_string(mode));
         contents += format("\n\"encryption\": %s,", disable_encryption ? "false" : "true");
-        contents += format("\n\"checksum\": %s,", disable_checksum ? "false" : "true");
-        contents += format("\n\"write_only\": %s", write_only ? "true" : "false");
+        contents += format("\n\"checksum\": %s", disable_checksum ? "false" : "true");
 
         return std::string("{") + indent(contents, "    ") + "\n}";
     }
@@ -410,6 +419,8 @@ struct BenchmarkParameters {
             "Bytes=%s sent per node (%s total)\n"
             "Interval=%sms\n"
             "Max Message Size=%u\n"
+            "Max Read Operations=%u\n"
+            "Max Write Operations=%u\n"
             "Message Mode=%s\n"
             "Encryption=%s\n"
             "Checksum=%s",
@@ -420,10 +431,11 @@ struct BenchmarkParameters {
             format_bytes(bytes_sent_per_node*total_groups*total_nodes_in_group).c_str(),
             interval_range.to_string().c_str(),
             max_message_size,
+            max_read_operations,
+            max_write_operations,
             benchmark_mode_to_string(mode),
             disable_encryption ? "disabled" : "enabled",
-            disable_checksum ? "disabled" : "enabled",
-            write_only ? "enabled" : "disabled"
+            disable_checksum ? "disabled" : "enabled"
         );
         return out;
     }
@@ -519,9 +531,10 @@ struct BenchmarkResult {
         if (params.interval_range.max > 0) value += format("-%sms", params.interval_range.to_string().c_str());
         if (params.max_message_size != PacketData::MAX_MESSAGE_SIZE)
             value += format("-%smax", format_bytes(params.max_message_size, 3).c_str());
+        if (params.max_read_operations) value += format("-%sr", params.max_read_operations);
+        if (params.max_write_operations) value += format("-%sw", params.max_write_operations);
         if (params.disable_checksum) value += "-nochecksum";
         if (params.disable_encryption) value += "-noencryption";
-        if (params.write_only) value += "-writeonly";
 
         uint32_t i = 1;
         while (fs::exists(format("%s/%s-%u.json", directory.c_str(), value.c_str(), i))) i++;
@@ -575,7 +588,8 @@ public:
         BenchmarkMode mode,
         bool no_encryption,
         bool no_checksum,
-        bool write_only
+        uint32_t max_read_operations,
+        uint32_t max_write_operations
     ) {
         global_group = total_groups == 0;
         total_groups = total_groups ? total_groups : 1;
@@ -589,7 +603,8 @@ public:
             mode : mode,
             disable_encryption : no_encryption,
             disable_checksum : no_checksum,
-            write_only : write_only
+            max_read_operations : max_read_operations,
+            max_write_operations : max_write_operations
         };
         workers.reserve(total_nodes());
     }
@@ -679,7 +694,8 @@ public:
                         params.bytes_sent_per_node,
                         params.interval_range,
                         params.max_message_size,
-                        params.write_only
+                        params.max_read_operations,
+                        params.max_write_operations
                     )
                 );
             }

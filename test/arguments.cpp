@@ -108,6 +108,12 @@ Arguments parse_arguments(int argc, char* argv[]) {
         else if ((!long_arg && flag=="l") || (long_arg && flag == "log-level")) {
             args.log_level = LogLevel::parse(reader);
         }
+        else if ((!long_arg && flag=="r") || (long_arg && flag == "read")) {
+            args.max_read_operations = reader.read_int();
+        }
+        else if ((!long_arg && flag=="w") || (long_arg && flag == "write")) {
+            args.max_write_operations = reader.read_int();
+        }
         else if (long_arg && flag == "out-file") {
             args.out_file = reader.peek() == '-' ? "" : parse_path(reader);
         }
@@ -134,9 +140,6 @@ Arguments parse_arguments(int argc, char* argv[]) {
         }
         else if (long_arg && flag == "no-checksum") {
             args.no_checksum = true;
-        }
-        else if (long_arg && flag == "write-only") {
-            args.write_only = true;
         }
         else {
             throw std::invalid_argument(

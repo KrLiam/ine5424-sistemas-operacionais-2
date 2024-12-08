@@ -42,8 +42,9 @@ struct Arguments {
     double bytes_per_node = 100*1024*1024;
     IntRange node_interval = {0, 0};
     uint32_t max_message_size = PacketData::MAX_MESSAGE_SIZE;
+    uint32_t max_read_operations = UINT32_MAX;
+    uint32_t max_write_operations = UINT32_MAX;
     BenchmarkMode mode = BenchmarkMode::AB;
-    bool write_only = false;
 
     bool no_encryption = false;
     bool no_checksum = false;
