@@ -383,5 +383,6 @@ void Runner::run_benchmark() {
         args.no_checksum
     );
 
-    benchmarker.run();
+    BenchmarkResult result = benchmarker.run();
+    if (args.out_file.length()) result.save(args.out_file);
 }

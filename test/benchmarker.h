@@ -2,9 +2,14 @@
 #include <vector>
 #include <thread>
 #include <semaphore>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <cmath>
 
 #include "communication/reliable_communication.h"
 
+namespace fs = std::filesystem;
 
 std::string format_bytes(uint64_t bytes, uint8_t decimals = 255) {
     if (bytes < 1024) return format("%uB", bytes);
@@ -21,10 +26,6 @@ std::string format_bytes(uint64_t bytes, uint8_t decimals = 255) {
     return format(p+"GiB", giB);
 }
 
-
-struct BenchmarkResult {
-    // vetor com throughput a cada segundo em cada no, 
-};
 
 enum HashMapOperation : uint16_t {
     READ = 0,
@@ -338,20 +339,200 @@ struct Worker {
     }
 };
 
-class Benchmarker {
+
+std::string indent(std::string str, std::string indentation) {
+    Reader reader(str);
+    auto ovr = reader.override_whitespace(false);
+
+    std::string result = indentation;
+
+    while (char ch = reader.read()) {
+        result += ch;
+        if (ch == '\n') result += indentation;
+    }
+
+    return result;
+}
+
+std::string serialize_double(double value) {
+    if(isinfl(value)) return "1e9999";
+
+    return std::to_string(value);
+}
+
+struct BenchmarkParameters {
     uint32_t total_groups;
     uint32_t total_nodes_in_group;
     uint32_t bytes_sent_per_node;
     IntRange interval_range;
     uint32_t max_message_size;
     BenchmarkMode mode;
+    bool disable_encryption;
+    bool disable_checksum;
+
+    std::string serialize() {
+        std::string contents;
+
+        contents += format("\n\"num_groups\": %u,", total_groups);
+        contents += format("\n\"num_nodes\": %u,", total_nodes_in_group);
+        contents += format("\n\"bytes_per_node\": %u,", bytes_sent_per_node);
+        contents += format("\n\"interval\": [%u, %u],", interval_range.min, interval_range.max);
+        contents += format("\n\"max_message_size\": %u,", max_message_size);
+        contents += format("\n\"mode\": \"%s\",", benchmark_mode_to_string(mode));
+        contents += format("\n\"encryption\": %s,", disable_encryption ? "false" : "true");
+        contents += format("\n\"checksum\": %s", disable_checksum ? "false" : "true");
+
+        return std::string("{") + indent(contents, "    ") + "\n}";
+    }
+
+    std::string to_string() {
+        std::string out = format(
+            "Groups=%u\n"
+            "Nodes=%u per group (%u total)\n"
+            "Bytes=%s sent per node (%s total)\n"
+            "Interval=%sms\n"
+            "Max Message Size=%u\n"
+            "Message Mode=%s\n"
+            "Encryption=%s\n"
+            "Checksum=%s",
+            total_groups,
+            total_nodes_in_group,
+            total_groups*total_nodes_in_group,
+            format_bytes(bytes_sent_per_node).c_str(),
+            format_bytes(bytes_sent_per_node*total_groups*total_nodes_in_group).c_str(),
+            interval_range.to_string().c_str(),
+            max_message_size,
+            benchmark_mode_to_string(mode),
+            disable_encryption ? "disabled" : "enabled",
+            disable_checksum ? "disabled" : "enabled"
+        );
+        return out;
+    }
+};
+
+struct BenchmarkSnapshot {
+    double elapsed_time;
+    uint32_t transferred_bytes;
+    uint32_t total_bytes;
+    double progress_ratio;
+    double time_estimate;
+    double avg_in_throughput;
+    double out_throughput;
+
+    std::string serialize() {
+        return format(
+            "{"
+            "\"elapsed_time\": %f, "
+            "\"transferred_bytes\": %u, "
+            "\"total_bytes\": %u, "
+            "\"progress_ratio\": %f, "
+            "\"time_estimate\": %s, "
+            "\"avg_in\": %f, "
+            "\"total_out\": %f"
+            "}",
+            elapsed_time,
+            transferred_bytes,
+            total_bytes,
+            progress_ratio,
+            serialize_double(time_estimate).c_str(),
+            avg_in_throughput,
+            out_throughput
+        );
+    }
+
+    std::string to_string() {
+        return format(
+            "%.1fs | "
+            "%s/%s (%.5f%%), "
+            "time_left=%.1fs, "
+            "avg_in=%s/s, "
+            "total_out=%s/s",
+            elapsed_time,
+            format_bytes(transferred_bytes, 3).c_str(),
+            format_bytes(total_bytes, 3).c_str(),
+            progress_ratio*100,
+            time_estimate,
+            format_bytes(avg_in_throughput, 3).c_str(),
+            format_bytes(out_throughput, 3).c_str()
+        );
+    }
+};
+
+struct BenchmarkResult {
+    uint64_t start_time;
+    BenchmarkParameters params;
+    std::vector<BenchmarkSnapshot> snapshots;
+
+    static constexpr const char* directory_path = ".data/benchmark";
+
+    std::string serialize() {
+        std::string contents;
+        contents += format("\n\"start_time\": %u,", start_time);
+
+        contents += format("\n\"params\": %s,", params.serialize().c_str());
+
+        std::string snapshots_contents;
+        for (size_t i = 0; i < snapshots.size(); i++) {
+            auto& snapshot = snapshots.at(i);
+            bool last = i == (snapshots.size() - 1);
+
+            snapshots_contents += "\n" + snapshot.serialize();
+            if (!last) snapshots_contents += ",";
+        }
+        contents += format("\n\"snapshots\": [%s\n]", indent(snapshots_contents, "    ").c_str());
+
+        return std::string("{") + indent(contents, "    ") + "\n}";
+    }
+
+    std::string produce_filename() {
+        std::string value;
+
+        value += format("%ug", params.total_groups);
+        value += format("-%un", params.total_nodes_in_group);
+        value += format("-%s", format_bytes(params.bytes_sent_per_node, 3).c_str());
+        value += format("-%s", benchmark_mode_to_string(params.mode));
+        if (params.interval_range.max > 0) value += format("-%sms", params.interval_range.to_string().c_str());
+        if (params.max_message_size != PacketData::MAX_MESSAGE_SIZE)
+            value += format("-%smax", format_bytes(params.max_message_size, 3).c_str());
+        if (params.disable_checksum) value += "-nochecksum";
+        if (params.disable_encryption) value += "-noencryption";
+
+        uint32_t i = 1;
+        while (fs::exists(format("%s/%s-%u.json", directory_path, value.c_str(), i))) i++;
+        value += format("-%u.json", i);
+        
+        return value;
+    }
+
+    void save(std::string file_path) {
+        fs::path path; 
+        if (!file_path.length()) {
+            std::string filename = produce_filename();
+            path = format(".data/benchmark/%s", filename.c_str());
+        }
+        else {
+            path = file_path;
+            if (!path.has_extension()) path += ".json";
+        }
+
+        std::string value = serialize();
+
+        fs::create_directories(path.parent_path());
+
+        std::ofstream file(path);
+        if (!file.is_open()) return;
+        file << value;
+        file.close();
+    }
+};
+
+class Benchmarker {
+    BenchmarkParameters params;
 
     bool global_group = false;
     uint64_t start_time;
     std::vector<std::unique_ptr<Worker>> workers;
 
-    bool disable_encryption;
-    bool disable_checksum;
 
 public:
     Benchmarker(
@@ -363,21 +544,24 @@ public:
         BenchmarkMode mode,
         bool no_encryption,
         bool no_checksum
-    ) :
-        total_nodes_in_group(total_nodes_in_group),
-        bytes_sent_per_node(bytes_sent_per_node),
-        interval_range(interval_range),
-        max_message_size(std::clamp(max_message_size, (uint32_t) 1, (uint32_t) Message::MAX_SIZE)),
-        mode(mode),
-        disable_encryption(no_encryption),
-        disable_checksum(no_checksum)
-    {
+    ) {
         global_group = total_groups == 0;
-        this->total_groups = total_groups ? total_groups : 1;
+        total_groups = total_groups ? total_groups : 1;
+
+        params = {
+            total_groups : total_groups,
+            total_nodes_in_group : total_nodes_in_group,
+            bytes_sent_per_node : bytes_sent_per_node,
+            interval_range : interval_range,
+            max_message_size : std::clamp(max_message_size, (uint32_t) 1, (uint32_t) Message::MAX_SIZE),
+            mode : mode,
+            disable_encryption : no_encryption,
+            disable_checksum : no_checksum
+        };
         workers.reserve(total_nodes());
     }
 
-    uint32_t total_nodes() { return total_groups * total_nodes_in_group; }
+    uint32_t total_nodes() { return params.total_groups * params.total_nodes_in_group; }
 
     std::unordered_map<std::string, ByteArray> create_groups() {
         std::unordered_map<std::string, ByteArray> map;
@@ -387,7 +571,7 @@ public:
             return map;
         }
 
-        for (uint32_t i = 0; i < total_groups; i++) {
+        for (uint32_t i = 0; i < params.total_groups; i++) {
             std::string id = format("group_%u", i);
             ByteArray key;
             for (int k = 0; k < 256; k++) {
@@ -423,18 +607,21 @@ public:
         config.nodes = create_nodes();
         config.alive = 100;
         config.broadcast =
-            mode == BenchmarkMode::URB ? BroadcastType::URB :
-            mode == BenchmarkMode::AB ? BroadcastType::AB :
+            params.mode == BenchmarkMode::URB ? BroadcastType::URB :
+            params.mode == BenchmarkMode::AB ? BroadcastType::AB :
             BroadcastType::BEB;
 
         config.faults = {delay: {0, 0}, lose_chance: 0, corrupt_chance: 0};
-        config.disable_encryption = disable_encryption;
-        config.disable_checksum = disable_checksum;
+        config.disable_encryption = params.disable_encryption;
+        config.disable_checksum = params.disable_checksum;
 
         return config;
     }
 
     BenchmarkResult run() {
+        BenchmarkResult result;
+        result.params = params;
+
         workers.clear();
 
         Config config = create_config();
@@ -445,9 +632,9 @@ public:
 
             // cada grupo vai ter somente os nós participantes na configuração
             // hack momentaneo para ter um lider em cada grupo
-            auto begin_iter = config.nodes.begin() + i * total_nodes_in_group;
+            auto begin_iter = config.nodes.begin() + i * params.total_nodes_in_group;
             i++;
-            std::vector<NodeConfig> nodes(begin_iter, begin_iter + total_nodes_in_group);
+            std::vector<NodeConfig> nodes(begin_iter, begin_iter + params.total_nodes_in_group);
             group_config.nodes = nodes;
 
             for (const NodeConfig& node : nodes) {
@@ -456,9 +643,9 @@ public:
                         group_config,
                         node.id,
                         group_id,
-                        bytes_sent_per_node,
-                        interval_range,
-                        max_message_size
+                        params.bytes_sent_per_node,
+                        params.interval_range,
+                        params.max_message_size
                     )
                 );
             }
@@ -467,13 +654,17 @@ public:
         print_start();
 
         start_time = DateUtils::now();
+        result.start_time = start_time;
 
         for (auto& worker : workers) {
             worker->start();
         }
 
         while (true) {
-            print_progress();
+            BenchmarkSnapshot snapshot = create_snapshot();
+            result.snapshots.push_back(snapshot);
+
+            std::cout << snapshot.to_string() << std::endl;
 
             if (all_done()) break;
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -492,7 +683,7 @@ public:
 
         
 
-        return BenchmarkResult();
+        return result;
     }
 
     bool all_done() {
@@ -511,24 +702,24 @@ public:
             "Interval between messages=%s\n"
             "Max message size=%u\n"
             "Message mode=%s\n\n",
-            total_groups,
-            total_nodes_in_group,
+            params.total_groups,
+            params.total_nodes_in_group,
             total_nodes(),
-            format_bytes(bytes_sent_per_node).c_str(),
-            format_bytes(bytes_sent_per_node*total_nodes()).c_str(),
-            interval_range.to_string().c_str(),
-            max_message_size,
-            benchmark_mode_to_string(mode)
+            format_bytes(params.bytes_sent_per_node).c_str(),
+            format_bytes(params.bytes_sent_per_node*total_nodes()).c_str(),
+            params.interval_range.to_string().c_str(),
+            params.max_message_size,
+            benchmark_mode_to_string(params.mode)
         );
         std::cout << out;
     }
 
-    void print_progress() {
+    BenchmarkSnapshot create_snapshot() {
         uint64_t now = DateUtils::now();
         double elapsed = (double)(now - start_time) / 1000.0;
 
-        double total_bytes = total_nodes() * bytes_sent_per_node;
-        double remaining_bytes = 0;
+        uint32_t total_bytes = total_nodes() * params.bytes_sent_per_node;
+        uint32_t remaining_bytes = 0;
         double avg_in_throughput = 0;
         double out_throughput = 0;
 
@@ -537,29 +728,23 @@ public:
             avg_in_throughput += worker->bytes_received(1000); // bytes recebidos no ultimo segundo
             out_throughput += worker->bytes_sent(1000);
         }
-        avg_in_throughput /= total_nodes_in_group;
+        avg_in_throughput /= params.total_nodes_in_group;
 
         uint32_t transferred_bytes = total_bytes - remaining_bytes;
-        double remaining_ratio = remaining_bytes/total_bytes;
+        double remaining_ratio = (double) remaining_bytes/ (double) total_bytes;
         double progress_ratio = 1 - remaining_ratio;
 
         double time_estimate = remaining_ratio/progress_ratio * elapsed;
 
 
-        std::string out = format(
-            "%.1fs | "
-            "%s/%s (%.5f%%), "
-            "time_left=%.1fs, "
-            "avg_in=%s/s, "
-            "total_out=%s/s",
-            elapsed,
-            format_bytes(transferred_bytes, 3).c_str(),
-            format_bytes(total_bytes, 3).c_str(),
-            progress_ratio*100,
-            time_estimate,
-            format_bytes(avg_in_throughput, 3).c_str(),
-            format_bytes(out_throughput, 3).c_str()
-        );
-        std::cout << out << std::endl;
+        return BenchmarkSnapshot{
+            elapsed_time : elapsed,
+            transferred_bytes : transferred_bytes,
+            total_bytes : total_bytes,
+            progress_ratio : progress_ratio,
+            time_estimate : time_estimate,
+            avg_in_throughput : avg_in_throughput,
+            out_throughput : out_throughput
+        };
     }
 };

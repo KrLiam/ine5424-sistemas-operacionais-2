@@ -108,6 +108,9 @@ Arguments parse_arguments(int argc, char* argv[]) {
         else if ((!long_arg && flag=="l") || (long_arg && flag == "log-level")) {
             args.log_level = LogLevel::parse(reader);
         }
+        else if (long_arg && flag == "out-file") {
+            args.out_file = parse_path(reader);
+        }
         else if (long_arg && flag == "num-groups") {
             args.num_groups = reader.read_int();
         }

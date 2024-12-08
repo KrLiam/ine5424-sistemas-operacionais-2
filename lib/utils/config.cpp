@@ -101,6 +101,7 @@ IntRange IntRange::parse(Reader &reader) {
     return IntRange(value, end);
 }
 
+IntRange::IntRange() : IntRange(0) {}
 IntRange::IntRange(uint32_t value) : IntRange(value, value) {}
 IntRange::IntRange(uint32_t min, uint32_t max) :
     min(std::min(min, max)), max(std::max(min, max)) {}

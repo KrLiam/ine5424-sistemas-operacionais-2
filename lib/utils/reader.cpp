@@ -101,7 +101,12 @@ char Reader::peek()
     return ch;
 }
 
-char Reader::read(char ch = 0)
+
+char Reader::read()
+{
+    return read(0);
+}
+char Reader::read(char ch)
 {
     char p = peek();
 

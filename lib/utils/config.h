@@ -135,6 +135,7 @@ struct IntRange {
     static IntRange parse(std::string string);
     static IntRange parse(Reader &reader);
 
+    IntRange();
     IntRange(uint32_t value);
     IntRange(uint32_t min, uint32_t max);
 
