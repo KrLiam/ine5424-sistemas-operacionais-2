@@ -107,13 +107,19 @@ struct Worker {
         max_read_operations(max_read_operations),
         write_operations(0),
         max_write_operations(max_write_operations)
-    {}
+    {
+        initialize_hashmap();
+    }
 
     ~Worker() {
         comm.reset();
         if (sender_thread.joinable()) sender_thread.join();
         if (receiver_thread.joinable()) receiver_thread.join();
         if (deliver_thread.joinable()) deliver_thread.join();
+    }
+
+    void initialize_hashmap() {
+        for (uint32_t i = 0; i < Worker::MAX_KEY; i++) hash_map[i] = {};
     }
 
     double bytes_received(uint64_t interval_ms) {
@@ -213,7 +219,7 @@ struct Worker {
         done = true;
         done_sem.release();
         benchmark_over.acquire();
-        
+
         //log_print("Node ", node_id, " is terminating.");
         terminate = true;
     }
@@ -306,13 +312,7 @@ struct Worker {
         answer.key = read_msg.key;
 
         hm_mutex.lock();
-        if (hash_map.contains(read_msg.key)) {
-            memcpy(answer.value, hash_map[read_msg.key].data(), HashMapMessage::VALUE_SIZE);
-        }
-        else {
-            std::string undefined = "undefined";
-            memcpy(answer.value, undefined.c_str(), undefined.size());
-        }
+        memcpy(answer.value, hash_map[read_msg.key].data(), HashMapMessage::VALUE_SIZE);
         hm_mutex.unlock();
 
         return answer;
@@ -342,7 +342,6 @@ struct Worker {
             in_logs.push_back(entry);
 
             hm_mutex.lock();
-            if (!hash_map.contains(msg.key)) hash_map[msg.key] = {};
             memcpy(hash_map[msg.key].data(), msg.value, result.length - sizeof(msg.operation) - sizeof(msg.key));
             hm_mutex.unlock();
         }
@@ -732,7 +731,7 @@ public:
         for (auto& worker : workers) {
             worker->done_sem.acquire();
         }
-        
+
         log_print("Benchmark is over.");
 
         for (auto& worker : workers) {
@@ -740,7 +739,34 @@ public:
             worker->wait();
         }
 
+        validate_hashmaps_match(config);
+
         return result;
+    }
+
+    void validate_hashmaps_match(const Config& config) {
+        log_print("Validating if hashmaps match between all workers that share a group.");
+
+        for (const auto &[group_id, _] : config.groups) {
+            std::unordered_map<uint32_t, std::array<char, HashMapMessage::VALUE_SIZE>> group_hm;
+
+            for (auto &worker : workers) {
+                if (worker->group_id != group_id) continue;
+                for (uint32_t key = 0; key <= Worker::MAX_KEY; key++) {
+                    if (!group_hm.contains(key)) {
+                        group_hm[key] = worker->hash_map[key];
+                        continue;
+                    }
+                    if (group_hm[key] != worker->hash_map[key]) {
+                        log_print("Hashmap of group ", group_id, " does not match. ");
+                        // log_print(group_hm[key].data(), " != ", worker->hash_map[key].data());
+                        return;
+                    }
+                }
+            }
+
+            log_print("Hashmap of group ", group_id, " is the same in all nodes.");
+        }
     }
 
     bool all_done() {
