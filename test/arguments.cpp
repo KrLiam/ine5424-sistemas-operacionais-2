@@ -12,6 +12,25 @@ BenchmarkMode parse_benchmark_mode(Reader& reader) {
     throw parse_error(format("Invalid benchmark mode '%s'.", value.c_str()));
 }
 
+uint32_t parse_byte_unit(Reader& reader) {
+    std::string value = reader.read_word();
+    std::transform(value.begin(), value.end(), value.begin(), ::tolower);
+
+    if (value == "b") return 1;
+    if (value == "kb") return 1000;
+    if (value == "kib") return 1024;
+    if (value == "mb") return 1000*1000;
+    if (value == "mib") return 1024*1024;
+    if (value == "gb") return 1000*1000*1000;
+    if (value == "gib") return 1024*1024*1024;
+
+    if (value.length()) parse_error(
+        format("Invalid byte unit '%s'. Valid values are B, KB, KiB, MB, MiB, GB or GiB.", value.c_str())
+    );
+
+    return 1;
+}
+
 const char* benchmark_mode_to_string(BenchmarkMode mode) {
     if (mode == BenchmarkMode::SEND) return "SEND";
     if (mode == BenchmarkMode::URB) return "BEB";
@@ -96,7 +115,7 @@ Arguments parse_arguments(int argc, char* argv[]) {
             args.num_nodes = reader.read_int();
         }
         else if (long_arg && flag == "bytes-per-node") {
-            args.bytes_per_node = reader.read_int();
+            args.bytes_per_node = reader.read_int() * parse_byte_unit(reader);
         }
         else if (long_arg && flag == "node-interval") {
             args.node_interval = IntRange::parse(reader);
