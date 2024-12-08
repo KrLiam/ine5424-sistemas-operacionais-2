@@ -380,7 +380,8 @@ void Runner::run_benchmark() {
         args.max_message_size,
         args.mode,
         args.no_encryption,
-        args.no_checksum
+        args.no_checksum,
+        args.write_only
     );
 
     BenchmarkResult result = benchmarker.run();

@@ -135,6 +135,9 @@ Arguments parse_arguments(int argc, char* argv[]) {
         else if (long_arg && flag == "no-checksum") {
             args.no_checksum = true;
         }
+        else if (long_arg && flag == "write-only") {
+            args.write_only = true;
+        }
         else {
             throw std::invalid_argument(
                 format("Unknown flag '%s' at pos %i", flag.c_str(), reader.get_pos() - flag.length())

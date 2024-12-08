@@ -43,6 +43,7 @@ struct Arguments {
     IntRange node_interval = {0, 0};
     uint32_t max_message_size = PacketData::MAX_MESSAGE_SIZE;
     BenchmarkMode mode = BenchmarkMode::AB;
+    bool write_only = false;
 
     bool no_encryption = false;
     bool no_checksum = false;
