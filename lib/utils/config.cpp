@@ -247,7 +247,7 @@ FaultConfig ConfigReader::parse_faults() {
         }
         else if (key == "delay") {
             config.delay = IntRange::parse(*this);
-            Config::ACK_TIMEOUT = (int)config.delay.max * 2 + 500;
+            Config::ACK_TIMEOUT = (int)config.delay.max * 2 + 200;
         }
         else throw parse_error(format("Unknown key '%s' in faults.", key.c_str()));
 

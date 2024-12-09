@@ -403,19 +403,25 @@ void BroadcastConnection::try_deliver(const MessageIdentity& id) {
 
 void BroadcastConnection::try_deliver_next_atomic()
 {
-    MessageIdentity* next_atomic = nullptr;
+    MessageIdentity next_atomic = {
+        origin : {{0, 0, 0, 0}, 0},
+        msg_num : UINT32_MAX,
+        msg_type : (MessageType)0
+    };
 
     for (auto& [_, entry] : retransmissions)
     {
         if (!message_type::is_atomic(entry.message.id.msg_type)) continue;
         uint32_t num = entry.message.id.msg_num;
-        if (num > ab_next_deliver && (!next_atomic || next_atomic->msg_num > num)) next_atomic = &entry.message.id;
+        if (num > ab_next_deliver && next_atomic.msg_num > num) {
+            next_atomic = entry.message.id;
+        }
     }
 
-    if (next_atomic)
+    if (next_atomic.msg_num != UINT32_MAX)
     {
-        ab_next_deliver = next_atomic->msg_num;
-        try_deliver(*next_atomic);
+        ab_next_deliver = next_atomic.msg_num;
+        try_deliver(next_atomic);
         return;
     }
     ab_next_deliver++;  // Se tiver salto, vai ser ressincronizado no receive
