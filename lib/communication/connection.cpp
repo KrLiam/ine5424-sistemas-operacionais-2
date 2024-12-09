@@ -191,7 +191,7 @@ void Connection::closed(Packet p)
 }
 
 void Connection::on_established() {
-    log_info("Established connection with node ", remote_node.get_id(), " (", remote_node.get_address().to_string(), ").");
+    log_print(local_node.get_id(), " Established connection with node ", remote_node.get_id(), " (", remote_node.get_address().to_string(), ").");
 
     ConnectionEstablished event(remote_node);
     pipeline.notify(event);
@@ -409,6 +409,7 @@ void Connection::send_syn(uint8_t extra_flags)
         broadcast_number : broadcast_dispatcher.get_next_number(),
         ab_number : ab_dispatcher.get_next_number() + local_node.is_receiving_ab_broadcast()
     };
+    log_print(local_node.get_id(), " sending syn ", data.broadcast_number, " to ", remote_node.get_id());
 
     send_flag(SYN | extra_flags, MessageData::from(data));
 }
@@ -443,7 +444,7 @@ void Connection::send_flag(uint8_t flags, MessageData message_data)
     Packet packet;
     packet.meta.destination = remote_node.get_address();
     packet.meta.message_length = message_data.size;
-    packet.meta.expects_ack = flags & SYN;
+    packet.meta.expects_ack = 0;
     packet.data = data;
 
     dispatch_to_sender(packet);

@@ -68,9 +68,9 @@ void BroadcastConnection::receive_synchronization(const ReceiveSynchronization& 
 
     if (!sequence_numbers.contains(id)) sequence_numbers.emplace(id, SequenceNumber());
     SequenceNumber& number = sequence_numbers.at(id);
-    number.initial_number = event.expected_broadcast_number;
+    number.initial_number = 0;
     number.next_number = event.expected_broadcast_number;
-    log_info("Broadcast sequence with node ", id, " was resync to ", number.initial_number);
+    log_print(local_node.get_id(), " Broadcast sequence with node ", id, " was resync to ", number.next_number);
 
     if (ab_sequence_number.next_number >= event.expected_ab_number) return;
     if (ab_dispatcher.is_active())
@@ -140,13 +140,15 @@ void BroadcastConnection::packet_received(const PacketReceived &event)
     Packet& packet = event.packet;
 
     if (packet.data.header.is_ack()) {
+        log_print("received ack ", packet.data.header.id.msg_num);
         receive_ack(packet);
         return;
     }
+    log_print(local_node.get_id(), " received ", packet.data.header.id.msg_num, " from ", packet.meta.origin.to_string());
 
     if (packet.data.header.is_rst()) {
         Node& node = nodes.get_node(packet.meta.origin);
-        log_info(
+        log_print(
             "Received RST from ",
             node.to_string(),
             "; considering it as dead for the current broadcast.");
@@ -159,16 +161,16 @@ void BroadcastConnection::packet_received(const PacketReceived &event)
     bool is_atomic = message_type::is_atomic(packet.data.header.get_message_type());
 
     SequenceNumber* sequence = get_sequence(packet.data.header.id);
-    // log_print(local_node.get_id(), " Received ", message_number, " is at ", sequence->next_number, " ", sequence->initial_number, " ", ab_next_deliver);
+    log_print(local_node.get_id(), " Received ", message_number, " from ", packet.data.header.id.origin.to_string(), " is at ", sequence->next_number, " ", sequence->initial_number, " ", ab_next_deliver);
     if (!sequence) {
-        log_warn("Received packet ", packet.to_string(PacketFormat::RECEIVED), ", but sequence number is not synchronized; sending RST.");
+        log_print("Received packet ", packet.to_string(PacketFormat::RECEIVED), ", but sequence number is not synchronized; sending RST.");
         send_rst(packet);
         return;
     }
 
     if (message_number < sequence->initial_number)
     {
-        log_debug(
+        log_print(
             "Received ",
             packet.to_string(PacketFormat::RECEIVED),
             " which is prior to current connection with initial number ",
@@ -193,7 +195,7 @@ void BroadcastConnection::packet_received(const PacketReceived &event)
             );
             return;
         }*/
-        log_debug(
+        log_print(
             "Received ",
             is_atomic ? "atomic broadcast" : "broadcast",
             " with sequence number higher than the current one [",
@@ -236,6 +238,7 @@ void BroadcastConnection::message_received(const MessageReceived &event)
     }
 
     sequence->next_number++;
+    log_print(local_node.get_id(), " incrementing seq number to ", sequence->next_number);
     if (message_type::is_atomic(message.id.msg_type))
     {
         ab_dispatcher.reset_number(sequence->next_number);
@@ -255,7 +258,7 @@ void BroadcastConnection::message_received(const MessageReceived &event)
         RetransmissionEntry& entry = retransmissions.at(id);
         entry.message = event.message;
         entry.message_received = true;
-        log_debug("Message from URB was received.", entry.received_all_acks ? "" : " Still waiting for all ACKs.");
+        log_print("Message from URB was received.", entry.received_all_acks ? "" : " Still waiting for all ACKs.");
 
         try_deliver(id);
     }
@@ -297,7 +300,7 @@ void BroadcastConnection::receive_ack(Packet& ack_packet)
     pipeline.notify(PacketAckReceived(ack_packet));
 
     if (message_type::is_urb(header.get_message_type())) {
-        if (is_delivered(id, message_type::is_atomic(ack_packet.data.header.get_message_type()))) return;
+        if (is_delivered(id, message_type::is_atomic(header.get_message_type()))) return;
 
         if (!retransmissions.contains(id)) retransmissions.emplace(id, RetransmissionEntry());
         RetransmissionEntry& entry = retransmissions.at(id);
@@ -325,6 +328,7 @@ void BroadcastConnection::receive_fragment(Packet& packet)
         retransmit_fragment(packet);
     }
 
+    log_print(local_node.get_id(), " SENDING ACK ", packet.data.header.id.msg_num);
     Packet ack_packet = create_ack(packet, ack_destination);
     pipeline.send(ack_packet);
 }
@@ -390,11 +394,12 @@ void BroadcastConnection::try_deliver(const MessageIdentity& id) {
     if (is_atomic && id.msg_num != ab_next_deliver) return;
 
     RetransmissionEntry& entry = retransmissions.at(id);
+    log_print(local_node.get_id(), "trying to deliver ", id.msg_num, " ", entry.message.to_string(), " ", entry.received_all_acks, entry.message_received);
     if (!entry.received_all_acks || !entry.message_received) return;
 
     if (entry.message.is_application())
     {
-        log_debug("Delivering message ", entry.message.to_string(), ".");
+        log_print(local_node.get_id(), " Delivering message ", entry.message.to_string(), ".");
         deliver_buffer.produce(entry.message);
     }
     retransmissions.erase(id);
@@ -430,6 +435,7 @@ void BroadcastConnection::try_deliver_next_atomic()
 
 void BroadcastConnection::transmission_complete(const TransmissionComplete& event) {
     if (!message_type::is_broadcast(event.id.msg_type)) return;
+    log_print("transmission of complete ", event.id.msg_num);
 
     const MessageIdentity& id = event.id;
     const UUID &uuid = event.uuid;
@@ -488,8 +494,10 @@ bool BroadcastConnection::enqueue(Transmission& transmission) {
 
 bool BroadcastConnection::establish_all_connections(const std::unordered_set<std::string>& node_ids) {
     bool established = true;
+    //log_print(local_node.get_id(), " ", node_ids.size());
 
     for (auto& node_id : node_ids) {
+        //log_print(local_node.get_id(), " ", node_id);
         Connection& connection = connections.at(node_id);
 
         const Node& node = nodes.get_node(node_id);
@@ -521,9 +529,15 @@ void BroadcastConnection::update() {
     if (ab_dispatcher.is_active() && dispatcher.is_active()) return;
 
     std::unordered_set<std::string> node_ids;
+    for (auto& [id, node] : nodes) {
+        node_ids.emplace(node.get_id());
+    }
     if (Transmission* t = dispatcher.get_next()) {
         uint64_t group_hash = t->message.group_hash;
-        for (Node* node : nodes.get_group(group_hash)) node_ids.emplace(node->get_id());
+        for (Node* node : nodes.get_group(group_hash)) {
+            // log_print(local_node.get_id(), " will ", node->get_id());
+            node_ids.emplace(node->get_id());
+        }
     }
     if (Transmission* t = ab_dispatcher.get_next()) {
         uint64_t group_hash = t->message.group_hash;
@@ -532,6 +546,7 @@ void BroadcastConnection::update() {
     
     bool established = establish_all_connections(node_ids);
     if (!established) return;
+    log_print(local_node.get_id(), " established connection with everyone");
 
     ab_dispatcher.update();
     dispatcher.update();

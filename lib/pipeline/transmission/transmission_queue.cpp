@@ -40,6 +40,7 @@ void TransmissionQueue::send(uint32_t num) {
                 if (node->get_address() == BROADCAST_ADDRESS) continue;
                 if (!node->is_alive()) continue;
                 entry.pending_receivers.emplace(node);
+                log_print("on group there is ", node->get_id());
             }
         }
         else {
@@ -84,6 +85,9 @@ void TransmissionQueue::send(uint32_t num) {
     Packet p = packet;
 
     for (const Node* receiver : entry.pending_receivers) {
+        if (packet.data.header.get_message_type() == MessageType::URB) {
+            log_print(packet.meta.origin.to_string(), " sending ack of ", packet.data.header.id.msg_num, " to ", receiver->get_address().to_string());
+        }
         p.meta.destination = receiver->get_address();
         handler.forward_send(p);
     }
@@ -119,6 +123,9 @@ void TransmissionQueue::fail()
         faulty_packets.size(),
         " unreceived packet(s)."
     );
+    for (auto& receiver : faulty_receivers) {
+        log_print(receiver->get_id());
+    }
 
     reset();
     mutex_timeout.unlock();
@@ -156,7 +163,7 @@ void TransmissionQueue::timeout(uint32_t num)
 
     mutex_timeout.unlock();
 
-    log_warn("Packet [", packet.to_string(PacketFormat::SENT), "] timed out. Sending again, already tried ", entry.tries, " time(s).");
+    log_print(packet.meta.origin.to_string(), " Packet [", packet.to_string(PacketFormat::SENT), "] timed out. Sending again, already tried ", entry.tries, " time(s).");
     send(num);
 }
 
@@ -234,6 +241,7 @@ bool TransmissionQueue::try_complete()
         return false;
     }
 
+    log_print("trying to complete ", entries.begin()->second.packet.data.header.id.msg_num);
     bool success = completed();
     if (success) {
         const QueueEntry& entry = entries.begin()->second;
@@ -243,16 +251,17 @@ bool TransmissionQueue::try_complete()
         [[maybe_unused]] uint32_t msg_num = packet.data.header.get_message_number();
         TransmissionComplete event(uuid, packet.data.header.id, packet.data.header.id.origin, remote_address);
 
-        log_info(
+        log_print(
             "Transmission ", remote_address.to_string(), " / ", msg_num, " is completed. Sent ",
             end_fragment_num + 1, " fragments, ", get_total_bytes(), " bytes total."
         );
+        PipelineCleanup e(packet.data.header.id, {BROADCAST_ADDRESS, 0});
 
         reset();
 
         handler.notify(event);
+        // TIMER.add(0, [this, e]() { handler.notify(e); });        
     }
-
     mutex_timeout.unlock();
 
     return success;
@@ -263,19 +272,23 @@ void TransmissionQueue::receive_ack(const Packet& ack_packet)
     uint32_t msg_num = ack_packet.data.header.get_message_number();
     uint32_t frag_num = ack_packet.data.header.get_fragment_number();
     const SocketAddress& receiver_address = ack_packet.meta.origin;
+    log_print(ack_packet.meta.destination.to_string(), " receive ack q", msg_num, " ", message_num, " ", ack_packet.data.header.id.origin.to_string(), " ", ack_packet.meta.origin.to_string());
 
     if (msg_num != message_num) return;
+    log_print("a", msg_num);
 
     mutex_timeout.lock();
 
     if (!entries.contains(frag_num)) {
         mutex_timeout.unlock();
+        log_print("c", msg_num);
         return;
     }
     QueueEntry& entry = entries.at(frag_num);
 
     if (!nodes.contains(receiver_address)) {
         mutex_timeout.unlock();
+        log_print("b", msg_num);
         return;
     }
     const Node& receiver = nodes.get_node(receiver_address);
@@ -285,6 +298,10 @@ void TransmissionQueue::receive_ack(const Packet& ack_packet)
     // log_info("Removing pending ack ", frag_num, " of remote ", receiver_address.to_string(), ". over: ", !entry.pending_receivers.size());
     if (entry.pending_receivers.size()) {
         mutex_timeout.unlock();
+        log_print("d", msg_num);
+        for (const Node* node : entry.pending_receivers) {
+            log_print(ack_packet.meta.destination.to_string(), " is waiting ack from ", node->get_id());
+        }
         return;
     }
 
