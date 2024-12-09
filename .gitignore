@@ -2,5 +2,5 @@ build
 .data
 program
 **/*.a
-bench/results
+bench/results*
 bench/plots
