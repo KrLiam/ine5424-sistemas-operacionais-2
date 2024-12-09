@@ -4,7 +4,8 @@ import glob
 import os
 from pathlib import Path
 from typing import Any, Iterable, TypedDict
-import matplotlib.pyplot as plt    
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 
 def parse_arguments():
     parser = ArgumentParser()
@@ -69,7 +70,7 @@ def plot(
 
     ax1.set_title(title)
 
-    colors = ["r", "b", "g", "magenta", "cyan", "yellow"]
+    colors = ["r", "b", "g", "orange", "magenta", "black", "yellow"]
 
     for i, (x, y) in enumerate(curves):
         ax1.plot(x, y, colors[i % len(colors)], label=curve_labels[i])
@@ -77,6 +78,7 @@ def plot(
     max_x = max(max(x) for x, _ in curves)
     min_x = min(min(x) for x, _ in curves)
     ax1.set_xbound(min_x, max_x)
+    ax1.xaxis.set_major_locator(ticker.MultipleLocator(2))
 
     ax1.set_xlabel(x_label)
     ax1.set_ylabel(y_label)
@@ -96,13 +98,13 @@ def main():
 
     if len(args.y_column) > 1:
         curve_labels = [
-            f"{Path(p).stem} ({column})"
+            f"{Path(p).stem.replace("_", " ")} ({column})"
             for p in args.files
             for column in args.y_column
         ]
     else:
         curve_labels = [
-            Path(p).stem for p in args.files
+            Path(p).stem.replace("_", " ") for p in args.files
         ]
 
     curves = []
