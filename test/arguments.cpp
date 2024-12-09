@@ -33,7 +33,7 @@ uint32_t parse_byte_unit(Reader& reader) {
 
 const char* benchmark_mode_to_string(BenchmarkMode mode) {
     if (mode == BenchmarkMode::SEND) return "SEND";
-    if (mode == BenchmarkMode::URB) return "BEB";
+    if (mode == BenchmarkMode::URB) return "URB";
     if (mode == BenchmarkMode::AB) return "AB";
     return "BEB";
 }
