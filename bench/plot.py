@@ -78,7 +78,10 @@ def plot(
     max_x = max(max(x) for x, _ in curves)
     min_x = min(min(x) for x, _ in curves)
     ax1.set_xbound(min_x, max_x)
-    ax1.xaxis.set_major_locator(ticker.MultipleLocator(2))
+
+    x_range = max_x - min_x
+    tick_interval = max(x_range // 40, 2)
+    ax1.xaxis.set_major_locator(ticker.MultipleLocator(tick_interval))
 
     ax1.set_xlabel(x_label)
     ax1.set_ylabel(y_label)
