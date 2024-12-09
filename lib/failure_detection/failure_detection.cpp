@@ -94,8 +94,8 @@ void FailureDetection::packet_received(const PacketReceived &event)
 }
 
 void FailureDetection::packet_sent(const PacketSent &event) {
-    Node& node = gr->get_nodes().get_node(event.packet.meta.destination);
-    schedule_heartbeat(node);
+    // Node& node = gr->get_nodes().get_node(event.packet.meta.destination);
+    // schedule_heartbeat(node);
 }
 
 

@@ -445,7 +445,7 @@ void Connection::send_flag(uint8_t flags, MessageData message_data)
     Packet packet;
     packet.meta.destination = remote_node.get_address();
     packet.meta.message_length = message_data.size;
-    packet.meta.expects_ack = flags & SYN;
+    packet.meta.expects_ack = 0; // flags & SYN;
     packet.data = data;
 
     dispatch_to_sender(packet);

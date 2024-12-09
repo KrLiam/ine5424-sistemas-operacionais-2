@@ -46,7 +46,7 @@ struct Arguments {
     uint32_t max_read_operations = 0;
     uint32_t max_write_operations = UINT32_MAX;
     BenchmarkMode mode = BenchmarkMode::BEB;
-    uint32_t max_inactivity_time = 5000;
+    uint32_t max_inactivity_time = 20000;
     bool measure_failures = false;
 
     bool no_encryption = false;

@@ -25,6 +25,8 @@ ReliableCommunication::ReliableCommunication(
     gr->set_pipeline(pipeline.get());
     gr->establish_connections();
 
+    for (auto& [id, _] : config.groups) join_group(id);
+
     failure_detection = std::make_unique<FailureDetection>(
         gr, event_bus, timer, config.alive, verbose
     );

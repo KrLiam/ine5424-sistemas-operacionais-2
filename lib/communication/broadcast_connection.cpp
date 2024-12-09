@@ -33,7 +33,7 @@ const TransmissionDispatcher& BroadcastConnection::get_ab_dispatcher() const { r
 void BroadcastConnection::observe_pipeline() {
     obs_receive_synchronization.on(std::bind(&BroadcastConnection::receive_synchronization, this, _1));
     obs_connection_established.on(std::bind(&BroadcastConnection::connection_established, this, _1));
-    // obs_connection_closed.on(std::bind(&BroadcastConnection::connection_closed, this, _1));
+    obs_connection_closed.on(std::bind(&BroadcastConnection::connection_closed, this, _1));
     obs_packet_received.on(std::bind(&BroadcastConnection::packet_received, this, _1));
     obs_message_received.on(std::bind(&BroadcastConnection::message_received, this, _1));
     obs_unicast_message_received.on(std::bind(&BroadcastConnection::unicast_message_received, this, _1));
@@ -43,7 +43,7 @@ void BroadcastConnection::observe_pipeline() {
     obs_node_up.on(std::bind(&BroadcastConnection::node_up, this, _1));
     pipeline.attach(obs_receive_synchronization);
     pipeline.attach(obs_connection_established);
-    // pipeline.attach(obs_connection_closed);
+    pipeline.attach(obs_connection_closed);
     pipeline.attach(obs_packet_received);
     pipeline.attach(obs_message_received);
     pipeline.attach(obs_unicast_message_received);
@@ -116,8 +116,9 @@ void BroadcastConnection::atomic_mapping(const AtomicMapping& event) {
         atomic_to_request_map.emplace(event.atomic_id, event.request_id);
 }
 
-/*
+
 void BroadcastConnection::connection_closed(const ConnectionClosed& event) {
+    /*
     ab_dispatcher.cancel_all(); // TODO apenas cancelar as transmissoes do nó que morreu
 
     std::unordered_set<MessageIdentity> remove;
@@ -127,10 +128,10 @@ void BroadcastConnection::connection_closed(const ConnectionClosed& event) {
     for (const MessageIdentity& id : remove) {
         ab_transmissions.erase(id);
     }
+    */
 
     if (!dispatcher.is_active()) dispatcher.cancel_all();
 }
-*/
 
 void BroadcastConnection::packet_received(const PacketReceived &event)
 {

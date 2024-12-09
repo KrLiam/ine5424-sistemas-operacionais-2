@@ -29,11 +29,10 @@ public:
 
     T consume()
     {
-        while (empty() && !terminating) {
-            // log_trace("Waiting to consume on [", name, "] buffer.");
-            std::unique_lock<std::mutex> lock(empty_mutex);
-            empty_cv.wait(lock);
-        }
+        // log_trace("Waiting to consume on [", name, "] buffer.");
+        std::unique_lock<std::mutex> e_lock(empty_mutex);
+        empty_cv.wait(e_lock, [this]{ return !empty() || terminating; });
+        e_lock.unlock();
 
         if (terminating) throw buffer_termination("Exiting buffer.");
 
@@ -42,7 +41,9 @@ public:
         T item = buffer.front();
         buffer.pop();
 
+        std::unique_lock<std::mutex> f_lock(full_mutex);
         full_cv.notify_one();
+        f_lock.unlock();
 
         // log_trace("Consumed item to [", name, "] buffer.");
 
@@ -53,18 +54,20 @@ public:
 
     void produce(const T &item)
     {
-        while (full() && !terminating) {
-            // log_trace("Waiting to produce on [", name, "] buffer.");
-            std::unique_lock<std::mutex> lock(full_mutex);
-            full_cv.wait(lock);
-        }
+        // log_trace("Waiting to produce on [", name, "] buffer.");
+        std::unique_lock<std::mutex> f_lock(full_mutex);
+        full_cv.wait(f_lock, [this]{ return !full() || terminating; });
+        f_lock.unlock();
 
         if (terminating) throw buffer_termination("Exiting buffer.");
 
         mutex.lock();
 
         buffer.push(item);
+
+        std::unique_lock<std::mutex> e_lock(empty_mutex);
         empty_cv.notify_one();
+        e_lock.unlock();
 
         // log_trace("Produced item to [", name, "] buffer.");
 
@@ -127,18 +130,20 @@ public:
     bool full() { return values.size() >= max_size; }
 
     void produce(const T& value) {
-        while (full() && !terminating) {
-            // log_trace("Waiting to produce on [", name, "] buffer.");
-            std::unique_lock<std::mutex> lock(full_mutex);
-            full_cv.wait(lock);
-        }
+        // log_trace("Waiting to produce on [", name, "] buffer.");
+        std::unique_lock<std::mutex> f_lock(full_mutex);
+        full_cv.wait(f_lock, [this]{ return !full() || terminating; });
+        f_lock.unlock();
 
         if (terminating) throw buffer_termination("Exiting buffer.");
 
         values_mutex.lock();
 
         values.emplace(value);
+
+        std::unique_lock<std::mutex> e_lock(empty_mutex);
         empty_cv.notify_one();
+        e_lock.unlock();
 
         // log_trace("Produced item to [", name, "] buffer.");
 
@@ -146,11 +151,10 @@ public:
     }
 
     T consume() {
-        while (empty() && !terminating) {
-            // log_trace("Waiting to consume on [", name, "] buffer.");
-            std::unique_lock<std::mutex> lock(empty_mutex);
-            empty_cv.wait(lock);
-        }
+        // log_trace("Waiting to consume on [", name, "] buffer.");
+        std::unique_lock<std::mutex> e_lock(empty_mutex);
+        empty_cv.wait(e_lock, [this]{ return !empty() || terminating; });
+        e_lock.unlock();
 
         if (terminating) throw buffer_termination("Exiting buffer.");
 
@@ -158,7 +162,10 @@ public:
 
         T v = *values.begin();
         values.erase(values.begin());
+
+        std::unique_lock<std::mutex> f_lock(full_mutex);
         full_cv.notify_one();
+        f_lock.unlock();
 
         // log_trace("Consumed item to [", name, "] buffer.");
 
