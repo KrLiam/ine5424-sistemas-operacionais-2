@@ -16,6 +16,7 @@ def parse_arguments():
     parser.add_argument("--y-column", type=str, nargs="+", default=["total_out"])
     parser.add_argument("--y-scale", type=float, nargs="+", required=False)
     parser.add_argument("--y-label", type=str, required=False)
+    parser.add_argument("--smooth-factor", type=int, default=0)
     parser.add_argument("--title", type=str, default="Benchmark result")
     parser.add_argument("--output", type=str, default="")
 
@@ -56,10 +57,22 @@ def get_axis(result: Any, column: str) -> list[Any]:
     snapshots = result["snapshots"]
     return [snapshot[column] for snapshot in snapshots]
 
-def get_avg(axis: list[Any]) -> float:
+def get_avg(axis: list[float]) -> float:
     if not len(axis):
         return 0
     return sum(axis) / len(axis)
+
+def get_value(axis: list[float], i: int) -> float:
+    if not axis:
+        return 0
+
+    if i < 0:
+        return axis[0]
+
+    if i >= len(axis):
+        return axis[-1]
+    
+    return axis[i]
 
 
 def plot(
@@ -126,6 +139,15 @@ def main():
                 yi / args.y_scale[i] for yi in get_axis(result, y_column)
             ]
             curves.append((x, y))
+    
+    if args.smooth_factor:
+        for _, y in curves:
+            for i in range(len(y)):
+                avg_value = get_avg([
+                    get_value(y, k)
+                    for k in range(i - args.smooth_factor, i + args.smooth_factor)
+                ])
+                y[i] = avg_value
     
     plot(
         curves,
