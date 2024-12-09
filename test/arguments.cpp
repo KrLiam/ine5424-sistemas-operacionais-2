@@ -114,6 +114,9 @@ Arguments parse_arguments(int argc, char* argv[]) {
         else if ((!long_arg && flag=="w") || (long_arg && flag == "write")) {
             args.max_write_operations = reader.read_int();
         }
+        else if (long_arg && flag == "alive") {
+            args.alive = reader.read_int();
+        }
         else if (long_arg && flag == "out-file") {
             args.out_file = reader.peek() == '-' ? "" : parse_path(reader);
         }

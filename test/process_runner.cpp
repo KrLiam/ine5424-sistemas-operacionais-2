@@ -382,7 +382,8 @@ void Runner::run_benchmark() {
         args.no_encryption,
         args.no_checksum,
         args.max_read_operations,
-        args.max_write_operations
+        args.max_write_operations,
+        args.alive
     );
 
     BenchmarkResult result = benchmarker.run();

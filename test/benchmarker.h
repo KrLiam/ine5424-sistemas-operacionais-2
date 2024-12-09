@@ -393,6 +393,7 @@ struct BenchmarkParameters {
     bool disable_checksum;
     uint32_t max_read_operations;
     uint32_t max_write_operations;
+    uint32_t alive;
 
     std::string serialize() {
         std::string contents;
@@ -406,7 +407,8 @@ struct BenchmarkParameters {
         contents += format("\n\"max_write_operations\": %u,", max_write_operations);
         contents += format("\n\"mode\": \"%s\",", benchmark_mode_to_string(mode));
         contents += format("\n\"encryption\": %s,", disable_encryption ? "false" : "true");
-        contents += format("\n\"checksum\": %s", disable_checksum ? "false" : "true");
+        contents += format("\n\"checksum\": %s,", disable_checksum ? "false" : "true");
+        contents += format("\n\"alive\": %u", alive);
 
         return std::string("{") + indent(contents, "    ") + "\n}";
     }
@@ -422,7 +424,8 @@ struct BenchmarkParameters {
             "Max Write Operations=%u\n"
             "Message Mode=%s\n"
             "Encryption=%s\n"
-            "Checksum=%s",
+            "Checksum=%s\n"
+            "Alive=%u",
             total_groups,
             total_nodes_in_group,
             total_groups*total_nodes_in_group,
@@ -434,7 +437,8 @@ struct BenchmarkParameters {
             max_write_operations,
             benchmark_mode_to_string(mode),
             disable_encryption ? "disabled" : "enabled",
-            disable_checksum ? "disabled" : "enabled"
+            disable_checksum ? "disabled" : "enabled",
+            alive
         );
         return out;
     }
@@ -588,7 +592,8 @@ public:
         bool no_encryption,
         bool no_checksum,
         uint32_t max_read_operations,
-        uint32_t max_write_operations
+        uint32_t max_write_operations,
+        uint32_t alive
     ) {
         global_group = total_groups == 0;
         total_groups = total_groups ? total_groups : 1;
@@ -603,7 +608,8 @@ public:
             disable_encryption : no_encryption,
             disable_checksum : no_checksum,
             max_read_operations : max_read_operations,
-            max_write_operations : max_write_operations
+            max_write_operations : max_write_operations,
+            alive : alive
         };
         workers.reserve(total_nodes());
     }
@@ -652,7 +658,7 @@ public:
 
         config.groups = create_groups();
         config.nodes = create_nodes();
-        config.alive = 100;
+        config.alive = params.alive;
         config.broadcast =
             params.mode == BenchmarkMode::URB ? BroadcastType::URB :
             params.mode == BenchmarkMode::AB ? BroadcastType::AB :
@@ -700,7 +706,8 @@ public:
             }
         }
 
-        print_start();
+        std::cout << "Starting benchmark.\n"
+            << params.to_string() << "\n" << std::endl;
 
         start_time = DateUtils::now();
         result.start_time = start_time;
@@ -774,27 +781,6 @@ public:
             if (!worker->done) return false;
         }
         return true;
-    }
-
-    void print_start() {
-        std::string out = format(
-            "Starting benchmark.\n"
-            "Groups=%u \n"
-            "Nodes=%u per group (%u total)\n"
-            "Bytes=%s sent per node (%s total)\n"
-            "Interval between messages=%s\n"
-            "Max message size=%u\n"
-            "Message mode=%s\n\n",
-            params.total_groups,
-            params.total_nodes_in_group,
-            total_nodes(),
-            format_bytes(params.bytes_sent_per_node).c_str(),
-            format_bytes(params.bytes_sent_per_node*total_nodes()).c_str(),
-            params.interval_range.to_string().c_str(),
-            params.max_message_size,
-            benchmark_mode_to_string(params.mode)
-        );
-        std::cout << out;
     }
 
     BenchmarkSnapshot create_snapshot() {
