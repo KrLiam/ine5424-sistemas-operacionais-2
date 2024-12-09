@@ -394,6 +394,7 @@ struct BenchmarkParameters {
     uint32_t max_read_operations;
     uint32_t max_write_operations;
     uint32_t alive;
+    uint32_t max_inactivity_time;
 
     std::string serialize() {
         std::string contents;
@@ -408,7 +409,8 @@ struct BenchmarkParameters {
         contents += format("\n\"mode\": \"%s\",", benchmark_mode_to_string(mode));
         contents += format("\n\"encryption\": %s,", disable_encryption ? "false" : "true");
         contents += format("\n\"checksum\": %s,", disable_checksum ? "false" : "true");
-        contents += format("\n\"alive\": %u", alive);
+        contents += format("\n\"alive\": %u,", alive);
+        contents += format("\n\"max_inactivity_time\": %u", max_inactivity_time);
 
         return std::string("{") + indent(contents, "    ") + "\n}";
     }
@@ -425,7 +427,8 @@ struct BenchmarkParameters {
             "Message Mode=%s\n"
             "Encryption=%s\n"
             "Checksum=%s\n"
-            "Alive=%u",
+            "Alive=%u\n"
+            "Max Inactivity Time=%u",
             total_groups,
             total_nodes_in_group,
             total_groups*total_nodes_in_group,
@@ -438,7 +441,8 @@ struct BenchmarkParameters {
             benchmark_mode_to_string(mode),
             disable_encryption ? "disabled" : "enabled",
             disable_checksum ? "disabled" : "enabled",
-            alive
+            alive,
+            max_inactivity_time
         );
         return out;
     }
@@ -594,7 +598,8 @@ public:
         bool no_checksum,
         uint32_t max_read_operations,
         uint32_t max_write_operations,
-        uint32_t alive
+        uint32_t alive,
+        uint32_t max_inactivity_time
     ) {
         global_group = total_groups == 0;
         total_groups = total_groups ? total_groups : 1;
@@ -610,7 +615,8 @@ public:
             disable_checksum : no_checksum,
             max_read_operations : max_read_operations,
             max_write_operations : max_write_operations,
-            alive : alive
+            alive : alive,
+            max_inactivity_time : max_inactivity_time
         };
         workers.reserve(total_nodes());
     }
@@ -722,10 +728,11 @@ public:
             BenchmarkSnapshot snapshot = create_snapshot();
             result.snapshots.push_back(snapshot);
 
+            uint64_t now = DateUtils::now();
             if (snapshot.out_throughput) {
-                last_activity_time = snapshot.elapsed_time;
+                last_activity_time = now;
             }
-            if ( (snapshot.elapsed_time - last_activity_time) > 5) {
+            if ( (now - last_activity_time) > params.max_inactivity_time ) {
                 log_error("Aborting benchmark due to inactivity. Terminating it ungracefully.");
                 return result;
             }

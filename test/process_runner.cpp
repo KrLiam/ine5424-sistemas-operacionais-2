@@ -383,7 +383,8 @@ void Runner::run_benchmark() {
         args.no_checksum,
         args.max_read_operations,
         args.max_write_operations,
-        args.alive
+        args.alive,
+        args.max_inactivity_time
     );
 
     BenchmarkResult result = benchmarker.run();

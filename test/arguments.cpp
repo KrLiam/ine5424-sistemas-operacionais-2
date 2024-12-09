@@ -144,6 +144,9 @@ Arguments parse_arguments(int argc, char* argv[]) {
         else if (long_arg && flag == "no-checksum") {
             args.no_checksum = true;
         }
+        else if (long_arg && flag == "max-inactivity-time") {
+            args.max_inactivity_time = reader.read_int();
+        }
         else {
             throw std::invalid_argument(
                 format("Unknown flag '%s' at pos %i", flag.c_str(), reader.get_pos() - flag.length())
