@@ -98,7 +98,7 @@ def main():
 
     if len(args.y_column) > 1:
         curve_labels = [
-            f"{Path(p).stem.replace("_", " ")} ({column})"
+            f"{Path(p).stem.replace('_', ' ')} ({column})"
             for p in args.files
             for column in args.y_column
         ]
