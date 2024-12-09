@@ -159,6 +159,7 @@ void BroadcastConnection::packet_received(const PacketReceived &event)
     bool is_atomic = message_type::is_atomic(packet.data.header.get_message_type());
 
     SequenceNumber* sequence = get_sequence(packet.data.header.id);
+    // log_print(local_node.get_id(), " Received ", message_number, " is at ", sequence->next_number, " ", sequence->initial_number, " ", ab_next_deliver);
     if (!sequence) {
         log_warn("Received packet ", packet.to_string(PacketFormat::RECEIVED), ", but sequence number is not synchronized; sending RST.");
         send_rst(packet);
@@ -409,12 +410,12 @@ void BroadcastConnection::try_deliver_next_atomic()
         msg_type : (MessageType)0
     };
 
-    for (auto& [_, entry] : retransmissions)
+    for (auto& [key, entry] : retransmissions)
     {
         if (!message_type::is_atomic(entry.message.id.msg_type)) continue;
-        uint32_t num = entry.message.id.msg_num;
+        uint32_t num = key.msg_num;
         if (num > ab_next_deliver && next_atomic.msg_num > num) {
-            next_atomic = entry.message.id;
+            next_atomic = key;
         }
     }
 
