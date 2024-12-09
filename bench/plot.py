@@ -41,8 +41,13 @@ def read_files(values: str | list[str]) -> list[Any]:
         files = glob.glob(value)
 
         for path in files:
-            with open(path, "rt") as f:
-                txt = f.read()
+            p = Path(path)
+
+            if not p.exists():
+                print(f"Result file '{p}' does not exist.")
+                continue
+
+            txt = p.read_text()
             results.append(json.loads(txt))
     
     return results
@@ -75,8 +80,11 @@ def plot(
     for i, (x, y) in enumerate(curves):
         ax1.plot(x, y, colors[i % len(colors)], label=curve_labels[i])
 
-    max_x = max(max(x) for x, _ in curves)
-    min_x = min(min(x) for x, _ in curves)
+    min_x = 0
+    max_x = 1
+    if curves:
+        max_x = max(max(x) for x, _ in curves)
+        min_x = min(min(x) for x, _ in curves)
     ax1.set_xbound(min_x, max_x)
 
     x_range = max_x - min_x
