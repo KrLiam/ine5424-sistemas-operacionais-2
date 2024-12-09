@@ -388,4 +388,8 @@ void Runner::run_benchmark() {
 
     BenchmarkResult result = benchmarker.run();
     if (args.out_file.has_value()) result.save(*args.out_file);
+
+    if (!result.completed) {
+        exit(0);
+    }
 }

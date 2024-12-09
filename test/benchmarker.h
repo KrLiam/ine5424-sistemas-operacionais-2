@@ -499,6 +499,7 @@ struct BenchmarkSnapshot {
 };
 
 struct BenchmarkResult {
+    bool completed = false;
     uint64_t start_time;
     BenchmarkParameters params;
     std::vector<BenchmarkSnapshot> snapshots;
@@ -726,7 +727,7 @@ public:
             }
             if ( (snapshot.elapsed_time - last_activity_time) > 5) {
                 log_error("Aborting benchmark due to inactivity. Terminating it ungracefully.");
-                exit(0);
+                return result;
             }
 
             std::cout << snapshot.to_string() << std::endl;
@@ -740,6 +741,7 @@ public:
         }
 
         log_print("Benchmark is over.");
+        result.completed = true;
 
         for (auto& worker : workers) {
             worker->benchmark_over.release();
