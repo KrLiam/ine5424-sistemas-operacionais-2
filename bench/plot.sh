@@ -142,7 +142,7 @@ python3 bench/plot.py \
     --x-label "Elapsed time (Seconds)" \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
-    --output bench/plots/guto-challenge-beb.png
+    --output bench/plots/guto-challenge-beb-throughput.png
 
 
 ## URB
@@ -158,7 +158,7 @@ python3 bench/plot.py \
     --x-label "Elapsed time (Seconds)" \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
-    --output bench/plots/guto-challenge-beb.png
+    --output bench/plots/guto-challenge-urb-throughput.png
 
 
 ## AB
@@ -174,4 +174,4 @@ python3 bench/plot.py \
     --x-label "Elapsed time (Seconds)" \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
-    --output bench/plots/guto-challenge-beb.png
+    --output bench/plots/guto-challenge-ab-throughput.png
