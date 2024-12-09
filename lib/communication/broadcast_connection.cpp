@@ -408,7 +408,8 @@ void BroadcastConnection::try_deliver_next_atomic()
     for (auto& [_, entry] : retransmissions)
     {
         if (!message_type::is_atomic(entry.message.id.msg_type)) continue;
-        if (!next_atomic || next_atomic->msg_num > entry.message.id.msg_num) next_atomic = &entry.message.id;
+        uint32_t num = entry.message.id.msg_num;
+        if (num > ab_next_deliver && (!next_atomic || next_atomic->msg_num > num)) next_atomic = &entry.message.id;
     }
 
     if (next_atomic)
