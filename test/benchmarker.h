@@ -807,7 +807,7 @@ public:
         double remaining_ratio = (double) remaining_bytes/ (double) total_bytes;
         double progress_ratio = 1 - remaining_ratio;
 
-        double time_estimate = remaining_ratio/progress_ratio * elapsed;
+        double time_estimate = progress_ratio != 0 ? remaining_ratio/progress_ratio * elapsed : std::numeric_limits<double>::infinity();
 
         return BenchmarkSnapshot{
             elapsed_time : elapsed,
