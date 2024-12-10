@@ -92,10 +92,11 @@ class FaultInjectionLayer : public PipelineStep {
     std::unordered_set<int> packet_timer_ids;
    FaultConfig config;
    NodeMap& nodes;
+   Timer& timer;
    std::uniform_int_distribution<> corruption_mask_dis;
 public:
-    FaultInjectionLayer(PipelineHandler handler, NodeMap& nodes);
-    FaultInjectionLayer(PipelineHandler handler, NodeMap& nodes, FaultConfig config);
+    FaultInjectionLayer(PipelineHandler handler, NodeMap& nodes, Timer& timer);
+    FaultInjectionLayer(PipelineHandler handler, NodeMap& nodes, Timer& timer, FaultConfig config);
 
     ~FaultInjectionLayer();
 

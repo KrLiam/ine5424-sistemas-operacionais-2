@@ -8,6 +8,7 @@ RaftManager::RaftManager(
     NodeMap &nodes,
     Node &local_node,
     EventBus &event_bus,
+    Timer& timer,
     unsigned int alive
 ) :
     voted_for(nullptr),
@@ -18,6 +19,7 @@ RaftManager::RaftManager(
     local_node(local_node),
     leader(nullptr),
     event_bus(event_bus),
+    timer(timer),
     timer_id(0),
     election_time_dis(alive * 6, alive * 7)
 {
@@ -117,11 +119,11 @@ void RaftManager::send_request_vote() {
 void RaftManager::set_election_timer() {
     cancel_election_timer();
     int election_time = election_time_dis(rc_random::gen);
-    timer_id = TIMER.add(election_time, election_timeout_handlers.at(state));
+    timer_id = timer.add(election_time, election_timeout_handlers.at(state));
 }
 
 void RaftManager::cancel_election_timer() {
-    if (timer_id != 0) TIMER.cancel(timer_id);
+    if (timer_id != 0) timer.cancel(timer_id);
 }
 
 

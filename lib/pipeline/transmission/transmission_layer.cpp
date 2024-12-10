@@ -7,8 +7,8 @@ bool TransmissionKey::operator==(const TransmissionKey& other) const {
         && destination == other.destination;
 }
 
-TransmissionLayer::TransmissionLayer(PipelineHandler handler, NodeMap &nodes)
-    : PipelineStep(handler), nodes(nodes)
+TransmissionLayer::TransmissionLayer(PipelineHandler handler, NodeMap &nodes, Timer& timer)
+    : PipelineStep(handler), nodes(nodes), timer(timer)
 {
 }
 
@@ -28,7 +28,7 @@ bool TransmissionLayer::has_queue(const TransmissionKey& key) {
 }
 TransmissionQueue& TransmissionLayer::get_queue(const TransmissionKey& key) {
     if (!has_queue(key)) {
-        auto queue = std::make_shared<TransmissionQueue>(handler, nodes);
+        auto queue = std::make_shared<TransmissionQueue>(handler, nodes, timer);
 
         queue_map.insert({key, queue});
         // log_info("Added queue to ", id.origin.to_string(), " ", id.msg_num, " ", id.sequence_type);

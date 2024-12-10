@@ -59,6 +59,7 @@ private:
     std::vector<Packet> dispatched_packets;
     BufferSet<std::string>& connection_update_buffer;
     TransmissionDispatcher dispatcher;
+    Timer& timer;
 
     uint32_t expected_number = 0;
 
@@ -145,7 +146,8 @@ public:
         Buffer<Message> &application_buffer,
         BufferSet<std::string>& connection_update_buffer,
         const TransmissionDispatcher& broadcast_dispatcher,
-        const TransmissionDispatcher& ab_dispatcher
+        const TransmissionDispatcher& ab_dispatcher,
+        Timer& timer
     );
 
     ConnectionState get_state() const;

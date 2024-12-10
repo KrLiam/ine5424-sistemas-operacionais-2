@@ -6,14 +6,15 @@
 FailureDetection::FailureDetection(
     std::shared_ptr<GroupRegistry> gr,
     EventBus &event_bus,
+    Timer& timer,
     unsigned int alive,
     bool verbose
 )
-    : gr(gr), event_bus(event_bus), alive(alive), verbose(verbose)
+    : gr(gr), event_bus(event_bus), timer(timer), alive(alive), verbose(verbose)
 {
     attach();
 
-    timer_id = TIMER.add(alive, [this]() { failure_detection_routine(); });
+    timer_id = timer.add(alive, [this]() { failure_detection_routine(); });
     for (auto& [id, node] : gr->get_nodes())
     {
         mtx.lock();
@@ -29,7 +30,7 @@ FailureDetection::~FailureDetection()
 
 void FailureDetection::terminate() {
     running = false;
-    if (timer_id >= 0) TIMER.cancel(timer_id);
+    if (timer_id >= 0) timer.cancel(timer_id);
 }
 
 void FailureDetection::connection_established(const ConnectionEstablished &event)
@@ -239,7 +240,7 @@ void FailureDetection::failure_detection_routine()
     mtx.unlock();
 
 
-    timer_id = TIMER.add(alive, [this]() { failure_detection_routine(); });
+    timer_id = timer.add(alive, [this]() { failure_detection_routine(); });
 }
 
 void FailureDetection::heartbeat(const Node& node)
@@ -269,8 +270,8 @@ void FailureDetection::schedule_heartbeat(const Node& node, bool instant)
         alive * ALIVE_TOLERANCE;
 
     hb_timers_mtx.lock();
-    if (hb_timers.contains(id)) TIMER.cancel(hb_timers[id]);
-    hb_timers[id] = TIMER.add(timeout, [this, node]()
+    if (hb_timers.contains(id)) timer.cancel(hb_timers[id]);
+    hb_timers[id] = timer.add(timeout, [this, node]()
     {
         mtx.lock();
         heartbeat(node);

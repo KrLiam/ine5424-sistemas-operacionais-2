@@ -6,8 +6,9 @@ std::string generate_node_id(const SocketAddress& address) {
     return std::to_string(std::hash<SocketAddress>()(address));
 }
 
-GroupRegistry::GroupRegistry(std::string local_id, Config config, EventBus& event_bus) :
+GroupRegistry::GroupRegistry(std::string local_id, Config config, EventBus& event_bus, Timer& timer) :
     event_bus(event_bus),
+    timer(timer),
     local_id(local_id),
     connection_update_buffer("connection_update"),
     application_buffer(INTERMEDIARY_BUFFER_ITEMS),
@@ -149,7 +150,8 @@ void GroupRegistry::establish_connection(Node& local_node, Node& remote_node)
             application_buffer,
             connection_update_buffer,
             broadcast_connection->get_dispatcher(),
-            broadcast_connection->get_ab_dispatcher()
+            broadcast_connection->get_ab_dispatcher(),
+            timer
         )
     );
 }
@@ -177,6 +179,6 @@ void GroupRegistry::set_pipeline(Pipeline* pipeline)
 void GroupRegistry::start_raft()
 {
     raft = std::make_unique<RaftManager>(
-        *broadcast_connection, connections, nodes, get_local_node(), event_bus, config.alive
+        *broadcast_connection, connections, nodes, get_local_node(), event_bus, timer, config.alive
     );
 }

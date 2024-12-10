@@ -19,6 +19,19 @@ void Timer::init() {
     initialized = true;
     thread = std::thread([this]() { routine(); });
 }
+void Timer::reset() {
+    timers_mutex.lock();
+
+    stop = true;
+    timers.clear();
+    var.notify_all();
+    has_timers_sem.release();
+
+    timers_mutex.unlock();
+
+    if (thread.joinable()) thread.join();
+
+}
 
 Timer::~Timer() {
     stop = true;
@@ -29,6 +42,7 @@ Timer::~Timer() {
 }
 
 int Timer::add(int interval_ms, std::function<void()> callback) {
+    if (stop) return false;
     if (!initialized) init();
     
     uint64_t now = DateUtils::now();
@@ -58,6 +72,8 @@ int Timer::add(int interval_ms, std::function<void()> callback) {
 }
 
 bool Timer::cancel(int id) {
+    if (stop) return false;
+
     bool success = false;
 
     timers_mutex.lock();
@@ -66,6 +82,7 @@ bool Timer::cancel(int id) {
 
     for (int i = 0; i < size; i++) {
         auto timer = timers.at(i);
+        if (!timer) continue;
 
         if (timer->id == id) {
             // log_debug("Cancelled timer ", id);
@@ -116,8 +133,10 @@ void Timer::routine() {
 
             continue;
         }
+        else {
+            timers_mutex.unlock();
+        }
 
-        timers_mutex.unlock();
 
         // log_debug("Sleeping for ", interval, "ms");
         std::unique_lock<std::mutex> lock(mutex);
@@ -125,5 +144,3 @@ void Timer::routine() {
     }
 }
 
-
-Timer TIMER;

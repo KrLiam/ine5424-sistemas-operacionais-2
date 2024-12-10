@@ -23,6 +23,7 @@ class Pipeline;
 class GroupRegistry
 {
     EventBus& event_bus;
+    Timer& timer;
     
     Observer<LeaderElected> obs_leader_elected;
     
@@ -32,7 +33,7 @@ class GroupRegistry
 
     void attach_observers();
 public:
-    GroupRegistry(std::string local_id, Config config, EventBus& event_bus);
+    GroupRegistry(std::string local_id, Config config, EventBus& event_bus, Timer& timer);
     ~GroupRegistry();
 
     NodeMap &get_nodes();

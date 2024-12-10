@@ -26,6 +26,7 @@ class TransmissionQueue
 private:
     PipelineHandler& handler;
     NodeMap& nodes;
+    Timer& timer;
 
     std::unordered_map<uint32_t, QueueEntry> entries;
     std::unordered_set<uint32_t> pending;
@@ -47,7 +48,7 @@ private:
 
     bool packet_can_timeout(const Packet&);
 public:
-    TransmissionQueue(PipelineHandler& handler, NodeMap& nodes);
+    TransmissionQueue(PipelineHandler& handler, NodeMap& nodes, Timer& timer);
     ~TransmissionQueue();
 
     uint32_t get_total_bytes();

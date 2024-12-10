@@ -32,6 +32,7 @@ class TransmissionLayer : public PipelineStep
 {
 private:
     NodeMap &nodes;
+    Timer& timer;
 
     std::unordered_map<TransmissionKey, std::shared_ptr<TransmissionQueue>> queue_map;
     std::mutex queue_mutex;
@@ -49,7 +50,7 @@ private:
     void clear_queue(const TransmissionKey& id);
 
 public:
-    TransmissionLayer(PipelineHandler handler, NodeMap &nodes);
+    TransmissionLayer(PipelineHandler handler, NodeMap &nodes, Timer& timer);
     ~TransmissionLayer() override;
 
     void attach(EventBus&);

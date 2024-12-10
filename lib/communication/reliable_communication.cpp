@@ -16,8 +16,8 @@ ReliableCommunication::ReliableCommunication(
 
     log_info("Initializing node ", node_config->id, " (", node_config->address.to_string(), ").");
 
-    gr = std::make_unique<GroupRegistry>(local_id, config, event_bus);
-    pipeline = std::make_unique<Pipeline>(gr.get(), event_bus, config);
+    gr = std::make_unique<GroupRegistry>(local_id, config, event_bus, timer);
+    pipeline = std::make_unique<Pipeline>(gr.get(), event_bus, timer, config);
 
     sender_thread = std::thread([this]()
                                 { send_routine(); });
@@ -26,7 +26,7 @@ ReliableCommunication::ReliableCommunication(
     gr->establish_connections();
 
     failure_detection = std::make_unique<FailureDetection>(
-        gr, event_bus, config.alive, verbose
+        gr, event_bus, timer, config.alive, verbose
     );
 
     gr->start_raft();
@@ -34,6 +34,8 @@ ReliableCommunication::ReliableCommunication(
 
 ReliableCommunication::~ReliableCommunication()
 {
+    timer.reset();
+    
     Node& node = gr->get_local_node();
     log_info("Killing node ", node.get_id(), " (", node.get_address().to_string(), ")."); 
 

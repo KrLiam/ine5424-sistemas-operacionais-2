@@ -11,7 +11,8 @@ Connection::Connection(
     Buffer<Message> &application_buffer,
     BufferSet<std::string> &connection_update_buffer,
     const TransmissionDispatcher& broadcast_dispatcher,
-    const TransmissionDispatcher& ab_dispatcher
+    const TransmissionDispatcher& ab_dispatcher,
+    Timer& timer
 ) :
     pipeline(pipeline),
     application_buffer(application_buffer),
@@ -20,7 +21,8 @@ Connection::Connection(
     local_node(local_node),
     remote_node(remote_node),
     connection_update_buffer(connection_update_buffer),
-    dispatcher(remote_node.get_id(), connection_update_buffer, pipeline)
+    dispatcher(remote_node.get_id(), connection_update_buffer, pipeline),
+    timer(timer)
 {
     observe_pipeline();
 }
@@ -126,7 +128,7 @@ void Connection::set_timeout()
 {
     mutex_timer.lock();
     cancel_timeout();
-    handshake_timer_id = TIMER.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
+    handshake_timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
     mutex_timer.unlock();
 }
 
@@ -134,7 +136,7 @@ void Connection::cancel_timeout()
 {
     if (handshake_timer_id != -1)
     {
-        TIMER.cancel(handshake_timer_id);
+        timer.cancel(handshake_timer_id);
         handshake_timer_id = -1;
     }
 }
@@ -159,12 +161,12 @@ bool Connection::disconnect()
     log_trace("disconnect: sending FIN.");
     change_state(FIN_WAIT);
     send_flag(FIN);
-    int timer_id = TIMER.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
+    int timer_id = timer.add(HANDSHAKE_TIMEOUT, std::bind(&Connection::connection_timeout, this));
 
     std::unique_lock lock(mutex);
     while (state != CLOSED)
         state_change.wait(lock);
-    TIMER.cancel(timer_id);
+    timer.cancel(timer_id);
 
     log_trace("disconnect: connection closed.");
     return true;

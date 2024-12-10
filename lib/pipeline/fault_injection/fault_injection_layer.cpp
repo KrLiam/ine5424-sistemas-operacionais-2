@@ -7,14 +7,15 @@ bool roll_chance(double chance) {
     return value < chance;
 }
 
-FaultInjectionLayer::FaultInjectionLayer(PipelineHandler handler, NodeMap& nodes)
-    : FaultInjectionLayer(handler, nodes, FaultConfig()) {}
+FaultInjectionLayer::FaultInjectionLayer(PipelineHandler handler, NodeMap& nodes, Timer& timer)
+    : FaultInjectionLayer(handler, nodes, timer, FaultConfig()) {}
 FaultInjectionLayer::FaultInjectionLayer(
-    PipelineHandler handler, NodeMap& nodes, FaultConfig config
+    PipelineHandler handler, NodeMap& nodes, Timer& timer, FaultConfig config
 ) :
     PipelineStep(handler),
     config(config),
     nodes(nodes),
+    timer(timer),
     corruption_mask_dis(0, 255)
 {
     if (config.lose_chance > 0) {
@@ -29,7 +30,7 @@ FaultInjectionLayer::FaultInjectionLayer(
 
 FaultInjectionLayer::~FaultInjectionLayer() {
     for (int id : packet_timer_ids) {
-        TIMER.cancel(id);
+        timer.cancel(id);
     }
 }
 
@@ -108,7 +109,7 @@ void FaultInjectionLayer::receive(Packet packet) {
                 " ms."
             );
         }
-        int id = TIMER.add(delay, [this, packet]() {
+        int id = timer.add(delay, [this, packet]() {
             proceed_receive(packet);
         });
         packet_timer_ids.emplace(id);

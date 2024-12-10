@@ -11,6 +11,7 @@
 class FragmentationLayer final : public PipelineStep
 {
     EventBus &event_bus;
+    Timer& timer;
 
     std::unordered_map<MessageIdentity, FragmentAssembler> assembler_map;
     std::mutex mtx_assembler_map;
@@ -25,7 +26,7 @@ class FragmentationLayer final : public PipelineStep
     void node_death(const NodeDeath& event);
 
 public:
-    FragmentationLayer(PipelineHandler handler, EventBus &bus);
+    FragmentationLayer(PipelineHandler handler, EventBus &bus, Timer& timer);
     ~FragmentationLayer() override;
 
     void attach(EventBus&);

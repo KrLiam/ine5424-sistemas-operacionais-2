@@ -15,6 +15,7 @@ class FragmentAssembler
     static const int MESSAGE_TIMEOUT = 30000;
 
     EventBus &event_bus;
+    Timer& timer;
 
     unsigned int bytes_received;
     uint32_t last_fragment_number;
@@ -25,7 +26,7 @@ class FragmentAssembler
     void message_timeout();
 
 public:
-    FragmentAssembler(EventBus &event_bus);
+    FragmentAssembler(EventBus &event_bus, Timer& timer);
     ~FragmentAssembler();
 
     bool has_received(Packet&);

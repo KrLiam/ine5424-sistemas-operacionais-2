@@ -33,6 +33,7 @@ class RaftManager
     Node *leader;
 
     EventBus &event_bus;
+    Timer& timer;
 
     std::unordered_set<SocketAddress> received_votes;
 
@@ -81,5 +82,5 @@ class RaftManager
     void on_leader();
     void leader_receive(Packet packet);
 public:
-    RaftManager(BroadcastConnection& broadcast_connection, std::map<std::string, Connection> &connections, NodeMap &nodes, Node &local_node, EventBus &event_bus, unsigned int alive);
+    RaftManager(BroadcastConnection& broadcast_connection, std::map<std::string, Connection> &connections, NodeMap &nodes, Node &local_node, EventBus &event_bus, Timer& timer, unsigned int alive);
 };

@@ -17,6 +17,7 @@ class FailureDetection
 {
     std::shared_ptr<GroupRegistry> gr;
     EventBus &event_bus;
+    Timer& timer;
     unsigned int alive;
     bool verbose = false;
 
@@ -67,6 +68,7 @@ public:
     FailureDetection(
         std::shared_ptr<GroupRegistry> gr,
         EventBus &event_bus,
+        Timer& timer,
         unsigned int alive,
         bool verbose
     );

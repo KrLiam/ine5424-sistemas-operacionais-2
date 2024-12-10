@@ -49,10 +49,10 @@ public:
     ~Timer();
 
     void init();
+    void reset();
 
     int add(int interval_ms, std::function<void()> callback);
 
     bool cancel(int id);
 };
 
-extern Timer TIMER;

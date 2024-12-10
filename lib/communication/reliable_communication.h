@@ -63,6 +63,7 @@ private:
     std::shared_ptr<GroupRegistry> gr;
     std::unique_ptr<FailureDetection> failure_detection;
     
+    Timer timer;
     EventBus event_bus;
 
     Config config;

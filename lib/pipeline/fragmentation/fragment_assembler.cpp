@@ -1,12 +1,12 @@
 #include "pipeline/fragmentation/fragment_assembler.h"
 
-FragmentAssembler::FragmentAssembler(EventBus &event_bus) : event_bus(event_bus), bytes_received(0), last_fragment_number(INT_MAX), received_fragments(), timer_id(-1)
+FragmentAssembler::FragmentAssembler(EventBus &event_bus, Timer& timer) : event_bus(event_bus), timer(timer), bytes_received(0), last_fragment_number(INT_MAX), received_fragments(), timer_id(-1)
 {
 }
 
 FragmentAssembler::~FragmentAssembler()
 {
-    if (timer_id != -1) TIMER.cancel(timer_id);
+    if (timer_id != -1) timer.cancel(timer_id);
 }
 
 bool FragmentAssembler::has_received(Packet &packet)
@@ -21,9 +21,9 @@ bool FragmentAssembler::is_complete()
 
 void FragmentAssembler::add_packet(Packet &packet)
 {
-    if (timer_id != -1) TIMER.cancel(timer_id);
+    if (timer_id != -1) timer.cancel(timer_id);
     if (!message_type::is_urb(packet.data.header.get_message_type()))
-        timer_id = TIMER.add(MESSAGE_TIMEOUT, std::bind(&FragmentAssembler::message_timeout, this));
+        timer_id = timer.add(MESSAGE_TIMEOUT, std::bind(&FragmentAssembler::message_timeout, this));
 
     if (has_received(packet))
     {
