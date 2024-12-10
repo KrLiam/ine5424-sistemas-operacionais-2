@@ -94,6 +94,7 @@ python3 bench/plot.py \
     --x-label "Elapsed time (Seconds)" \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
+    --smooth-factor 100 \
     --output bench/plots/guto-challenge-all-no-encryption-checksum.png
 
 
@@ -110,6 +111,7 @@ python3 bench/plot.py \
     --x-label "Elapsed time (Seconds)" \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
+    --smooth-factor 100 \
     --output bench/plots/guto-challenge-all-no-encryption.png
 
 
@@ -126,6 +128,7 @@ python3 bench/plot.py \
     --x-label "Elapsed time (Seconds)" \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
+    --smooth-factor 100 \
     --output bench/plots/guto-challenge-all-normal.png
 
 
@@ -142,6 +145,7 @@ python3 bench/plot.py \
     --x-label "Elapsed time (Seconds)" \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
+    --smooth-factor 100 \
     --output bench/plots/guto-challenge-beb-throughput.png
 
 ### Progress
@@ -171,6 +175,7 @@ python3 bench/plot.py \
     --x-label "Elapsed time (Seconds)" \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
+    --smooth-factor 100 \
     --output bench/plots/guto-challenge-urb-throughput.png
 
 ### Progress
@@ -200,6 +205,7 @@ python3 bench/plot.py \
     --x-label "Elapsed time (Seconds)" \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
+    --smooth-factor 100 \
     --output bench/plots/guto-challenge-ab-throughput.png
 
 ### Progress
