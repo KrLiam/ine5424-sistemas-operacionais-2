@@ -33,6 +33,7 @@ LogLevel::Type LogLevel::parse(Reader& reader) {
     std::string level_str = reader.read_word();
     std::transform(level_str.begin(), level_str.end(), level_str.begin(), ::tolower);
 
+    if (level_str == "none") return NONE;
     if (level_str == "error") return ERROR;
     if (level_str == "warn") return WARN;
     if (level_str == "info") return INFO;

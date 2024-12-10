@@ -16,6 +16,7 @@
 
 namespace LogLevel {
     enum Type : uint8_t {
+        NONE = 5,
         ERROR = 4,
         WARN = 3,
         INFO = 2,
