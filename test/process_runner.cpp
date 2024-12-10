@@ -370,7 +370,7 @@ void Runner::run_node(
 }
 
 void Runner::run_benchmark() {
-    if (!args.log_level.has_value()) Logger::set_level(LogLevel::ERROR);
+    if (!args.log_level.has_value()) Logger::set_level(LogLevel::NONE);
 
     Benchmarker benchmarker(
         args.num_groups,
