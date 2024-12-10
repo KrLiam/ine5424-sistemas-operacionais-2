@@ -70,7 +70,7 @@ void BroadcastConnection::receive_synchronization(const ReceiveSynchronization& 
     SequenceNumber& number = sequence_numbers.at(id);
     number.initial_number = 0;
     number.next_number = event.expected_broadcast_number;
-    log_info(local_node.get_id(), " Broadcast sequence with node ", id, " was resync to ", number.next_number);
+    log_print(local_node.get_id(), " Broadcast sequence with node ", id, " was resync to ", number.next_number);
 
     if (ab_sequence_number.next_number >= event.expected_ab_number) return;
     if (ab_dispatcher.is_active())
@@ -513,7 +513,7 @@ bool BroadcastConnection::establish_all_connections(const std::unordered_set<std
         ConnectionState state = connection.get_state();
  
         if (state != ConnectionState::ESTABLISHED) {
-            log_info(local_node.get_id(), " did not establish connection with ", node.get_id());
+            log_print(local_node.get_id(), " did not establish connection with ", node.get_id());
             established = false;
         }
 
@@ -549,7 +549,7 @@ void BroadcastConnection::update() {
     
     bool established = establish_all_connections(node_ids);
     if (!established) return;
-    log_info(local_node.get_id(), " established connection with everyone");
+    // log_print(local_node.get_id(), " established connection with everyone");
 
     ab_dispatcher.update();
     dispatcher.update();

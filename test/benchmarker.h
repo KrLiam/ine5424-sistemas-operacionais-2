@@ -78,6 +78,8 @@ struct Worker {
     uint32_t max_write_operations;
     uint32_t write_operations;
 
+    std::vector<HashMapMessage> dispatched_messages;
+
     // o numero maximo de chaves na hash table está relacionado com
     // o numero total de nós e a quantidade de ram disponível pro benchmark. 
     static const uint32_t MAX_KEY = 100;
@@ -189,7 +191,7 @@ struct Worker {
 
             if (msg.operation == HashMapOperation::READ) {
                 std::string node_id = choose_random_node();
-                //log_print("Node ", node_id, " is reading ", msg.key, " at ", node_id, ".");
+                log_print("Node ", node_id, " is reading ", msg.key, " at ", node_id, ".");
 
                 bool success = comm->send(group_id, node_id, {(const char*) &msg, size});
                 if (!success) {
@@ -207,7 +209,7 @@ struct Worker {
                 read_operations++;
             }
             else if (msg.operation == HashMapOperation::WRITE) {
-                //log_print("Node ", node_id, " is sending ", size, " bytes (key=", msg.key, ").");
+                log_print("Node ", node_id, " is sending ", size, " bytes (key=", msg.key, ").");
                 uint32_t interval = interval_range.random();
 
                 bool success = comm->broadcast(group_id, {(const char*) &msg, size});
@@ -252,8 +254,8 @@ struct Worker {
 
         // TODO: talvez tirar isso e deixar mandar um pacote cheio pra não bugar o valor no ultimo broadcast
         uint32_t value_size = bytes - metadata_bytes;
+        bool can_read = false;
 
-        bool can_read = read_operations < max_read_operations;
         bool can_write = write_operations < max_write_operations;
         if (can_read && can_write) msg.operation = (HashMapOperation)rc_random::dis1(rc_random::gen);
         else if (can_read) msg.operation = HashMapOperation::READ;
@@ -299,18 +301,18 @@ struct Worker {
             in_logs.push_back(entry);
 
             if (msg.operation == HashMapOperation::READ) {
-                // log_print("Node ", node_id, " received read request on group ", result.group_id, " (key=", msg.key, ").");
+                log_print("Node ", node_id, " received read request on group ", result.group_id, " from ", result.sender_id," (key=", msg.key, ").");
                 HashMapMessage answer = create_read_answer(msg);
                 bool success = comm->send(result.group_id, result.sender_id, {(char*)&answer, sizeof(answer)});
-                if (!success) continue;
+                if (!success) return;
                 out_logs.push_back({
                     time : DateUtils::now(),
                     bytes : sizeof(answer),
-                    key : msg.key
+                    key : answer.key
                 });
             }
             else if (msg.operation == HashMapOperation::READ_RESULT) {
-                // log_print(msg.key, " on node ", result.sender_id, " is ", msg.value, ".");
+                log_print(msg.key, " on node ", result.sender_id, " is <>");
                 read_sem.release();
             }
         }

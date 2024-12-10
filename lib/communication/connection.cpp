@@ -191,14 +191,14 @@ void Connection::closed(Packet p)
 }
 
 void Connection::on_established() {
-    log_info(local_node.get_id(), " Established connection with node ", remote_node.get_id(), " (", remote_node.get_address().to_string(), ").");
+    log_print(local_node.get_id(), " Established connection with node ", remote_node.get_id(), " (", remote_node.get_address().to_string(), ").");
 
     ConnectionEstablished event(remote_node);
     pipeline.notify(event);
 }
 
 void Connection::on_closed() {
-    log_info(local_node.get_id(), " Closed connection with node ", remote_node.get_id(), " (", remote_node.get_address().to_string(), ").");
+    log_print(local_node.get_id(), " Closed connection with node ", remote_node.get_id(), " (", remote_node.get_address().to_string(), ").");
 
     ConnectionClosed event(remote_node);
     pipeline.notify(event);
