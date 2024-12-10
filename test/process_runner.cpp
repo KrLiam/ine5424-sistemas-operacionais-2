@@ -388,7 +388,10 @@ void Runner::run_benchmark() {
     );
 
     BenchmarkResult result = benchmarker.run();
-    if (args.out_file.has_value()) result.save(*args.out_file);
+    if (args.out_file.has_value()) {
+        std::optional<std::string> path = result.save(*args.out_file);
+        if (path.has_value()) std::cout << "Result saved in '" << *path << "'." << std::endl;
+    }
 
     if (!result.completed) {
         exit(0);

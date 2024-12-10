@@ -551,7 +551,7 @@ struct BenchmarkResult {
         return value;
     }
 
-    void save(std::string file_path) {
+    std::optional<std::string> save(std::string file_path) {
         fs::path directory = directory_path;
         fs::path path = file_path;
 
@@ -572,9 +572,11 @@ struct BenchmarkResult {
         if (!parent_path.empty()) fs::create_directories(parent_path);
 
         std::ofstream file(path);
-        if (!file.is_open()) return;
+        if (!file.is_open()) return std::nullopt;
         file << value;
         file.close();
+
+        return path;
     }
 };
 
