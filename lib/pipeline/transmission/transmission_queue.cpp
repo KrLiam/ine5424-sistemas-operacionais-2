@@ -7,7 +7,7 @@ QueueEntry::QueueEntry(const Packet& packet) : packet(packet) {}
 
 
 TransmissionQueue::TransmissionQueue(PipelineHandler& handler, NodeMap& nodes)
-    : handler(handler), nodes(nodes), destroyed(false)
+    : handler(handler), nodes(nodes), destroyed(false), timeout_dis(Config::ACK_TIMEOUT, Config::ACK_TIMEOUT + 500)
 {
 }
 
@@ -74,7 +74,7 @@ void TransmissionQueue::send(uint32_t num) {
         TIMER.cancel(entry.timeout_id);
         entry.timeout_id = -1;
     }
-    entry.timeout_id = TIMER.add(Config::ACK_TIMEOUT, [this, num]() { timeout(num); });
+    entry.timeout_id = TIMER.add(timeout_dis(rc_random::gen), [this, num]() { timeout(num); });
 
     // não transmite o fragmento na primeira tentativa
     if (packet.meta.urb_retransmission && entry.tries == 1) {

@@ -110,6 +110,7 @@ void Connection::connect()
     log_debug("connect: sending SYN.");
     reset_message_numbers();
     change_state(SYN_SENT);
+    log_print(local_node.get_id(), " closed: sending syn to connect");
     send_syn(0);
     set_timeout();
 }
@@ -174,7 +175,7 @@ void Connection::closed(Packet p)
 {
     if (p.data.header.is_syn() && !p.data.header.is_ack() && p.data.header.get_message_number() == 0)
     {
-        log_debug("closed: received SYN; sending SYN+ACK.");
+        log_print(local_node.get_id(), " closed: received SYN; sending SYN+ACK.");
         reset_message_numbers();
         resync_broadcast_on_syn(p);
         send_syn(ACK);
@@ -230,7 +231,7 @@ void Connection::syn_sent(Packet p)
             return;
         }
 
-        log_debug("syn_sent: received SYN from simultaneous connection; transitioning to syn_received and sending SYN+ACK.");
+        log_print(local_node.get_id(), " syn_sent: received SYN from simultaneous connection; transitioning to syn_received and sending SYN+ACK.");
 
         stop_syn_transmission();
         resync_broadcast_on_syn(p);
@@ -280,7 +281,7 @@ void Connection::syn_received(Packet p)
             
             return;
         }
-        log_debug("syn_received: received SYN; sending SYN+ACK.");
+        log_print(local_node.get_id(), " syn_received: received SYN; sending SYN+ACK.");
         stop_syn_transmission();
         send_syn(ACK);
     }
@@ -303,6 +304,7 @@ void Connection::established(Packet p)
         cancel_transmissions();
         reset_message_numbers();
         resync_broadcast_on_syn(p);
+        log_print(local_node.get_id(), " sending syn+ack because received syn 0 on established");
         send_syn(ACK);
         change_state(SYN_RECEIVED);
         set_timeout();
@@ -447,7 +449,7 @@ void Connection::send_flag(uint8_t flags, MessageData message_data)
     Packet packet;
     packet.meta.destination = remote_node.get_address();
     packet.meta.message_length = message_data.size;
-    packet.meta.expects_ack = flags & SYN;
+    packet.meta.expects_ack = 0; // flags & SYN;
     packet.data = data;
 
     dispatch_to_sender(packet);

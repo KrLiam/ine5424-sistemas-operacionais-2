@@ -38,6 +38,8 @@ private:
 
     std::atomic<bool> destroyed;
 
+    std::uniform_int_distribution<> timeout_dis;
+
     void send(uint32_t num);
 
     void timeout(uint32_t num);
