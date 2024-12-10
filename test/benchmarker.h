@@ -46,6 +46,7 @@ struct LogEntry {
     uint64_t time;
     size_t bytes;
     uint32_t key;
+    bool success = true;
 };
 
 struct Worker {
@@ -66,10 +67,11 @@ struct Worker {
     bool terminate = false;
 
     std::binary_semaphore benchmark_over{0};
-
     std::binary_semaphore read_sem{0};
 
+    uint64_t start_time;
     double remaining_bytes;
+    uint32_t failures;
     std::vector<LogEntry> in_logs;
     std::vector<LogEntry> out_logs;
 
@@ -148,10 +150,14 @@ struct Worker {
         return bytes;
     }
 
-    double bytes_sent(uint64_t interval_ms) {
-        return bytes_sent(interval_ms, DateUtils::now());
+    double bytes_sent(bool success) {
+        uint64_t interval = DateUtils::now() - start_time;
+        return bytes_sent(success, interval, DateUtils::now());
     }
-    uint64_t bytes_sent(uint64_t interval_ms, uint64_t time) {
+    double bytes_sent(bool success, uint64_t interval_ms) {
+        return bytes_sent(success, interval_ms, DateUtils::now());
+    }
+    uint64_t bytes_sent(bool success, uint64_t interval_ms, uint64_t time) {
         if (out_logs.empty()) return 0;
 
         uint64_t min_time = time - interval_ms;
@@ -169,6 +175,7 @@ struct Worker {
 
         uint64_t bytes = 0;
         for (auto entry = begin; entry <= end; entry++) {
+            if (entry->success != success) continue;
             bytes += entry->bytes;
         }
         return bytes;
@@ -201,15 +208,17 @@ struct Worker {
             else if (msg.operation == HashMapOperation::WRITE) {
                 // log_print("Node ", node_id, " is sending ", size, " bytes (key=", msg.key, ").");
                 uint32_t interval = interval_range.random();
+                if (interval) std::this_thread::sleep_for(std::chrono::milliseconds(interval));
 
                 bool success = comm->broadcast(group_id, {(const char*) &msg, size});
-                std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-                if (!success) continue;
                 out_logs.push_back({
                     time : DateUtils::now(),
                     bytes : size,
-                    key : msg.key
+                    key : msg.key,
+                    success: success
                 });
+
+                if (!success) continue;
                 remaining_bytes -= size;
                 write_operations++;
             }
@@ -351,6 +360,7 @@ struct Worker {
         comm = std::make_unique<ReliableCommunication>(node_id, Message::MAX_SIZE, false, config);
         if (group_id != GLOBAL_GROUP_ID) comm->join_group(group_id);
 
+        start_time = DateUtils::now();
         sender_thread = std::thread([this]() { send_routine(); });
         receiver_thread = std::thread([this]() { receive_routine(); });
         deliver_thread = std::thread([this]() { deliver_routine(); });
@@ -452,10 +462,12 @@ struct BenchmarkSnapshot {
     double elapsed_time;
     double transferred_bytes;
     double total_bytes;
+    double failed_bytes;
     double progress_ratio;
     double time_estimate;
     double avg_in_throughput;
     double out_throughput;
+    double failure_out_throughput;
     uint32_t read_operations;
     uint32_t write_operations;
 
@@ -465,20 +477,24 @@ struct BenchmarkSnapshot {
             "\"elapsed_time\": %f, "
             "\"transferred_bytes\": %f, "
             "\"total_bytes\": %f, "
+            "\"failed_bytes\": %f, "
             "\"progress_ratio\": %f, "
             "\"time_estimate\": %s, "
             "\"avg_in\": %f, "
             "\"total_out\": %f, "
+            "\"total_failure_out\": %f, "
             "\"read_operations\": %u, "
             "\"write_operations\": %u"
             "}",
             elapsed_time,
             transferred_bytes,
             total_bytes,
+            failed_bytes,
             progress_ratio,
             serialize_double(time_estimate).c_str(),
             avg_in_throughput,
             out_throughput,
+            failure_out_throughput,
             read_operations,
             write_operations
         );
@@ -487,17 +503,19 @@ struct BenchmarkSnapshot {
     std::string to_string() {
         return format(
             "%.1fs | "
-            "%s/%s (%.5f%%), "
+            "%s/%s (%.5f%%) (%s failed), "
             "time_left=%.1fs, "
             "avg_in=%s/s, "
-            "total_out=%s/s",
+            "total_out=%s/s (failing %s/s)",
             elapsed_time,
             format_bytes(transferred_bytes, 3).c_str(),
             format_bytes(total_bytes, 3).c_str(),
+            format_bytes(failed_bytes, 3).c_str(),
             progress_ratio*100,
             time_estimate,
             format_bytes(avg_in_throughput, 3).c_str(),
-            format_bytes(out_throughput, 3).c_str()
+            format_bytes(out_throughput, 3).c_str(),
+            format_bytes(failure_out_throughput, 3).c_str()
         );
     }
 };
@@ -800,15 +818,19 @@ public:
 
         double total_bytes = total_nodes() * params.bytes_sent_per_node;
         double remaining_bytes = 0;
+        double failed_bytes = 0;
         double avg_in_throughput = 0;
         double out_throughput = 0;
+        double failure_out_throughput = 0;
         uint32_t read_operations = 0;
         uint32_t write_operations = 0;
 
         for (auto& worker : workers) {
             avg_in_throughput += worker->bytes_received(1000); // bytes recebidos no ultimo segundo
             remaining_bytes += worker->remaining_bytes;
-            out_throughput += worker->bytes_sent(1000);
+            failed_bytes += worker->bytes_sent(false);
+            out_throughput += worker->bytes_sent(true, 1000);
+            failure_out_throughput += worker->bytes_sent(false, 1000);
             read_operations += worker->read_operations;
             write_operations += worker->write_operations;
         }
@@ -824,10 +846,12 @@ public:
             elapsed_time : elapsed,
             transferred_bytes : transferred_bytes,
             total_bytes : total_bytes,
+            failed_bytes : failed_bytes,
             progress_ratio : progress_ratio,
             time_estimate : time_estimate,
             avg_in_throughput : avg_in_throughput,
             out_throughput : out_throughput,
+            failure_out_throughput : failure_out_throughput,
             read_operations : read_operations,
             write_operations : write_operations
         };
