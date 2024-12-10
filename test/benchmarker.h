@@ -539,8 +539,8 @@ struct BenchmarkResult {
         if (params.interval_range.max > 0) value += format("-%sms", params.interval_range.to_string().c_str());
         if (params.max_message_size != PacketData::MAX_MESSAGE_SIZE)
             value += format("-%smax", format_bytes(params.max_message_size, 3).c_str());
-        if (params.max_read_operations) value += format("-%sr", params.max_read_operations);
-        if (params.max_write_operations) value += format("-%sw", params.max_write_operations);
+        if (params.max_read_operations) value += format("-%ur", params.max_read_operations);
+        if (params.max_write_operations) value += format("-%uw", params.max_write_operations);
         if (params.disable_checksum) value += "-nochecksum";
         if (params.disable_encryption) value += "-noencryption";
 
