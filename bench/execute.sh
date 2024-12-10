@@ -32,19 +32,19 @@ MB=250
 ./program benchmark --out-file "bench/results/nodes-ab/E_-_1_Node.json" --num-groups 1 --num-nodes 1 --bytes-per-node $(($MB/1))mb --mode ab --no-encryption --no-checksum
 
 
-# guto challenge
+# challenge
 
 ## ab
-./program benchmark --out-file "bench/results/guto-challenge/AB_-_Normal.json" --num-groups 3 --num-nodes 10 --bytes-per-node 100mb --mode ab
-./program benchmark --out-file "bench/results/guto-challenge/AB_-_No_encryption.json" --num-groups 3 --num-nodes 10 --bytes-per-node 100mb --mode ab --no-encryption
-./program benchmark --out-file "bench/results/guto-challenge/AB_-_No_encryption_and_checksum.json" --num-groups 3 --num-nodes 10 --bytes-per-node 100mb --mode ab --no-encryption --no-checksum
+./program benchmark --out-file "bench/results/challenge/AB_-_Normal.json" --num-groups 3 --num-nodes 10 --bytes-per-node 100mb --mode ab
+./program benchmark --out-file "bench/results/challenge/AB_-_No_encryption.json" --num-groups 3 --num-nodes 10 --bytes-per-node 100mb --mode ab --no-encryption
+./program benchmark --out-file "bench/results/challenge/AB_-_No_encryption_and_checksum.json" --num-groups 3 --num-nodes 10 --bytes-per-node 100mb --mode ab --no-encryption --no-checksum
 
 ## urb
-./program benchmark --out-file "bench/results/guto-challenge/URB_-_Normal.json" --num-groups 3 --num-nodes 10 --bytes-per-node 100mb --mode urb
-./program benchmark --out-file "bench/results/guto-challenge/URB_-_No_encryption.json" --num-groups 3 --num-nodes 10 --bytes-per-node 100mb --mode urb --no-encryption
-./program benchmark --out-file "bench/results/guto-challenge/URB_-_No_encryption_and_checksum.json" --num-groups 3 --num-nodes 10 --bytes-per-node 100mb --mode urb --no-encryption --no-checksum
+./program benchmark --out-file "bench/results/challenge/URB_-_Normal.json" --num-groups 3 --num-nodes 10 --bytes-per-node 100mb --mode urb
+./program benchmark --out-file "bench/results/challenge/URB_-_No_encryption.json" --num-groups 3 --num-nodes 10 --bytes-per-node 100mb --mode urb --no-encryption
+./program benchmark --out-file "bench/results/challenge/URB_-_No_encryption_and_checksum.json" --num-groups 3 --num-nodes 10 --bytes-per-node 100mb --mode urb --no-encryption --no-checksum
 
 ## beb
-./program benchmark --out-file "bench/results/guto-challenge/BEB_-_Normal.json" --num-groups 3 --num-nodes 10 --bytes-per-node 100mb --mode beb
-./program benchmark --out-file "bench/results/guto-challenge/BEB_-_No_encryption.json" --num-groups 3 --num-nodes 10 --bytes-per-node 100mb --mode beb --no-encryption
-./program benchmark --out-file "bench/results/guto-challenge/BEB_-_No_encryption_and_checksum.json" --num-groups 3 --num-nodes 10 --bytes-per-node 100mb --mode beb --no-encryption --no-checksum
+./program benchmark --out-file "bench/results/challenge/BEB_-_Normal.json" --num-groups 3 --num-nodes 10 --bytes-per-node 100mb --mode beb
+./program benchmark --out-file "bench/results/challenge/BEB_-_No_encryption.json" --num-groups 3 --num-nodes 10 --bytes-per-node 100mb --mode beb --no-encryption
+./program benchmark --out-file "bench/results/challenge/BEB_-_No_encryption_and_checksum.json" --num-groups 3 --num-nodes 10 --bytes-per-node 100mb --mode beb --no-encryption --no-checksum

@@ -85,15 +85,15 @@ python3 bench/plot.py \
 
 
 
-# Guto Challenge
+# Challenge
 
 ## No encryption and checksum
 
 ### Throughput
 python3 bench/plot.py \
-    --files bench/results/guto-challenge/BEB_-_No_encryption_and_checksum.json \
-            bench/results/guto-challenge/URB_-_No_encryption_and_checksum.json \
-            bench/results/guto-challenge/AB_-_No_encryption_and_checksum.json \
+    --files bench/results/challenge/BEB_-_No_encryption_and_checksum.json \
+            bench/results/challenge/URB_-_No_encryption_and_checksum.json \
+            bench/results/challenge/AB_-_No_encryption_and_checksum.json \
     --title "BEBxURBxAB - 3 Groups 10 Nodes Each, 3GB, No encryption, No checksum" \
     --x-column elapsed_time \
     --y-column total_out \
@@ -101,17 +101,17 @@ python3 bench/plot.py \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
     --smooth-factor 100 \
-    --output bench/plots/png/guto-challenge-all-no-encryption-checksum.png \
-             bench/plots/svg/guto-challenge-all-no-encryption-checksum.svg
+    --output bench/plots/png/challenge-all-no-encryption-checksum.png \
+             bench/plots/svg/challenge-all-no-encryption-checksum.svg
 
 
 ## No encryption
 
 ### Throughput
 python3 bench/plot.py \
-    --files bench/results/guto-challenge/BEB_-_No_encryption.json \
-            bench/results/guto-challenge/URB_-_No_encryption.json \
-            bench/results/guto-challenge/AB_-_No_encryption.json \
+    --files bench/results/challenge/BEB_-_No_encryption.json \
+            bench/results/challenge/URB_-_No_encryption.json \
+            bench/results/challenge/AB_-_No_encryption.json \
     --title "BEBxURBxAB - 3 Groups 10 Nodes Each, 3GB, No encryption" \
     --x-column elapsed_time \
     --y-column total_out \
@@ -119,17 +119,17 @@ python3 bench/plot.py \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
     --smooth-factor 100 \
-    --output bench/plots/png/guto-challenge-all-no-encryption.png \
-             bench/plots/svg/guto-challenge-all-no-encryption.svg
+    --output bench/plots/png/challenge-all-no-encryption.png \
+             bench/plots/svg/challenge-all-no-encryption.svg
 
 
 ## Normal
 
 ### Throughput
 python3 bench/plot.py \
-    --files bench/results/guto-challenge/BEB_-_Normal.json \
-            bench/results/guto-challenge/URB_-_Normal.json \
-            bench/results/guto-challenge/AB_-_Normal.json \
+    --files bench/results/challenge/BEB_-_Normal.json \
+            bench/results/challenge/URB_-_Normal.json \
+            bench/results/challenge/AB_-_Normal.json \
     --title "BEBxURBxAB - 3 Groups 10 Nodes Each, 3GB" \
     --x-column elapsed_time \
     --y-column total_out \
@@ -137,17 +137,17 @@ python3 bench/plot.py \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
     --smooth-factor 100 \
-    --output bench/plots/png/guto-challenge-all-normal.png \
-             bench/plots/svg/guto-challenge-all-normal.svg
+    --output bench/plots/png/challenge-all-normal.png \
+             bench/plots/svg/enge-all-normal.svg
 
 
 ## BEB
 
 ### Throughput
 python3 bench/plot.py \
-    --files bench/results/guto-challenge/BEB_-_No_encryption_and_checksum.json \
-            bench/results/guto-challenge/BEB_-_No_encryption.json \
-            bench/results/guto-challenge/BEB_-_Normal.json \
+    --files bench/results/challenge/BEB_-_No_encryption_and_checksum.json \
+            bench/results/challenge/BEB_-_No_encryption.json \
+            bench/results/challenge/BEB_-_Normal.json \
     --title "BEB - 3 Groups 10 Nodes Each, 3GB" \
     --x-column elapsed_time \
     --y-column total_out \
@@ -155,31 +155,31 @@ python3 bench/plot.py \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
     --smooth-factor 100 \
-    --output bench/plots/png/guto-challenge-beb-throughput.png \
-             bench/plots/svg/guto-challenge-beb-throughput.svg
+    --output bench/plots/png/challenge-beb-throughput.png \
+             bench/plots/svg/challenge-beb-throughput.svg
 
 ### Progress
 python3 bench/plot.py \
-    --files bench/results/guto-challenge/BEB_-_No_encryption_and_checksum.json \
-            bench/results/guto-challenge/BEB_-_No_encryption.json \
-            bench/results/guto-challenge/BEB_-_Normal.json \
+    --files bench/results/challenge/BEB_-_No_encryption_and_checksum.json \
+            bench/results/challenge/BEB_-_No_encryption.json \
+            bench/results/challenge/BEB_-_Normal.json \
     --title "BEB - 3 Groups 10 Nodes Each, 3GB" \
     --x-column elapsed_time \
     --y-column progress_ratio \
     --x-label "Elapsed time (Seconds)" \
     --y-label "Progress (%)" \
     --y-scale 0.01 \
-    --output bench/plots/png/guto-challenge-beb-progress.png \
-             bench/plots/svg/guto-challenge-beb-progress.svg
+    --output bench/plots/png/challenge-beb-progress.png \
+             bench/plots/svg/challenge-beb-progress.svg
 
 
 ## URB
 
 ### Throughput
 python3 bench/plot.py \
-    --files bench/results/guto-challenge/URB_-_No_encryption_and_checksum.json \
-            bench/results/guto-challenge/URB_-_No_encryption.json \
-            bench/results/guto-challenge/URB_-_Normal.json \
+    --files bench/results/challenge/URB_-_No_encryption_and_checksum.json \
+            bench/results/challenge/URB_-_No_encryption.json \
+            bench/results/challenge/URB_-_Normal.json \
     --title "URB - 3 Groups 10 Nodes Each, 3GB" \
     --x-column elapsed_time \
     --y-column total_out \
@@ -187,31 +187,31 @@ python3 bench/plot.py \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
     --smooth-factor 100 \
-    --output bench/plots/png/guto-challenge-urb-throughput.png \
-             bench/plots/svg/guto-challenge-urb-throughput.svg
+    --output bench/plots/png/challenge-urb-throughput.png \
+             bench/plots/svg/challenge-urb-throughput.svg
 
 ### Progress
 python3 bench/plot.py \
-    --files bench/results/guto-challenge/URB_-_No_encryption_and_checksum.json \
-            bench/results/guto-challenge/URB_-_No_encryption.json \
-            bench/results/guto-challenge/URB_-_Normal.json \
+    --files bench/results/challenge/URB_-_No_encryption_and_checksum.json \
+            bench/results/challenge/URB_-_No_encryption.json \
+            bench/results/challenge/URB_-_Normal.json \
     --title "URB - 3 Groups 10 Nodes Each, 3GB" \
     --x-column elapsed_time \
     --y-column progress_ratio \
     --x-label "Elapsed time (Seconds)" \
     --y-label "Progress (%)" \
     --y-scale 0.01 \
-    --output bench/plots/png/guto-challenge-urb-progress.png \
-             bench/plots/svg/guto-challenge-urb-progress.svg
+    --output bench/plots/png/challenge-urb-progress.png \
+             bench/plots/svg/challenge-urb-progress.svg
 
 
 ## AB
 
 ### Throughput
 python3 bench/plot.py \
-    --files bench/results/guto-challenge/AB_-_No_encryption_and_checksum.json \
-            bench/results/guto-challenge/AB_-_No_encryption.json \
-            bench/results/guto-challenge/AB_-_Normal.json \
+    --files bench/results/challenge/AB_-_No_encryption_and_checksum.json \
+            bench/results/challenge/AB_-_No_encryption.json \
+            bench/results/challenge/AB_-_Normal.json \
     --title "AB - 3 Groups 10 Nodes Each, 3GB" \
     --x-column elapsed_time \
     --y-column total_out \
@@ -219,19 +219,19 @@ python3 bench/plot.py \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
     --smooth-factor 100 \
-    --output bench/plots/png/guto-challenge-ab-throughput.png \
-             bench/plots/svg/guto-challenge-ab-throughput.svg
+    --output bench/plots/png/challenge-ab-throughput.png \
+             bench/plots/svg/challenge-ab-throughput.svg
 
 ### Progress
 python3 bench/plot.py \
-    --files bench/results/guto-challenge/AB_-_No_encryption_and_checksum.json \
-            bench/results/guto-challenge/AB_-_No_encryption.json \
-            bench/results/guto-challenge/AB_-_Normal.json \
+    --files bench/results/challenge/AB_-_No_encryption_and_checksum.json \
+            bench/results/challenge/AB_-_No_encryption.json \
+            bench/results/challenge/AB_-_Normal.json \
     --title "AB - 3 Groups 10 Nodes Each, 3GB" \
     --x-column elapsed_time \
     --y-column progress_ratio \
     --x-label "Elapsed time (Seconds)" \
     --y-label "Progress (%)" \
     --y-scale 0.01 \
-    --output bench/plots/png/guto-challenge-ab-progress.png \
-             bench/plots/svg/guto-challenge-ab-progress.svg
+    --output bench/plots/png/challenge-ab-progress.png \
+             bench/plots/svg/challenge-ab-progress.svg
