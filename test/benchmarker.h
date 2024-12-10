@@ -178,16 +178,24 @@ struct Worker {
         HashMapMessage msg;
 
         while (true) {
+            //log_print(node_id, " while");
             std::size_t size = create_hashmap_message(&msg);
+            //log_print(node_id, " size", size);
+
 
             if (!size) break;
+            //log_print(node_id, " op ", msg.operation);
+
 
             if (msg.operation == HashMapOperation::READ) {
                 std::string node_id = choose_random_node();
-                // log_print("Node ", node_id, " is reading ", msg.key, " at ", node_id, ".");
+                //log_print("Node ", node_id, " is reading ", msg.key, " at ", node_id, ".");
 
                 bool success = comm->send(group_id, node_id, {(const char*) &msg, size});
-                if (!success) continue;
+                if (!success) {
+                    //log_print(node_id, " failed to send");
+                    continue;
+                }
                 out_logs.push_back({
                     time : DateUtils::now(),
                     bytes : size,
@@ -199,12 +207,15 @@ struct Worker {
                 read_operations++;
             }
             else if (msg.operation == HashMapOperation::WRITE) {
-                // log_print("Node ", node_id, " is sending ", size, " bytes (key=", msg.key, ").");
+                //log_print("Node ", node_id, " is sending ", size, " bytes (key=", msg.key, ").");
                 uint32_t interval = interval_range.random();
 
                 bool success = comm->broadcast(group_id, {(const char*) &msg, size});
                 std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-                if (!success) continue;
+                if (!success) {
+                    //log_print(node_id, " failed to broadcast");
+                    continue;
+                };
                 out_logs.push_back({
                     time : DateUtils::now(),
                     bytes : size,
@@ -733,6 +744,9 @@ public:
                 last_activity_time = now;
             }
             if ( (now - last_activity_time) > params.max_inactivity_time ) {
+                for (auto& worker : workers) {
+                    log_print(worker->node_id, " broadcasted ", worker->write_operations);
+                }
                 log_error("Aborting benchmark due to inactivity. Terminating it ungracefully.");
                 return result;
             }
@@ -751,6 +765,7 @@ public:
         result.completed = true;
 
         for (auto& worker : workers) {
+            log_print(worker->node_id, " broadcasted ", worker->write_operations);
             worker->benchmark_over.release();
             worker->wait();
         }

@@ -55,7 +55,7 @@ void FailureDetection::packet_received(const PacketReceived &event)
     mtx.lock();
     if (node.is_alive() && pid != node.get_pid())
     {
-        log_print(
+        log_info(
             "Node ",
             node.get_address().to_string(),
             " restarted. Notifying about its death before marking it as active.");
@@ -115,7 +115,7 @@ void FailureDetection::process_heartbeat(const Packet& packet)
     }
     int group_data_size = num_of_groups * sizeof(uint64_t);
     nodes.update_groups(remote, joined_groups);
-    // log_print(remote.get_id(), " is on ", joined_groups.size(), " groups");
+    // log_info(remote.get_id(), " is on ", joined_groups.size(), " groups");
 
     if (verbose) {
         std::string groups_str;
@@ -163,7 +163,7 @@ void FailureDetection::check_for_faulty_nodes()
         Node &node = nodes.get_node(address);
         if (node.get_state() == FAULTY) continue;
 
-        log_print(
+        log_info(
                 "Majority of nodes (", quorum, ") suspect of node '",
                 node.get_id(),
                 "' (",

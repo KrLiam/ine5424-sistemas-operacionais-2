@@ -96,7 +96,7 @@ void EncryptionLayer::join_group(const JoinGroup& event)
     mtx_groups.lock();
     groups.emplace(group.hash, group);
     mtx_groups.unlock();
-    log_print("Local node joined group '", group.id, "'.");
+    log_info("Local node joined group '", group.id, "'.");
 }
 
 void EncryptionLayer::leave_group(const LeaveGroup& event)

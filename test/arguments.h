@@ -37,7 +37,7 @@ struct Arguments {
 
     bool benchmark = false;
     std::optional<std::string> out_file;
-    uint32_t alive = 250;
+    uint32_t alive = 500;
     uint32_t num_groups = 3;
     uint32_t num_nodes = 10;
     double bytes_per_node = 100*1024*1024;

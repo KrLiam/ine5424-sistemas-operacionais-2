@@ -95,7 +95,7 @@ void Connection::node_death(const NodeDeath& event)
 {
     if (event.remote_node != remote_node)
         return;
-
+    log_info("closing by death");
     cancel_transmissions();
     change_state(CLOSED);
 };
@@ -141,11 +141,11 @@ void Connection::cancel_timeout()
 
 void Connection::connection_timeout()
 {
-    log_warn("Unable to establish connection with node ", remote_node.get_id());
+    log_info("Unable to establish connection with node ", remote_node.get_id());
     change_state(CLOSED);
 
     mutex_timer.lock();
-    handshake_timer_id = -1;
+    cancel_timeout();
     mutex_timer.unlock();
 
     cancel_transmissions();
@@ -191,14 +191,14 @@ void Connection::closed(Packet p)
 }
 
 void Connection::on_established() {
-    log_print(local_node.get_id(), " Established connection with node ", remote_node.get_id(), " (", remote_node.get_address().to_string(), ").");
+    log_info(local_node.get_id(), " Established connection with node ", remote_node.get_id(), " (", remote_node.get_address().to_string(), ").");
 
     ConnectionEstablished event(remote_node);
     pipeline.notify(event);
 }
 
 void Connection::on_closed() {
-    log_info("Closed connection with node ", remote_node.get_id(), " (", remote_node.get_address().to_string(), ").");
+    log_info(local_node.get_id(), " Closed connection with node ", remote_node.get_id(), " (", remote_node.get_address().to_string(), ").");
 
     ConnectionClosed event(remote_node);
     pipeline.notify(event);
@@ -409,7 +409,7 @@ void Connection::send_syn(uint8_t extra_flags)
         broadcast_number : broadcast_dispatcher.get_next_number(),
         ab_number : ab_dispatcher.get_next_number() + local_node.is_receiving_ab_broadcast()
     };
-    log_print(local_node.get_id(), " sending syn ", data.broadcast_number, " to ", remote_node.get_id());
+    log_info(local_node.get_id(), " sending syn ", data.broadcast_number, " to ", remote_node.get_id());
 
     send_flag(SYN | extra_flags, MessageData::from(data));
 }
@@ -419,6 +419,9 @@ void Connection::send_flag(uint8_t flags) {
 }
 void Connection::send_flag(uint8_t flags, MessageData message_data)
 {
+    if (flags & RST) {
+        log_info(local_node.get_id(), " ", get_current_state_name(), " sending rst to ", remote_node.get_id());
+    }
     MessageIdentity id;
     memset(&id, 0, sizeof(MessageIdentity));
 
@@ -444,7 +447,7 @@ void Connection::send_flag(uint8_t flags, MessageData message_data)
     Packet packet;
     packet.meta.destination = remote_node.get_address();
     packet.meta.message_length = message_data.size;
-    packet.meta.expects_ack = 0;
+    packet.meta.expects_ack = flags & SYN;
     packet.data = data;
 
     dispatch_to_sender(packet);
@@ -454,7 +457,7 @@ bool Connection::close_on_rst(Packet p)
 {
     if (p.data.header.is_rst() && p.data.header.get_message_number() == expected_number)
     {
-        log_debug(get_current_state_name(), ": received RST.");
+        log_info(get_current_state_name(), ": received RST.");
         reset_message_numbers();
         change_state(CLOSED);
         return true;
@@ -466,7 +469,7 @@ bool Connection::rst_on_syn(Packet p)
 {
     if (p.data.header.is_syn())
     {
-        log_debug(get_current_state_name(), ": received SYN; sending RST.");
+        log_info(get_current_state_name(), ": received SYN; sending RST.");
         reset_message_numbers();
         change_state(CLOSED);
         send_flag(RST);
