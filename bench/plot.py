@@ -18,7 +18,7 @@ def parse_arguments():
     parser.add_argument("--y-label", type=str, required=False)
     parser.add_argument("--smooth-factor", type=int, default=0)
     parser.add_argument("--title", type=str, default="Benchmark result")
-    parser.add_argument("--output", type=str, default="")
+    parser.add_argument("--output", type=str, nargs="+", default=[])
 
     args = parser.parse_args()
 
@@ -80,7 +80,7 @@ def plot(
     curve_labels: list[str],
     x_label: str,
     y_label: str,
-    output_path: str,
+    outputs: Iterable[str],
     title: str,
 ):
     fig, ax1 = plt.subplots(1, 1)
@@ -108,11 +108,12 @@ def plot(
     ax1.set_ylabel(y_label)
     ax1.legend()
 
-    if not len(output_path):
+    if not len(outputs):
         plt.show()
     else:
-        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-        plt.savefig(output_path, bbox_inches="tight")
+        for output_path in outputs:
+            Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+            plt.savefig(output_path, bbox_inches="tight")
 
 
 def main():

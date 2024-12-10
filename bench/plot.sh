@@ -14,7 +14,8 @@ python3 bench/plot.py \
     --x-label "Elapsed time (Seconds)" \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
-    --output bench/plots/node-beb-throughput.png
+    --output bench/plots/png/node-beb-throughput.png \
+             bench/plots/svg/node-beb-throughput.svg
 
 ### Progress
 python3 bench/plot.py \
@@ -25,7 +26,8 @@ python3 bench/plot.py \
     --x-label "Elapsed time (Seconds)" \
     --y-label "Progress (%)" \
     --y-scale 0.01 \
-    --output bench/plots/node-beb-progress.png
+    --output bench/plots/png/node-beb-progress.png \
+             bench/plots/svg/node-beb-progress.svg
 
 
 ## URB
@@ -39,7 +41,8 @@ python3 bench/plot.py \
     --x-label "Elapsed time (Seconds)" \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
-    --output bench/plots/node-urb-throughput.png
+    --output bench/plots/png/node-urb-throughput.png \
+             bench/plots/svg/node-urb-throughput.svg
 
 ### Progress
 python3 bench/plot.py \
@@ -50,7 +53,8 @@ python3 bench/plot.py \
     --x-label "Elapsed time (Seconds)" \
     --y-label "Progress (%)" \
     --y-scale 0.01 \
-    --output bench/plots/node-urb-progress.png
+    --output bench/plots/png/node-urb-progress.png \
+             bench/plots/svg/node-urb-progress.svg
 
 
 ## AB
@@ -64,7 +68,8 @@ python3 bench/plot.py \
     --x-label "Elapsed time (Seconds)" \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
-    --output bench/plots/node-ab-throughput.png
+    --output bench/plots/png/node-ab-throughput.png \
+             bench/plots/svg/node-ab-throughput.svg
 
 ### Progress
 python3 bench/plot.py \
@@ -75,7 +80,8 @@ python3 bench/plot.py \
     --x-label "Elapsed time (Seconds)" \
     --y-label "Progress (%)" \
     --y-scale 0.01 \
-    --output bench/plots/node-ab-progress.png
+    --output bench/plots/png/node-ab-progress.png \
+             bench/plots/svg/node-ab-progress.svg
 
 
 
@@ -95,7 +101,8 @@ python3 bench/plot.py \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
     --smooth-factor 100 \
-    --output bench/plots/guto-challenge-all-no-encryption-checksum.png
+    --output bench/plots/png/guto-challenge-all-no-encryption-checksum.png \
+             bench/plots/svg/guto-challenge-all-no-encryption-checksum.svg
 
 
 ## No encryption
@@ -112,7 +119,8 @@ python3 bench/plot.py \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
     --smooth-factor 100 \
-    --output bench/plots/guto-challenge-all-no-encryption.png
+    --output bench/plots/png/guto-challenge-all-no-encryption.png \
+             bench/plots/svg/guto-challenge-all-no-encryption.svg
 
 
 ## Normal
@@ -129,7 +137,8 @@ python3 bench/plot.py \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
     --smooth-factor 100 \
-    --output bench/plots/guto-challenge-all-normal.png
+    --output bench/plots/png/guto-challenge-all-normal.png \
+             bench/plots/svg/guto-challenge-all-normal.svg
 
 
 ## BEB
@@ -146,7 +155,8 @@ python3 bench/plot.py \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
     --smooth-factor 100 \
-    --output bench/plots/guto-challenge-beb-throughput.png
+    --output bench/plots/png/guto-challenge-beb-throughput.png \
+             bench/plots/svg/guto-challenge-beb-throughput.svg
 
 ### Progress
 python3 bench/plot.py \
@@ -159,7 +169,8 @@ python3 bench/plot.py \
     --x-label "Elapsed time (Seconds)" \
     --y-label "Progress (%)" \
     --y-scale 0.01 \
-    --output bench/plots/guto-challenge-beb-progress.png
+    --output bench/plots/png/guto-challenge-beb-progress.png \
+             bench/plots/svg/guto-challenge-beb-progress.svg
 
 
 ## URB
@@ -176,7 +187,8 @@ python3 bench/plot.py \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
     --smooth-factor 100 \
-    --output bench/plots/guto-challenge-urb-throughput.png
+    --output bench/plots/png/guto-challenge-urb-throughput.png \
+             bench/plots/svg/guto-challenge-urb-throughput.svg
 
 ### Progress
 python3 bench/plot.py \
@@ -189,7 +201,8 @@ python3 bench/plot.py \
     --x-label "Elapsed time (Seconds)" \
     --y-label "Progress (%)" \
     --y-scale 0.01 \
-    --output bench/plots/guto-challenge-urb-progress.png
+    --output bench/plots/png/guto-challenge-urb-progress.png \
+             bench/plots/svg/guto-challenge-urb-progress.svg
 
 
 ## AB
@@ -206,7 +219,8 @@ python3 bench/plot.py \
     --y-label "Total outbound throughput (MB)" \
     --y-scale 1000000 \
     --smooth-factor 100 \
-    --output bench/plots/guto-challenge-ab-throughput.png
+    --output bench/plots/png/guto-challenge-ab-throughput.png \
+             bench/plots/svg/guto-challenge-ab-throughput.svg
 
 ### Progress
 python3 bench/plot.py \
@@ -219,4 +233,5 @@ python3 bench/plot.py \
     --x-label "Elapsed time (Seconds)" \
     --y-label "Progress (%)" \
     --y-scale 0.01 \
-    --output bench/plots/guto-challenge-ab-progress.png
+    --output bench/plots/png/guto-challenge-ab-progress.png \
+             bench/plots/svg/guto-challenge-ab-progress.svg
