@@ -7,7 +7,7 @@ QueueEntry::QueueEntry(const Packet& packet) : packet(packet) {}
 
 
 TransmissionQueue::TransmissionQueue(PipelineHandler& handler, NodeMap& nodes)
-    : handler(handler), nodes(nodes), destroyed(false), timeout_dis(Config::ACK_TIMEOUT, Config::ACK_TIMEOUT + 500)
+    : handler(handler), nodes(nodes), destroyed(false), timeout_dis(Config::ACK_TIMEOUT, Config::ACK_TIMEOUT)
 {
 }
 

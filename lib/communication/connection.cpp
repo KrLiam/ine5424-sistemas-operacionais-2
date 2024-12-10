@@ -331,6 +331,8 @@ void Connection::established(Packet p)
     uint32_t number = expected_number;
     uint32_t initial_number = 0;
 
+    log_print("received ", message_number, " expects ", number);
+
     if (message_number < initial_number)
     {
         log_debug(

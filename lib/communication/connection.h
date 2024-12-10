@@ -138,6 +138,8 @@ private:
     void node_death(const NodeDeath& event);
 
 public:
+    static const int HANDSHAKE_TIMEOUT = 500;
+
     Connection(
         Node& local_node,
         Node& remote_node,

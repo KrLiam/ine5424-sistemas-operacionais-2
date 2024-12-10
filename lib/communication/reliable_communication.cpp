@@ -130,11 +130,13 @@ bool ReliableCommunication::send(std::string group_id, std::string id, MessageDa
     bool enqueued = gr->enqueue(transmission);
 
     if (!enqueued) {
-        log_warn(
+        log_print(
             "Could not enqueue transmission ", transmission.uuid,
             ", node connection must be overloaded."
         );
         return false;
+    } else {
+        log_print("Succesfully enqueued mesage on buffer");
     }
 
     TransmissionResult result = transmission.wait_result();
