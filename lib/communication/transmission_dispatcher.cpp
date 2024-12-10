@@ -72,7 +72,7 @@ void TransmissionDispatcher::update() {
     activate(active_transmission);
 }
 void TransmissionDispatcher::activate(Transmission* transmission) {
-    if (transmission->active) return;
+    if (!transmission || transmission->active) return;
 
     transmission->active = true;
 
