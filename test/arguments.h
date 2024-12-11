@@ -43,7 +43,7 @@ struct Arguments {
     double bytes_per_node = 20*1024*1024;
     IntRange node_interval = {0, 0};
     uint32_t max_message_size = PacketData::MAX_MESSAGE_SIZE;
-    uint32_t max_read_operations = UINT32_MAX;
+    uint32_t max_read_operations = 0;
     uint32_t max_write_operations = UINT32_MAX;
     BenchmarkMode mode = BenchmarkMode::BEB;
     uint32_t max_inactivity_time = 20000;
