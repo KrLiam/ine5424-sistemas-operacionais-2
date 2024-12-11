@@ -67,7 +67,6 @@ struct Worker {
     bool terminate = false;
 
     std::binary_semaphore benchmark_over{0};
-    std::binary_semaphore read_sem{0};
 
     uint64_t start_time;
     double remaining_bytes;
@@ -202,7 +201,6 @@ struct Worker {
                 });
                 remaining_bytes -= size;
 
-                read_sem.acquire();
                 read_operations++;
             }
             else if (msg.operation == HashMapOperation::WRITE) {
@@ -306,10 +304,6 @@ struct Worker {
                     bytes : sizeof(answer),
                     key : msg.key
                 });
-            }
-            else if (msg.operation == HashMapOperation::READ_RESULT) {
-                // log_print(msg.key, " on node ", result.sender_id, " is ", msg.value, ".");
-                read_sem.release();
             }
         }
     }
