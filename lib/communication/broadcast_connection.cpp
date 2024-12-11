@@ -251,7 +251,13 @@ void BroadcastConnection::message_received(const MessageReceived &event)
     MessageType type = event.message.id.msg_type;
 
     if (type == MessageType::BEB) {
-        if (event.message.is_application()) deliver_buffer.produce(event.message);
+        if (event.message.is_application()) {
+            try {
+                deliver_buffer.produce(event.message);
+            } catch (std::runtime_error &e) {
+                return;
+            }
+        }
     }
     else if (message_type::is_urb(type)) {
         if (!retransmissions.contains(id)) {
@@ -402,7 +408,11 @@ void BroadcastConnection::try_deliver(const MessageIdentity& id) {
     if (entry.message.is_application())
     {
         log_info(local_node.get_id(), " Delivering message ", entry.message.to_string(), ".");
-        deliver_buffer.produce(entry.message);
+        try {
+            deliver_buffer.produce(entry.message);
+        } catch (std::runtime_error &e) {
+            return;
+        }   
     }
     retransmissions.erase(id);
 
@@ -487,7 +497,11 @@ void BroadcastConnection::transmission_fail(const TransmissionFail& event) {
 }
 
 void BroadcastConnection::request_update() {
-    connection_update_buffer.produce(BROADCAST_ID);
+    try {
+        connection_update_buffer.produce(BROADCAST_ID);
+    } catch (std::runtime_error &e) {
+        return;
+    }
 }
 
 bool BroadcastConnection::enqueue(Transmission& transmission) {

@@ -50,7 +50,7 @@ bool TransmissionDispatcher::enqueue(Transmission& transmission) {
 
     mutex_transmissions.unlock();
 
-    log_debug("Enqueued transmission ", transmission.uuid, " on connection of node ", transmission.receiver_id);
+    log_print("Enqueued transmission ", transmission.uuid, " on connection of node ", transmission.receiver_id);
 
     request_update();
     return true;
@@ -61,7 +61,11 @@ void TransmissionDispatcher::increment_number() {
 }
 
 void TransmissionDispatcher::request_update() {
-    update_buffer.produce(id);
+    try {
+        update_buffer.produce(id);
+    } catch (std::runtime_error& e) {
+        return;
+    }
 }
 
 void TransmissionDispatcher::update() {

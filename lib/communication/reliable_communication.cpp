@@ -9,7 +9,8 @@ ReliableCommunication::ReliableCommunication(
     const Config& cfg
 ) :
     config(cfg),
-    user_buffer_size(user_buffer_size)
+    user_buffer_size(user_buffer_size),
+    terminating(false)
 {
     const NodeConfig* node_config = config.get_node(local_id);
     if (!node_config) throw std::invalid_argument(format("Node '%s' does not exist in the config.", local_id.c_str()));
@@ -36,17 +37,38 @@ ReliableCommunication::ReliableCommunication(
 
 ReliableCommunication::~ReliableCommunication()
 {
+    terminating = true;
     Node& node = gr->get_local_node();
-    log_info("Killing node ", node.get_id(), " (", node.get_address().to_string(), ")."); 
+    log_print("Killing node ", node.get_id(), " (", node.get_address().to_string(), ")."); 
 
+    log_print("a");
     gr->get_application_buffer().terminate();
+    log_print("a");
     gr->get_deliver_buffer().terminate();
-    
+    log_print("c");
     failure_detection->terminate();
-
+    log_print("d");
     gr->get_connection_update_buffer().terminate();
     if (sender_thread.joinable())
         sender_thread.join();
+    log_print("f");
+}
+
+void ReliableCommunication::terminate()
+{
+    terminating = true;
+    Node& node = gr->get_local_node();
+    log_print("Killing node ", node.get_id(), " (", node.get_address().to_string(), ")."); 
+
+    log_print("a", node.get_id());
+    gr->get_application_buffer().terminate();
+    log_print("b", node.get_id());
+    gr->get_deliver_buffer().terminate();
+    log_print("c", node.get_id());
+    failure_detection->terminate();
+    log_print("d", node.get_id());
+    gr->get_connection_update_buffer().terminate();
+    log_print("e", node.get_id());
 }
 
 void ReliableCommunication::add_fault_rule(const FaultRule& rule) {
@@ -87,14 +109,24 @@ ReceiveResult ReliableCommunication::message_to_buffer(Message &message, char *m
 
 ReceiveResult ReliableCommunication::receive(char *m)
 {
-    Message message = gr->get_application_buffer().consume();
-    return message_to_buffer(message, m);
+    if (terminating) throw buffer_termination("Exiting buffer.");
+    try {
+        Message message = gr->get_application_buffer().consume();
+        return message_to_buffer(message, m);
+    } catch (std::runtime_error &err) {
+        throw std::runtime_error("a");
+    }
 }
 
 ReceiveResult ReliableCommunication::deliver(char *m)
 {
-    Message message = gr->get_deliver_buffer().consume();
-    return message_to_buffer(message, m);
+    if (terminating) throw buffer_termination("Exiting buffer.");
+    try {
+        Message message = gr->get_deliver_buffer().consume();
+        return message_to_buffer(message, m);
+    } catch (std::runtime_error &err) {
+        throw std::runtime_error("a");
+    }
 }
 
 bool ReliableCommunication::send(std::string group_id, std::string id, MessageData data)
@@ -176,7 +208,17 @@ bool ReliableCommunication::broadcast(std::string group_id, MessageData data) {
     MessageType message_type = message_type::from_broadcast_type(config.broadcast);
     std::string receiver_id = message_type == MessageType::AB_REQUEST ? LEADER_ID : BROADCAST_ID;
     Transmission transmission = create_transmission(group_hash, receiver_id, data, message_type);
-    gr->enqueue(transmission);
+    bool enqueued = gr->enqueue(transmission);
+
+    if (!enqueued) {
+        log_print(
+            "Could not enqueue transmission ", transmission.uuid,
+            ", node connection must be overloaded."
+        );
+        return false;
+    } else {
+        log_print("Succesfully enqueued mesage on buffer");
+    }
     
     TransmissionResult result = transmission.wait_result();
     log_debug("Transmission ", transmission.uuid, " returned result to application.");
@@ -229,13 +271,13 @@ Transmission ReliableCommunication::create_transmission(
 void ReliableCommunication::send_routine()
 {
     std::string id;
-    while (true)
+    while (!terminating)
     {
         try
         {
             id = gr->get_connection_update_buffer().consume();
         }
-        catch (const buffer_termination &e)
+        catch (std::runtime_error &e)
         {
             return;
         }

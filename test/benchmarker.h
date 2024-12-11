@@ -87,6 +87,9 @@ struct Worker {
     std::unordered_map<uint16_t, std::array<char, HashMapMessage::VALUE_SIZE>> hash_map;
     std::mutex hm_mutex;
 
+    std::mutex rcv_mutex;
+    std::mutex dlv_mutex;
+
     Worker(
         const Config& config,
         const std::string& node_id,
@@ -234,7 +237,13 @@ struct Worker {
         benchmark_over.acquire();
 
         //log_print("Node ", node_id, " is terminating.");
+        comm->terminate();
+
+        rcv_mutex.lock();
+        dlv_mutex.lock();
         terminate = true;
+        rcv_mutex.unlock();
+        dlv_mutex.unlock();
     }
 
     std::string choose_random_node() {
@@ -283,12 +292,17 @@ struct Worker {
         ReceiveResult result;
 
         while (!terminate) {
+            rcv_mutex.lock();
+            if (terminate) break;
             try {
                 result = comm->receive((char*) &msg);
             }
-            catch (const buffer_termination& err) {
+            catch (std::runtime_error& err) {
+                log_print("aaaa");
+                rcv_mutex.unlock();
                 break;
             }
+            rcv_mutex.unlock();
 
             if (terminate) break;
 
@@ -335,12 +349,17 @@ struct Worker {
         ReceiveResult result;
 
         while (!terminate) {
+            dlv_mutex.lock();
+            if (terminate) break;
             try {
                 result = comm->deliver((char*) &msg);
             }
-            catch (const buffer_termination& err) {
+            catch (std::runtime_error& err) {
+                log_print("bbbb");
+                dlv_mutex.unlock();
                 break;
             }
+            dlv_mutex.unlock();
 
             if (terminate) break;
 
@@ -772,6 +791,11 @@ public:
         }
 
         validate_hashmaps_match(config);
+
+        for (std::size_t i = 0; i < workers.size(); i++) {
+            log_print("reseting ", i);
+            workers[i].reset();
+        }
 
         return result;
     }

@@ -534,7 +534,9 @@ void Connection::request_update()
     try {
         connection_update_buffer.produce(remote_node.get_id());
     }
-    catch (std::runtime_error& e) {}
+    catch (std::runtime_error& e) {
+        return;
+    }
 }
 
 void Connection::cancel_transmissions()
@@ -548,18 +550,23 @@ void Connection::cancel_transmissions()
 
 void Connection::update()
 {
-    // log_trace("Updating connection with node ", remote_node.get_id());
+    log_print("Updating connection with node ", remote_node.get_id());
 
     send_dispatched_packets();
 
-    if (dispatcher.is_empty()) return;
+    if (dispatcher.is_empty()) {
+        log_print(remote_node.get_id(), " dispatcher is empty");
+        return;
+    };
 
     if (state == ConnectionState::CLOSED)
     {
+        log_print(remote_node.get_id(), " closed");
         connect();
         return;
     }
 
+    log_print(remote_node.get_id(), " updating dispatcher");
     if (state == ConnectionState::ESTABLISHED) dispatcher.update();
 }
 
@@ -604,7 +611,11 @@ void Connection::receive(Message message)
 
     if (message.is_application())
     {
-        application_buffer.produce(message);
+        try {
+            application_buffer.produce(message);
+        } catch (std::runtime_error& e) {
+            return;
+        }
     }
 }
 

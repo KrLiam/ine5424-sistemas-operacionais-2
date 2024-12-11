@@ -57,6 +57,8 @@ public:
     void discover_node(const SocketAddress& address);
 
     std::shared_ptr<GroupRegistry> get_group_registry();
+    
+    void terminate();
 
 private:
     std::shared_ptr<Pipeline> pipeline;
@@ -69,6 +71,8 @@ private:
 
     std::thread sender_thread;
     std::size_t user_buffer_size;
+
+    std::atomic<bool> terminating;
 
     ReceiveResult message_to_buffer(Message &message, char *m);
 

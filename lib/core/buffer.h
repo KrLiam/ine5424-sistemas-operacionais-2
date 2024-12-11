@@ -32,9 +32,13 @@ public:
         log_print("Waiting to consume on [", name, "] buffer.");
         std::unique_lock<std::mutex> lock(empty_mutex);
         empty_cv.wait(lock, [this]{ return !empty() || terminating; });
-        lock.unlock();
+        log_print("a3 ", name);
 
-        if (terminating) throw buffer_termination("Exiting buffer.");
+        if (terminating) {
+            log_print("a4 ", name);
+            throw std::runtime_error("Exiting buffer.");
+        }
+        lock.unlock();
 
         mutex.lock();
 
@@ -57,9 +61,9 @@ public:
         log_print("Waiting to produce on [", name, "] buffer.");
         std::unique_lock<std::mutex> lock(full_mutex);
         full_cv.wait(lock, [this]{ return !full() || terminating; });
-        lock.unlock();
 
-        if (terminating) throw buffer_termination("Exiting buffer.");
+        if (terminating) std::runtime_error("Exiting buffer.");
+        lock.unlock();
 
         mutex.lock();
 
@@ -76,7 +80,11 @@ public:
 
     void terminate() {
         terminating = true;
+
+        std::unique_lock<std::mutex> lock(empty_mutex);
         empty_cv.notify_all();
+
+        std::unique_lock<std::mutex> _lock(full_mutex);
         full_cv.notify_all();  
     }
     
@@ -133,9 +141,9 @@ public:
         log_print("Waiting to produce on [", name, "] buffer.");
         std::unique_lock<std::mutex> lock(full_mutex);
         full_cv.wait(lock, [this]{ return !full() || terminating; });
-        lock.unlock();
 
-        if (terminating) throw buffer_termination("Exiting buffer.");
+        if (terminating) throw std::runtime_error("Exiting buffer.");
+        lock.unlock();
 
         values_mutex.lock();
 
@@ -154,9 +162,13 @@ public:
         log_print("Waiting to consume on [", name, "] buffer.");
         std::unique_lock<std::mutex> lock(empty_mutex);
         empty_cv.wait(lock, [this]{ return !empty() || terminating; });
-        lock.unlock();
+        log_print("a3");
 
-        if (terminating) throw buffer_termination("Exiting buffer.");
+        if (terminating) {
+            log_print("a4 ", name);
+            throw std::runtime_error("Exiting buffer.");
+        }
+        lock.unlock();
 
         values_mutex.lock();
 
@@ -176,7 +188,13 @@ public:
 
     void terminate() {
         terminating = true;
+
+        log_print("a1");
+        std::unique_lock<std::mutex> lock(empty_mutex);
         empty_cv.notify_all();
+
+        log_print("a2");
+        std::unique_lock<std::mutex> _lock(full_mutex);
         full_cv.notify_all();  
     }
 };
