@@ -81,7 +81,7 @@ void Channel::send(Packet packet)
         return;
     }
     if (!packet.silent()) {
-        log_print("Sent ", bytes_sent, " bytes to ", destination.to_string(), ".");
+        // log_print("Sent ", bytes_sent, " bytes to ", destination.to_string(), ".");
     }
     event_bus.notify(PacketSent(packet));
 }

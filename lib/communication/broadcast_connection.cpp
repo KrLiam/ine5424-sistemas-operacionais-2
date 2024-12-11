@@ -163,7 +163,7 @@ void BroadcastConnection::packet_received(const PacketReceived &event)
     bool is_atomic = message_type::is_atomic(packet.data.header.get_message_type());
 
     SequenceNumber* sequence = get_sequence(packet.data.header.id);
-    log_info(local_node.get_id(), " Received ", message_number, " from ", packet.data.header.id.origin.to_string(), " is at ", sequence->next_number, " ", sequence->initial_number, " ", ab_next_deliver);
+    log_print(local_node.get_id(), " Received ", message_number, " from ", packet.data.header.id.origin.to_string(), " is at ", sequence->next_number, " ", sequence->initial_number, " ", ab_next_deliver);
     if (!sequence) {
         log_info("Received packet ", packet.to_string(PacketFormat::RECEIVED), ", but sequence number is not synchronized; sending RST.");
         send_rst(packet);
@@ -563,7 +563,7 @@ void BroadcastConnection::update() {
     
     bool established = establish_all_connections(node_ids);
     if (!established) return;
-    // log_print(local_node.get_id(), " established connection with everyone");
+    log_print(local_node.get_id(), " established connection with everyone");
 
     ab_dispatcher.update();
     dispatcher.update();
