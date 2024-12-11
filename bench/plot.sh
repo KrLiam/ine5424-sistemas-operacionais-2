@@ -12,7 +12,7 @@ python3 bench/plot.py \
     --x-column elapsed_time \
     --y-column total_out \
     --x-label "Elapsed time (Seconds)" \
-    --y-label "Total outbound throughput (MB)" \
+    --y-label "Total outbound throughput (MB/s)" \
     --y-scale 1000000 \
     --output bench/plots/png/node-beb-throughput.png \
              bench/plots/svg/node-beb-throughput.svg
@@ -39,7 +39,7 @@ python3 bench/plot.py \
     --x-column elapsed_time \
     --y-column total_out \
     --x-label "Elapsed time (Seconds)" \
-    --y-label "Total outbound throughput (MB)" \
+    --y-label "Total outbound throughput (MB/s)" \
     --y-scale 1000000 \
     --output bench/plots/png/node-urb-throughput.png \
              bench/plots/svg/node-urb-throughput.svg
@@ -66,7 +66,7 @@ python3 bench/plot.py \
     --x-column elapsed_time \
     --y-column total_out \
     --x-label "Elapsed time (Seconds)" \
-    --y-label "Total outbound throughput (MB)" \
+    --y-label "Total outbound throughput (MB/s)" \
     --y-scale 1000000 \
     --output bench/plots/png/node-ab-throughput.png \
              bench/plots/svg/node-ab-throughput.svg
@@ -98,7 +98,7 @@ python3 bench/plot.py \
     --x-column elapsed_time \
     --y-column total_out \
     --x-label "Elapsed time (Seconds)" \
-    --y-label "Total outbound throughput (MB)" \
+    --y-label "Total outbound throughput (MB/s)" \
     --y-scale 1000000 \
     --smooth-factor 100 \
     --output bench/plots/png/challenge-all-no-encryption-checksum.png \
@@ -116,7 +116,7 @@ python3 bench/plot.py \
     --x-column elapsed_time \
     --y-column total_out \
     --x-label "Elapsed time (Seconds)" \
-    --y-label "Total outbound throughput (MB)" \
+    --y-label "Total outbound throughput (MB/s)" \
     --y-scale 1000000 \
     --smooth-factor 100 \
     --output bench/plots/png/challenge-all-no-encryption.png \
@@ -134,7 +134,7 @@ python3 bench/plot.py \
     --x-column elapsed_time \
     --y-column total_out \
     --x-label "Elapsed time (Seconds)" \
-    --y-label "Total outbound throughput (MB)" \
+    --y-label "Total outbound throughput (MB/s)" \
     --y-scale 1000000 \
     --smooth-factor 100 \
     --output bench/plots/png/challenge-all-normal.png \
@@ -152,7 +152,7 @@ python3 bench/plot.py \
     --x-column elapsed_time \
     --y-column total_out \
     --x-label "Elapsed time (Seconds)" \
-    --y-label "Total outbound throughput (MB)" \
+    --y-label "Total outbound throughput (MB/s)" \
     --y-scale 1000000 \
     --smooth-factor 100 \
     --output bench/plots/png/challenge-beb-throughput.png \
@@ -184,7 +184,7 @@ python3 bench/plot.py \
     --x-column elapsed_time \
     --y-column total_out \
     --x-label "Elapsed time (Seconds)" \
-    --y-label "Total outbound throughput (MB)" \
+    --y-label "Total outbound throughput (MB/s)" \
     --y-scale 1000000 \
     --smooth-factor 100 \
     --output bench/plots/png/challenge-urb-throughput.png \
@@ -216,7 +216,7 @@ python3 bench/plot.py \
     --x-column elapsed_time \
     --y-column total_out \
     --x-label "Elapsed time (Seconds)" \
-    --y-label "Total outbound throughput (MB)" \
+    --y-label "Total outbound throughput (MB/s)" \
     --y-scale 1000000 \
     --smooth-factor 100 \
     --output bench/plots/png/challenge-ab-throughput.png \

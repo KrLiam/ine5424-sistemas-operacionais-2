@@ -38,14 +38,14 @@ struct Arguments {
     bool benchmark = false;
     std::optional<std::string> out_file;
     uint32_t alive = 250;
-    uint32_t num_groups = 3;
-    uint32_t num_nodes = 10;
-    double bytes_per_node = 100*1024*1024;
+    uint32_t num_groups = 1;
+    uint32_t num_nodes = 5;
+    double bytes_per_node = 20*1024*1024;
     IntRange node_interval = {0, 0};
     uint32_t max_message_size = PacketData::MAX_MESSAGE_SIZE;
     uint32_t max_read_operations = 0;
     uint32_t max_write_operations = UINT32_MAX;
-    BenchmarkMode mode = BenchmarkMode::AB;
+    BenchmarkMode mode = BenchmarkMode::BEB;
     uint32_t max_inactivity_time = 5000;
     bool measure_failures = false;
 
