@@ -24,19 +24,15 @@ TransmissionKey TransmissionLayer::create_key(const MessageIdentity& id, const S
 }
 
 bool TransmissionLayer::has_queue(const TransmissionKey& key) {
-    queue_mutex.lock();
     bool result = queue_map.contains(key);
-    queue_mutex.unlock();
     return result;
 }
 TransmissionQueue& TransmissionLayer::get_queue(const TransmissionKey& key) {
-    queue_mutex.lock();
     if (!has_queue(key)) {
         auto queue = std::make_shared<TransmissionQueue>(handler, nodes, timer);
 
         queue_map.insert({key, queue});
     }
-    queue_mutex.unlock();
 
     return *queue_map.at(key);
 }
