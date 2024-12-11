@@ -405,6 +405,7 @@ struct BenchmarkParameters {
     uint32_t max_write_operations;
     uint32_t alive;
     uint32_t max_inactivity_time;
+    bool measure_failures;
 
     std::string serialize() {
         std::string contents;
@@ -470,6 +471,7 @@ struct BenchmarkSnapshot {
     double failure_out_throughput;
     uint32_t read_operations;
     uint32_t write_operations;
+    bool measure_failures;
 
     std::string serialize() {
         return format(
@@ -477,7 +479,7 @@ struct BenchmarkSnapshot {
             "\"elapsed_time\": %f, "
             "\"transferred_bytes\": %f, "
             "\"total_bytes\": %f, "
-            "\"failed_bytes\": %f, "
+            "%s, "
             "\"progress_ratio\": %f, "
             "\"time_estimate\": %s, "
             "\"avg_in\": %f, "
@@ -489,7 +491,7 @@ struct BenchmarkSnapshot {
             elapsed_time,
             transferred_bytes,
             total_bytes,
-            failed_bytes,
+            measure_failures ? format("\"failed_bytes\": %u, ", failed_bytes).c_str() : "",
             progress_ratio,
             serialize_double(time_estimate).c_str(),
             avg_in_throughput,
@@ -503,19 +505,19 @@ struct BenchmarkSnapshot {
     std::string to_string() {
         return format(
             "%.1fs | "
-            "%s/%s (%.5f%%) (%s failed), "
+            "%s/%s (%.5f%%)%s, "
             "time_left=%.1fs, "
             "avg_in=%s/s, "
-            "total_out=%s/s (failing %s/s)",
+            "total_out=%s/s%s",
             elapsed_time,
             format_bytes(transferred_bytes, 3).c_str(),
             format_bytes(total_bytes, 3).c_str(),
-            format_bytes(failed_bytes, 3).c_str(),
+            measure_failures ?  format(" (%s failed)", format_bytes(failed_bytes, 3).c_str()).c_str() : "",
             progress_ratio*100,
             time_estimate,
             format_bytes(avg_in_throughput, 3).c_str(),
             format_bytes(out_throughput, 3).c_str(),
-            format_bytes(failure_out_throughput, 3).c_str()
+            measure_failures ? format(" (failing %s/s)", format_bytes(failure_out_throughput, 3).c_str()).c_str() : ""
         );
     }
 };
@@ -601,6 +603,7 @@ struct BenchmarkResult {
 class Benchmarker {
     BenchmarkParameters params;
 
+    bool measure_failures;
     bool global_group = false;
     uint64_t start_time;
     std::vector<std::unique_ptr<Worker>> workers;
@@ -619,8 +622,11 @@ public:
         uint32_t max_read_operations,
         uint32_t max_write_operations,
         uint32_t alive,
-        uint32_t max_inactivity_time
-    ) {
+        uint32_t max_inactivity_time,
+        bool measure_failures
+    ) :
+        measure_failures(measure_failures)
+    {
         global_group = total_groups == 0;
         total_groups = total_groups ? total_groups : 1;
 
@@ -636,7 +642,8 @@ public:
             max_read_operations : max_read_operations,
             max_write_operations : max_write_operations,
             alive : alive,
-            max_inactivity_time : max_inactivity_time
+            max_inactivity_time : max_inactivity_time,
+            measure_failures : measure_failures
         };
         workers.reserve(total_nodes());
     }
@@ -853,7 +860,8 @@ public:
             out_throughput : out_throughput,
             failure_out_throughput : failure_out_throughput,
             read_operations : read_operations,
-            write_operations : write_operations
+            write_operations : write_operations,
+            measure_failures : measure_failures
         };
     }
 };
