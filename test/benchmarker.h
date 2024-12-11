@@ -479,7 +479,7 @@ struct BenchmarkSnapshot {
             "\"elapsed_time\": %f, "
             "\"transferred_bytes\": %f, "
             "\"total_bytes\": %f, "
-            "%s, "
+            "%s"
             "\"progress_ratio\": %f, "
             "\"time_estimate\": %s, "
             "\"avg_in\": %f, "
