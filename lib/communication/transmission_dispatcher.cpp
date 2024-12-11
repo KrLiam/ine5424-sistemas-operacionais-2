@@ -61,7 +61,7 @@ void TransmissionDispatcher::increment_number() {
 }
 
 void TransmissionDispatcher::request_update() {
-    update_buffer.produce(id);
+    update_buffer.try_produce(id);
 }
 
 void TransmissionDispatcher::update() {

@@ -32,9 +32,8 @@ public:
         // log_trace("Waiting to consume on [", name, "] buffer.");
         std::unique_lock<std::mutex> e_lock(empty_mutex);
         empty_cv.wait(e_lock, [this]{ return !empty() || terminating; });
-        e_lock.unlock();
-
         if (terminating) throw buffer_termination("Exiting buffer.");
+        e_lock.unlock();
 
         mutex.lock();
 
@@ -57,9 +56,8 @@ public:
         // log_trace("Waiting to produce on [", name, "] buffer.");
         std::unique_lock<std::mutex> f_lock(full_mutex);
         full_cv.wait(f_lock, [this]{ return !full() || terminating; });
-        f_lock.unlock();
-
         if (terminating) throw buffer_termination("Exiting buffer.");
+        f_lock.unlock();
 
         mutex.lock();
 
@@ -72,6 +70,16 @@ public:
         // log_trace("Produced item to [", name, "] buffer.");
 
         mutex.unlock();
+    }
+
+    bool try_produce(const T& item)
+    {
+        try {
+            produce(item);
+            return true;
+        } catch (const buffer_termination& e) {
+            return false;
+        }
     }
 
     void terminate() {
@@ -133,9 +141,8 @@ public:
         // log_trace("Waiting to produce on [", name, "] buffer.");
         std::unique_lock<std::mutex> f_lock(full_mutex);
         full_cv.wait(f_lock, [this]{ return !full() || terminating; });
-        f_lock.unlock();
-
         if (terminating) throw buffer_termination("Exiting buffer.");
+        f_lock.unlock();
 
         values_mutex.lock();
 
@@ -150,13 +157,22 @@ public:
         values_mutex.unlock();
     }
 
+    bool try_produce(const T& item)
+    {
+        try {
+            produce(item);
+            return true;
+        } catch (const buffer_termination& e) {
+            return false;
+        }
+    }
+
     T consume() {
         // log_trace("Waiting to consume on [", name, "] buffer.");
         std::unique_lock<std::mutex> e_lock(empty_mutex);
         empty_cv.wait(e_lock, [this]{ return !empty() || terminating; });
-        e_lock.unlock();
-
         if (terminating) throw buffer_termination("Exiting buffer.");
+        e_lock.unlock();
 
         values_mutex.lock();
 

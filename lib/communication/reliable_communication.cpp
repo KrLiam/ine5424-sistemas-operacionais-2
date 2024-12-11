@@ -176,7 +176,14 @@ bool ReliableCommunication::broadcast(std::string group_id, MessageData data) {
     MessageType message_type = message_type::from_broadcast_type(config.broadcast);
     std::string receiver_id = message_type == MessageType::AB_REQUEST ? LEADER_ID : BROADCAST_ID;
     Transmission transmission = create_transmission(group_hash, receiver_id, data, message_type);
-    gr->enqueue(transmission);
+    bool enqueued = gr->enqueue(transmission);
+    if (!enqueued) {
+        log_error(
+            "Could not enqueue transmission ", transmission.uuid,
+            ", broadcast connection must be overloaded."
+        );
+        return false;
+    }
     
     TransmissionResult result = transmission.wait_result();
     log_debug("Transmission ", transmission.uuid, " returned result to application.");
