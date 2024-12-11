@@ -31,7 +31,6 @@ TransmissionQueue& TransmissionLayer::get_queue(const TransmissionKey& key) {
         auto queue = std::make_shared<TransmissionQueue>(handler, nodes, timer);
 
         queue_map.insert({key, queue});
-        // log_info("Added queue to ", id.origin.to_string(), " ", id.msg_num, " ", id.sequence_type);
     }
 
     return *queue_map.at(key);
@@ -40,7 +39,6 @@ void TransmissionLayer::clear_queue(const TransmissionKey& key) {
     queue_mutex.lock();
     queue_map.erase(key);
     queue_mutex.unlock();
-    // log_info("Cleared queue to ", id.origin.to_string(), " ", id.msg_num, " ", id.sequence_type);
 }
 
 void TransmissionLayer::attach(EventBus& bus) {

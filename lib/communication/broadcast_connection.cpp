@@ -118,18 +118,6 @@ void BroadcastConnection::atomic_mapping(const AtomicMapping& event) {
 
 
 void BroadcastConnection::connection_closed(const ConnectionClosed& event) {
-    /*
-    ab_dispatcher.cancel_all(); // TODO apenas cancelar as transmissoes do nó que morreu
-
-    std::unordered_set<MessageIdentity> remove;
-    for (auto& [id, t] : ab_transmissions) {
-        if (id.origin == event.node.get_address()) remove.emplace(id);
-    }
-    for (const MessageIdentity& id : remove) {
-        ab_transmissions.erase(id);
-    }
-    */
-
     if (!dispatcher.is_active()) dispatcher.cancel_all();
 }
 
@@ -160,7 +148,6 @@ void BroadcastConnection::packet_received(const PacketReceived &event)
     bool is_atomic = message_type::is_atomic(packet.data.header.get_message_type());
 
     SequenceNumber* sequence = get_sequence(packet.data.header.id);
-    // log_print(local_node.get_id(), " Received ", message_number, " is at ", sequence->next_number, " ", sequence->initial_number, " ", ab_next_deliver);
     if (!sequence) {
         log_warn("Received packet ", packet.to_string(PacketFormat::RECEIVED), ", but sequence number is not synchronized; sending RST.");
         send_rst(packet);

@@ -60,7 +60,6 @@ int Timer::add(int interval_ms, std::function<void()> callback) {
 
         insert_i = i;
     }
-    // log_debug("Insert timer ", current_id, " scheduled for ", date % 60000, " at pos ", insert_i);
     timers.insert(timers.begin() + insert_i, timer);
 
     timers_mutex.unlock();
@@ -85,7 +84,6 @@ bool Timer::cancel(int id) {
         if (!timer) continue;
 
         if (timer->id == id) {
-            // log_debug("Cancelled timer ", id);
             timer->cancelled = true;
             var.notify_all();
 
@@ -102,7 +100,6 @@ bool Timer::cancel(int id) {
 void Timer::routine() {
     while (!stop) {
         while (!timers.size()) {
-            // log_debug("Waiting for active timer");
             has_timers_sem.acquire();
 
             if (stop) return;
@@ -121,14 +118,11 @@ void Timer::routine() {
         uint64_t now = DateUtils::now();
         int interval = timer_date - now;
 
-        // log_debug("Next timer is ", next_timer->id, " in ", interval, "ms");
-
         if (interval <= 0 || next_timer->cancelled) {
             timers.erase(timers.begin());
             
             timers_mutex.unlock();
             
-            // log_debug("Trigerring timer ", next_timer->id, ", time is ", now % 60000);
             if (!next_timer->cancelled) next_timer->callback();
 
             continue;
@@ -138,7 +132,6 @@ void Timer::routine() {
         }
 
 
-        // log_debug("Sleeping for ", interval, "ms");
         std::unique_lock<std::mutex> lock(mutex);
         var.wait_for(lock, std::chrono::milliseconds(interval));
     }

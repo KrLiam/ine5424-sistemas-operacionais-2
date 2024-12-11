@@ -167,7 +167,7 @@ double Reader::read_double()
 
     Override ovr = override_whitespace(false);
 
-    while (ch && isdigit(ch)) // Ignora ponto, mas não vai ser usado
+    while (ch && isdigit(ch))
     {
         advance();
         ch = peek();

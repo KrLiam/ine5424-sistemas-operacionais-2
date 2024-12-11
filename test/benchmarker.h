@@ -79,8 +79,6 @@ struct Worker {
     uint32_t max_write_operations;
     uint32_t write_operations;
 
-    // o numero maximo de chaves na hash table está relacionado com
-    // o numero total de nós e a quantidade de ram disponível pro benchmark. 
     static const uint32_t MAX_KEY = 100;
     std::uniform_int_distribution<> key_dis;
     std::unordered_map<uint16_t, std::array<char, HashMapMessage::VALUE_SIZE>> hash_map;
@@ -190,7 +188,6 @@ struct Worker {
 
             if (msg.operation == HashMapOperation::READ) {
                 std::string node_id = choose_random_node();
-                // log_print("Node ", node_id, " is reading ", msg.key, " at ", node_id, ".");
 
                 bool success = comm->send(group_id, node_id, {(const char*) &msg, size});
                 if (!success) continue;
@@ -204,7 +201,6 @@ struct Worker {
                 read_operations++;
             }
             else if (msg.operation == HashMapOperation::WRITE) {
-                // log_print("Node ", node_id, " is sending ", size, " bytes (key=", msg.key, ").");
                 uint32_t interval = interval_range.random();
                 if (interval) std::this_thread::sleep_for(std::chrono::milliseconds(interval));
 
@@ -222,12 +218,10 @@ struct Worker {
             }
         }
 
-        // log_print("Node ", node_id, " is done, waiting for benchmark being over.");
         done = true;
         done_sem.release();
         benchmark_over.acquire();
 
-        //log_print("Node ", node_id, " is terminating.");
         terminate = true;
     }
 
@@ -241,12 +235,10 @@ struct Worker {
         HashMapMessage msg;
 
         uint32_t bytes = std::min(remaining_bytes, (double) max_message_size);
-        // remaining_bytes -= bytes;
 
         uint32_t metadata_bytes = sizeof(msg.operation) + sizeof(msg.key);
         if (bytes < metadata_bytes) return 0;
 
-        // TODO: talvez tirar isso e deixar mandar um pacote cheio pra não bugar o valor no ultimo broadcast
         uint32_t value_size = bytes - metadata_bytes;
 
         bool can_read = read_operations < max_read_operations;
@@ -259,9 +251,6 @@ struct Worker {
         msg.key = key_dis(rc_random::gen);
 
         if (msg.operation == HashMapOperation::WRITE) {
-            // talvez seja mais interessante ler o valor atual da chave e calcular
-            // um novo valor que dependa do anterior e da ordem que estas escritas são feitas
-            // para verificar a integridade do ab
             for (uint32_t i = 0; i < value_size; i++) {
                 uint8_t byte = rc_random::dis8(rc_random::gen);
                 msg.value[i] = byte;
@@ -295,7 +284,6 @@ struct Worker {
             in_logs.push_back(entry);
 
             if (msg.operation == HashMapOperation::READ) {
-                // log_print("Node ", node_id, " received read request on group ", result.group_id, " (key=", msg.key, ").");
                 HashMapMessage answer = create_read_answer(msg);
                 bool success = comm->send(result.group_id, result.sender_id, {(char*)&answer, sizeof(answer)});
                 if (!success) continue;
@@ -334,8 +322,6 @@ struct Worker {
             }
 
             if (terminate) break;
-
-            // log_print("Node ", node_id, " received ", result.length, " bytes on group ", result.group_id, " (key=", msg.key, ").");
 
             LogEntry entry = {
                 time : DateUtils::now(),
@@ -656,7 +642,7 @@ public:
             std::string id = format("group_%u", i);
             ByteArray key;
             for (int k = 0; k < 256; k++) {
-                key.push_back(i); // fazer ser um numero aleatorio
+                key.push_back(i);
             }
 
             map.emplace(id, key);
@@ -671,7 +657,7 @@ public:
         for (uint32_t i = 0; i < total_nodes(); i++) {
             std::string id = std::to_string(i);
 
-            uint16_t port = 3000 + i; // fazer um esquema de verificar se esta porta está disponível
+            uint16_t port = 3000 + i;
             SocketAddress address = {{127, 0, 0, 1}, port};
 
             NodeConfig node = {id, address};
@@ -711,8 +697,6 @@ public:
         for (const auto& [group_id, _] : config.groups) {
             Config group_config = config;
 
-            // cada grupo vai ter somente os nós participantes na configuração
-            // hack momentaneo para ter um lider em cada grupo
             auto begin_iter = config.nodes.begin() + i * params.total_nodes_in_group;
             i++;
             std::vector<NodeConfig> nodes(begin_iter, begin_iter + params.total_nodes_in_group);
@@ -796,7 +780,6 @@ public:
                     }
                     if (group_hm[key] != worker->hash_map[key]) {
                         log_print("Hashmap of group ", group_id, " does not match. ");
-                        // log_print(group_hm[key].data(), " != ", worker->hash_map[key].data());
                         return;
                     }
                 }

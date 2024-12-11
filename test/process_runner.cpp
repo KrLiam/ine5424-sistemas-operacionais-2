@@ -1,4 +1,3 @@
-// process_runner.cpp
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -243,7 +242,7 @@ void Runner::run_test(const std::string& case_path_str) {
     ).lexically_normal().lexically_relative(fs::current_path());
 
     log_info("Parsing config file in ", config_path);
-    Config config = ConfigReader::parse_file(config_path); // TODO fazer resolução do caminho a partir do .case
+    Config config = ConfigReader::parse_file(config_path);
 
     log_info("Initializing test case...");
 

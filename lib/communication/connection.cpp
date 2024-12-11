@@ -40,7 +40,7 @@ void Connection::observe_pipeline()
     pipeline.attach(obs_message_defragmentation_is_complete);
     pipeline.attach(obs_transmission_complete);
     pipeline.attach(obs_transmission_fail);
-    pipeline.attach(obs_node_death); // TODO: arrumar o local disso, já q uma conexão fechar não faz parte do pipeline
+    pipeline.attach(obs_node_death);
 }
 
 void Connection::packet_received(const PacketReceived &event)
@@ -293,10 +293,7 @@ void Connection::established(Packet p)
     if (p.data.header.is_rst())
     {
         cancel_transmissions();
-        // reset_message_numbers();
-        // send_syn(0);
         change_state(CLOSED);
-        // set_timeout();
         return;
     }
 
@@ -375,7 +372,6 @@ void Connection::fin_wait(Packet p)
 
     if (p.data.header.is_fin())
     {
-        // expected_number++;
         if (p.data.header.is_ack())
         {
             log_trace("fin_wait: received FIN+ACK; closing and sending ACK.");
@@ -445,7 +441,7 @@ void Connection::send_flag(uint8_t flags, MessageData message_data)
     Packet packet;
     packet.meta.destination = remote_node.get_address();
     packet.meta.message_length = message_data.size;
-    packet.meta.expects_ack = 0; // flags & SYN;
+    packet.meta.expects_ack = 0;
     packet.data = data;
 
     dispatch_to_sender(packet);
@@ -539,8 +535,6 @@ void Connection::cancel_transmissions()
 
 void Connection::update()
 {
-    // log_trace("Updating connection with node ", remote_node.get_id());
-
     send_dispatched_packets();
 
     if (dispatcher.is_empty()) return;

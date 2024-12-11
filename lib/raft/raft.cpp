@@ -66,7 +66,6 @@ void RaftManager::send_vote(Packet packet) {
 
     PacketData data = packet.data;
     data.header.flags = data.header.flags | ACK;
-    // data.header.id.origin = local_node.get_address();
     memcpy(data.message_data, &rvo_data, sizeof(RequestVoteData));
 
     PacketMetadata meta = {
@@ -186,8 +185,6 @@ unsigned int RaftManager::get_quorum() {
 void RaftManager::packet_received(const PacketReceived &event) {
     Packet &packet = event.packet;
     MessageType type = packet.data.header.get_message_type();
-
-    // if (type != MessageType::RAFT && type != MessageType::HEARTBEAT) return;
 
     if (!packet.silent()) {
         log_trace("Packet ", packet.to_string(PacketFormat::RECEIVED),

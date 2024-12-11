@@ -31,7 +31,6 @@ void Transmission::release() {
 } 
 
 TransmissionResult Transmission::wait_result() {
-    // trocar pra condition_variable
     if (!completed) completed_sem.acquire();
     return result;
 }

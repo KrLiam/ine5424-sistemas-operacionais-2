@@ -74,7 +74,6 @@ void FailureDetection::packet_received(const PacketReceived &event)
 
         std::unordered_set<SocketAddress> &suspicions = get_suspicions(gr->get_local_node().get_id());
         suspicions.erase(node.get_address());
-        // Talvez dava pra remover esse nó da lista de suspeitos dos outros nós tb
 
         log_info(
             "Received ",
@@ -94,8 +93,6 @@ void FailureDetection::packet_received(const PacketReceived &event)
 }
 
 void FailureDetection::packet_sent(const PacketSent &event) {
-    // Node& node = gr->get_nodes().get_node(event.packet.meta.destination);
-    // schedule_heartbeat(node);
 }
 
 
@@ -171,9 +168,6 @@ void FailureDetection::check_for_faulty_nodes()
                 "); marking it as faulty."
             );
         node.set_state(FAULTY);
-
-        // std::unordered_set<SocketAddress> &local_suspicions = get_suspicions(gr->get_local_node().get_id());
-        // local_suspicions.erase(node.get_address());
 
         event_bus.notify(NodeDeath(node));
     }
@@ -379,7 +373,6 @@ void FailureDetection::process_discover(Packet& packet)
 
 void FailureDetection::send_discover_ack(const Packet& packet)
 {
-    // Isso aqui é bem genérico, talvez dava pra centralizar no connection de uma vez
     Node& local_node = gr->get_local_node();
 
     PacketData data = packet.data;

@@ -83,7 +83,6 @@ void Pipeline::receive(Message message, int step_index)
         step->receive(message);
         return;
     }
-    // TODO: na nova tentativa de conexão, dá pra chamar um metodo q faz a msm coisa q o establish_connections(), só q pra uma só
     event_bus.notify(MessageReceived(message));
 }
 void Pipeline::receive(Packet packet, int step_index)
@@ -94,6 +93,5 @@ void Pipeline::receive(Packet packet, int step_index)
         step->receive(packet);
         return;
     }
-    // TODO: na nova tentativa de conexão, dá pra chamar um metodo q faz a msm coisa q o establish_connections(), só q pra uma só
     event_bus.notify(PacketReceived(packet));
 }

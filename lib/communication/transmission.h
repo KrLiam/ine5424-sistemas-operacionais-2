@@ -12,7 +12,6 @@ const std::string GLOBAL_GROUP_ID = "#all";
 
 struct TransmissionResult {
     bool success;
-    // ...
 };
 
 

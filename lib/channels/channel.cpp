@@ -91,7 +91,6 @@ Packet Channel::receive()
     Packet packet;
     socklen_t in_address_len = sizeof(in_address);
 
-    // log_trace("Waiting to receive data.");
     int bytes_received = recvfrom(
         socket_descriptor,
         (char *)&packet.data,

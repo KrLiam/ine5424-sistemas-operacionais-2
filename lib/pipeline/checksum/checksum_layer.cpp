@@ -13,8 +13,6 @@ void ChecksumLayer::send(Packet packet)
 
     PacketData &data = packet.data;
 
-    // pre-processamento do pacote antes de enviar, a principio isso n tem nada a ver com a checksum layer
-    // e deveria estar em outro lugar
     packet.data.header.pid = local_node.get_pid();
     if (local_node.is_leader()) packet.data.header.flags |= LDR;
     else packet.data.header.flags &= ~LDR;

@@ -52,10 +52,6 @@ private:
     ConnectionState state = CLOSED;
     std::condition_variable state_change;
 
-    // Atualmente só tá sendo enviado packet sem esperar ACK, a ideia é fazer com que a mesma lógica de
-    // aguardar o envio seja possível para os pacotes da lib
-    // Para isso, vai ser necessário adaptar para ter um TransmissionQueue por ato de send
-    // ou um TransmissionQueue só suportar mensagem + pacotes não relacionados
     std::vector<Packet> dispatched_packets;
     BufferSet<std::string>& connection_update_buffer;
     TransmissionDispatcher dispatcher;

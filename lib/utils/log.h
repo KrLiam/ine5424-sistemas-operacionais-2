@@ -113,7 +113,6 @@ public:
     static void set_output_file(const std::string& path) {
         log_open_file = std::ofstream(path);
         log_out = &log_open_file;
-        // std::cout.rdbuf(log_out.rdbuf());
     }   
 
     template <typename... Args>

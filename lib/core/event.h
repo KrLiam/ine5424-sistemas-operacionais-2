@@ -148,7 +148,7 @@ struct TransmissionComplete : public Event {
 struct MessageDefragmentationIsComplete : public Event {
     static EventType type() { return EventType::MESSAGE_DEFRAGMENTATION_IS_COMPLETE; }
 
-    Packet& packet; // TODO: Dá pra trocar pelo UUID da mensagem depois de implementarmos
+    Packet& packet;
 
     MessageDefragmentationIsComplete(Packet& packet);
 };
@@ -156,7 +156,7 @@ struct MessageDefragmentationIsComplete : public Event {
 struct ForwardDefragmentedMessage : public Event {
     static EventType type() { return EventType::FORWARD_DEFRAGMENTED_MESSAGE; }
 
-    Packet& packet; // TODO: Dá pra trocar pelo UUID da mensagem depois de implementarmos
+    Packet& packet;
 
     ForwardDefragmentedMessage(Packet& packet);
 };

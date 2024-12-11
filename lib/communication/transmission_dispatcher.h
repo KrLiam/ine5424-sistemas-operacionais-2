@@ -40,8 +40,7 @@ public:
 
     bool enqueue(Transmission& transmission);
 
-    void increment_number(); // TODO isso é temporário.
-
+    void increment_number();
     void update();
 
     void complete(bool success);

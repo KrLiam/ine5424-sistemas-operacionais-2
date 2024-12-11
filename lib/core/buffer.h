@@ -29,7 +29,6 @@ public:
 
     T consume()
     {
-        // log_trace("Waiting to consume on [", name, "] buffer.");
         std::unique_lock<std::mutex> e_lock(empty_mutex);
         empty_cv.wait(e_lock, [this]{ return !empty() || terminating; });
         if (terminating) throw buffer_termination("Exiting buffer.");
@@ -44,8 +43,6 @@ public:
         full_cv.notify_one();
         f_lock.unlock();
 
-        // log_trace("Consumed item to [", name, "] buffer.");
-
         mutex.unlock();
 
         return item;
@@ -53,7 +50,6 @@ public:
 
     void produce(const T &item)
     {
-        // log_trace("Waiting to produce on [", name, "] buffer.");
         std::unique_lock<std::mutex> f_lock(full_mutex);
         full_cv.wait(f_lock, [this]{ return !full() || terminating; });
         if (terminating) throw buffer_termination("Exiting buffer.");
@@ -66,8 +62,6 @@ public:
         std::unique_lock<std::mutex> e_lock(empty_mutex);
         empty_cv.notify_one();
         e_lock.unlock();
-
-        // log_trace("Produced item to [", name, "] buffer.");
 
         mutex.unlock();
     }
@@ -138,7 +132,6 @@ public:
     bool full() { return values.size() >= max_size; }
 
     void produce(const T& value) {
-        // log_trace("Waiting to produce on [", name, "] buffer.");
         std::unique_lock<std::mutex> f_lock(full_mutex);
         full_cv.wait(f_lock, [this]{ return !full() || terminating; });
         if (terminating) throw buffer_termination("Exiting buffer.");
@@ -151,8 +144,6 @@ public:
         std::unique_lock<std::mutex> e_lock(empty_mutex);
         empty_cv.notify_one();
         e_lock.unlock();
-
-        // log_trace("Produced item to [", name, "] buffer.");
 
         values_mutex.unlock();
     }
@@ -168,7 +159,6 @@ public:
     }
 
     T consume() {
-        // log_trace("Waiting to consume on [", name, "] buffer.");
         std::unique_lock<std::mutex> e_lock(empty_mutex);
         empty_cv.wait(e_lock, [this]{ return !empty() || terminating; });
         if (terminating) throw buffer_termination("Exiting buffer.");
@@ -182,8 +172,6 @@ public:
         std::unique_lock<std::mutex> f_lock(full_mutex);
         full_cv.notify_one();
         f_lock.unlock();
-
-        // log_trace("Consumed item to [", name, "] buffer.");
 
         values_mutex.unlock();
 

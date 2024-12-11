@@ -35,7 +35,6 @@ void TransmissionQueue::send(uint32_t num) {
     if (entry.tries == 0) {
         if (receiver_address == BROADCAST_ADDRESS) {
             uint64_t group_hash = packet.data.header.key_hash;
-            // log_print(group_hash, " ", nodes.get_group(group_hash).size(), " ", nodes.size());
             for (const Node* node : nodes.get_group(group_hash)) {
                 if (node->get_address() == BROADCAST_ADDRESS) continue;
                 if (!node->is_alive()) continue;
@@ -282,14 +281,12 @@ void TransmissionQueue::receive_ack(const Packet& ack_packet)
 
     entry.pending_receivers.erase(&receiver);
 
-    // log_info("Removing pending ack ", frag_num, " of remote ", receiver_address.to_string(), ". over: ", !entry.pending_receivers.size());
     if (entry.pending_receivers.size()) {
         mutex_timeout.unlock();
         return;
     }
 
     pending.erase(frag_num);
-    // log_info("Completed: ", completed());
 
     if (entry.timeout_id != -1)
     {
