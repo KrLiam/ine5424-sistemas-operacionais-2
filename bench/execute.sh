@@ -21,11 +21,11 @@ MB=250
 ./program benchmark --out-file "bench/results/nodes-ab/E_-_1_Node.json" --num-groups 1 --num-nodes 1 --bytes-per-node $(($MB/1))mb --mode ab --no-encryption --no-checksum
 
 ## URB
-./program benchmark --out-file "bench/results/nodes-beb/A_-_20_Nodes.json" --num-groups 1 --num-nodes 20 --bytes-per-node $(($MB/20))mb --mode urb --no-encryption --no-checksum
-./program benchmark --out-file "bench/results/nodes-beb/B_-_15_Nodes.json" --num-groups 1 --num-nodes 15 --bytes-per-node $(($MB/15))mb --mode urb --no-encryption --no-checksum
-./program benchmark --out-file "bench/results/nodes-beb/C_-_10_Nodes.json" --num-groups 1 --num-nodes 10 --bytes-per-node $(($MB/10))mb --mode urb --no-encryption --no-checksum
-./program benchmark --out-file "bench/results/nodes-beb/D_-_5_Nodes.json" --num-groups 1 --num-nodes 5 --bytes-per-node $(($MB/5))mb --mode urb --no-encryption --no-checksum
-./program benchmark --out-file "bench/results/nodes-beb/E_-_1_Node.json" --num-groups 1 --num-nodes 1 --bytes-per-node $(($MB/1))mb --mode urb --no-encryption --no-checksum
+./program benchmark --out-file "bench/results/nodes-urb/A_-_20_Nodes.json" --num-groups 1 --num-nodes 20 --bytes-per-node $(($MB/20))mb --mode urb --no-encryption --no-checksum
+./program benchmark --out-file "bench/results/nodes-urb/B_-_15_Nodes.json" --num-groups 1 --num-nodes 15 --bytes-per-node $(($MB/15))mb --mode urb --no-encryption --no-checksum
+./program benchmark --out-file "bench/results/nodes-urb/C_-_10_Nodes.json" --num-groups 1 --num-nodes 10 --bytes-per-node $(($MB/10))mb --mode urb --no-encryption --no-checksum
+./program benchmark --out-file "bench/results/nodes-urb/D_-_5_Nodes.json" --num-groups 1 --num-nodes 5 --bytes-per-node $(($MB/5))mb --mode urb --no-encryption --no-checksum
+./program benchmark --out-file "bench/results/nodes-urb/E_-_1_Node.json" --num-groups 1 --num-nodes 1 --bytes-per-node $(($MB/1))mb --mode urb --no-encryption --no-checksum
 
 # challenge
 
